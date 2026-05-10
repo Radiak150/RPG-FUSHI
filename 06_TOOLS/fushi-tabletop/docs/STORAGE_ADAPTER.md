@@ -45,6 +45,8 @@ O adapter expõe metodos de alto nivel:
 
 Tambem existem metodos internos de compatibilidade para preferencias de view, interludios/transicoes e contagem de entradas locais.
 
+`exportCampaign(campaignId)` retorna apenas os blocos persistidos da campanha. A montagem do arquivo final, com metadados e validacao, fica em `src/lib/campaignTransfer.ts`.
+
 ## Arquivos migrados
 
 Os seguintes arquivos deixaram de acessar `window.localStorage` ou `window.sessionStorage` diretamente:

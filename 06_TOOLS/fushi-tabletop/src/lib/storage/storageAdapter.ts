@@ -1,8 +1,6 @@
 import {
   applyFushiLocalBackup,
-  createFushiLocalBackup,
   normalizeFushiLocalBackup,
-  type FushiLocalBackup,
 } from '../localBackup'
 
 const DEFAULT_CAMPAIGN_ID = 'campaign-local-default'
@@ -107,7 +105,6 @@ export interface CampaignStorageExport {
   version: 1
   campaignId: string
   exportedAt: string
-  backup: FushiLocalBackup
   campaignSession: unknown
   libraryState: unknown
   mundiState: unknown
@@ -320,7 +317,6 @@ export const BrowserStorageAdapter: StorageAdapter = {
       version: 1,
       campaignId: normalizedCampaignId,
       exportedAt: new Date().toISOString(),
-      backup: createFushiLocalBackup(),
       campaignSession: this.loadCampaignSession(normalizedCampaignId),
       libraryState: parseJsonValue(this.loadLibraryState(normalizedCampaignId)),
       mundiState: this.loadMundiState(normalizedCampaignId),

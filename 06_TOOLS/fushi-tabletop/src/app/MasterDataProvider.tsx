@@ -163,6 +163,34 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
     return nextCampaign
   }
 
+  function updateCampaign(campaign: LocalCampaign) {
+    if (!workspace) {
+      return null
+    }
+
+    const nextCampaign = {
+      ...campaign,
+    }
+
+    setWorkspace((currentWorkspace) => {
+      if (!currentWorkspace) {
+        return currentWorkspace
+      }
+
+      return {
+        ...currentWorkspace,
+        campaigns: {
+          ...currentWorkspace.campaigns,
+          items: currentWorkspace.campaigns.items.map((currentCampaign) =>
+            currentCampaign.id === nextCampaign.id ? nextCampaign : currentCampaign,
+          ),
+        },
+      }
+    })
+
+    return nextCampaign
+  }
+
   function deleteCampaign(campaignId: string) {
     setWorkspace((currentWorkspace) => {
       if (!currentWorkspace) {
@@ -219,6 +247,7 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
         updateCharacter,
         deleteCharacter,
         createCampaign,
+        updateCampaign,
         deleteCampaign,
         setActiveCampaign,
       }}

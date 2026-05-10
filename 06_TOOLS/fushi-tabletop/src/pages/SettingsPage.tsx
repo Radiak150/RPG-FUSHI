@@ -4,6 +4,16 @@ import { Panel } from '../components/ui/Panel'
 import { useMasterData } from '../hooks/useMasterData'
 import { useProductPreferences } from '../hooks/useProductPreferences'
 import {
+  buildImportedCampaignMetadata,
+  createCampaignExportFile,
+  createCampaignExportFilename,
+  downloadJsonFile,
+  saveImportedCampaignStorage,
+  validateCampaignExportFile,
+  type FushiCampaignExportFile,
+  type FushiCampaignImportSummary,
+} from '../lib/campaignTransfer'
+import {
   applyFushiLocalBackup,
   createFushiBackupFilename,
   createFushiLocalBackup,
@@ -14,16 +24,40 @@ import {
 } from '../lib/localBackup'
 
 export function SettingsPage() {
-  const { data, refresh } = useMasterData()
+  const {
+    data,
+    createCampaign,
+    refresh,
+    setActiveCampaign,
+    updateCampaign,
+  } = useMasterData()
   const importInputRef = useRef<HTMLInputElement | null>(null)
+  const campaignImportInputRef = useRef<HTMLInputElement | null>(null)
   const [backupStatus, setBackupStatus] = useState('')
+  const [campaignTransferStatus, setCampaignTransferStatus] = useState('')
   const [isImportingBackup, setIsImportingBackup] = useState(false)
+  const [pendingCampaignImport, setPendingCampaignImport] = useState<{
+    file: FushiCampaignExportFile
+    summary: FushiCampaignImportSummary
+  } | null>(null)
   const {
     theme,
     setTheme,
     showModuleDescriptions,
     setShowModuleDescriptions,
   } = useProductPreferences()
+  const activeCampaign =
+    data?.campaigns.items.find(
+      (campaign) => campaign.id === data.campaigns.activeCampaignId,
+    ) ??
+    data?.campaigns.items[0] ??
+    null
+
+  function buildBackupFilename(campaignId: string) {
+    const date = new Date().toISOString().slice(0, 10)
+
+    return `fushi-backup-${campaignId}-${date}.json`
+  }
 
   function handleExportBackup() {
     const backup = createFushiLocalBackup()
@@ -34,6 +68,116 @@ export function SettingsPage() {
     setBackupStatus(
       `Backup exportado com ${summary.localStorageKeys} chave(s) locais e ${summary.sessionStorageKeys} chave(s) de sessao.`,
     )
+  }
+
+  function handleExportCampaign() {
+    if (!activeCampaign) {
+      setCampaignTransferStatus('Nenhuma campanha ativa para exportar.')
+      return
+    }
+
+    const exportFile = createCampaignExportFile(activeCampaign)
+
+    downloadJsonFile(exportFile, createCampaignExportFilename(activeCampaign))
+    setCampaignTransferStatus(`Campanha "${activeCampaign.nome}" exportada.`)
+  }
+
+  function handleCreateCampaignBackup() {
+    if (!activeCampaign) {
+      setCampaignTransferStatus('Nenhuma campanha ativa para backup.')
+      return
+    }
+
+    const exportFile = createCampaignExportFile(activeCampaign)
+
+    downloadJsonFile(exportFile, buildBackupFilename(activeCampaign.id))
+    setCampaignTransferStatus(`Backup da campanha "${activeCampaign.nome}" criado.`)
+  }
+
+  async function handleSelectCampaignImport(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+
+    if (!file) {
+      return
+    }
+
+    setCampaignTransferStatus('Validando arquivo de campanha...')
+    setPendingCampaignImport(null)
+
+    try {
+      const parsedValue = await readJsonFile(file)
+      const validation = validateCampaignExportFile(parsedValue)
+
+      if (!validation.ok || !validation.file || !validation.summary) {
+        setCampaignTransferStatus(validation.error ?? 'Arquivo de campanha invalido.')
+        return
+      }
+
+      setPendingCampaignImport({
+        file: validation.file,
+        summary: validation.summary,
+      })
+      setCampaignTransferStatus('Arquivo valido. Escolha como deseja importar.')
+    } catch (error) {
+      setCampaignTransferStatus(
+        error instanceof Error
+          ? error.message
+          : 'Nao foi possivel validar o arquivo de campanha.',
+      )
+    } finally {
+      if (campaignImportInputRef.current) {
+        campaignImportInputRef.current.value = ''
+      }
+    }
+  }
+
+  async function handleImportCampaign(mode: 'new' | 'replace') {
+    if (!pendingCampaignImport) {
+      return
+    }
+
+    if (mode === 'replace' && !activeCampaign) {
+      setCampaignTransferStatus('Nenhuma campanha ativa para substituir.')
+      return
+    }
+
+    if (mode === 'replace') {
+      const confirmed = window.confirm(
+        'Isso vai substituir os dados da campanha atual. Um backup JSON sera baixado antes. Confirmar?',
+      )
+
+      if (!confirmed) {
+        return
+      }
+    }
+
+    const targetCampaign = buildImportedCampaignMetadata(
+      pendingCampaignImport.file,
+      mode,
+      activeCampaign ?? undefined,
+    )
+
+    if (mode === 'replace' && activeCampaign) {
+      downloadJsonFile(createCampaignExportFile(activeCampaign), buildBackupFilename(activeCampaign.id))
+      updateCampaign(targetCampaign)
+      saveImportedCampaignStorage(pendingCampaignImport.file, activeCampaign.id)
+      setActiveCampaign(activeCampaign.id)
+      setCampaignTransferStatus(`Campanha atual substituida por "${targetCampaign.nome}".`)
+    } else {
+      const createdCampaign = createCampaign(targetCampaign)
+
+      if (!createdCampaign) {
+        setCampaignTransferStatus('Nao foi possivel criar a campanha importada.')
+        return
+      }
+
+      saveImportedCampaignStorage(pendingCampaignImport.file, createdCampaign.id)
+      setActiveCampaign(createdCampaign.id)
+      setCampaignTransferStatus(`Campanha importada como "${createdCampaign.nome}".`)
+    }
+
+    setPendingCampaignImport(null)
+    await refresh()
   }
 
   async function handleImportBackup(event: ChangeEvent<HTMLInputElement>) {
@@ -118,6 +262,118 @@ export function SettingsPage() {
           <ViewModeControls />
         </Panel>
       </div>
+
+      <Panel
+        eyebrow="Gerenciar campanha"
+        title="Exportar e importar campanha"
+        subtitle="Exporta somente a campanha ativa e seus estados persistidos, sem codigo, builds ou dados ignorados."
+      >
+        <div className="cards-grid">
+          <article className="list-card">
+            <div className="list-card__top">
+              <h3>Campanha ativa</h3>
+              <span className="tag">{activeCampaign?.codigo ?? 'sem campanha'}</span>
+            </div>
+            <p className="support-copy">
+              {activeCampaign?.nome ?? 'Selecione ou crie uma campanha antes de exportar.'}
+            </p>
+            <div className="tabletop-hud-panel__actions">
+              <button
+                className="button button--primary"
+                disabled={!activeCampaign}
+                onClick={handleExportCampaign}
+                type="button"
+              >
+                Exportar campanha
+              </button>
+              <button
+                className="button"
+                disabled={!activeCampaign}
+                onClick={handleCreateCampaignBackup}
+                type="button"
+              >
+                Criar backup da campanha atual
+              </button>
+            </div>
+          </article>
+
+          <article className="list-card">
+            <div className="list-card__top">
+              <h3>Importar campanha</h3>
+              <span className="tag">json</span>
+            </div>
+            <p className="support-copy">
+              Valida o arquivo antes de criar uma nova campanha ou substituir a atual.
+            </p>
+            <div className="tabletop-hud-panel__actions">
+              <button
+                className="button"
+                onClick={() => campaignImportInputRef.current?.click()}
+                type="button"
+              >
+                Importar campanha
+              </button>
+              <input
+                accept="application/json,.json"
+                hidden
+                onChange={handleSelectCampaignImport}
+                ref={campaignImportInputRef}
+                type="file"
+              />
+            </div>
+          </article>
+        </div>
+
+        {pendingCampaignImport ? (
+          <article className="list-card">
+            <div className="list-card__top">
+              <h3>{pendingCampaignImport.summary.campaignName}</h3>
+              <span className="tag">v{pendingCampaignImport.summary.version}</span>
+            </div>
+            <div className="tag-row">
+              <span className="tag">
+                Exportada: {pendingCampaignImport.summary.exportedAt.slice(0, 10)}
+              </span>
+              <span className="tag">{pendingCampaignImport.summary.mapCount} mapas</span>
+              <span className="tag">
+                {pendingCampaignImport.summary.locationCount} locais MUN
+              </span>
+              <span className="tag">
+                {pendingCampaignImport.summary.groupCount} grupos
+              </span>
+            </div>
+            <p className="support-copy">Como deseja importar?</p>
+            <div className="tabletop-hud-panel__actions">
+              <button
+                className="button button--primary"
+                onClick={() => void handleImportCampaign('new')}
+                type="button"
+              >
+                Importar como nova campanha
+              </button>
+              <button
+                className="button"
+                disabled={!activeCampaign}
+                onClick={() => void handleImportCampaign('replace')}
+                type="button"
+              >
+                Substituir campanha atual
+              </button>
+              <button
+                className="button"
+                onClick={() => setPendingCampaignImport(null)}
+                type="button"
+              >
+                Cancelar
+              </button>
+            </div>
+          </article>
+        ) : null}
+
+        {campaignTransferStatus ? (
+          <p className="support-copy">{campaignTransferStatus}</p>
+        ) : null}
+      </Panel>
 
       <Panel
         eyebrow="Backup"

@@ -32,6 +32,10 @@ FUSHI Tabletop is a custom RPG tabletop app for a living-world campaign. The app
   - `playerAccess.ts`;
   - `physicalPersistence.ts`.
 - The adapter still uses the legacy browser storage keys to preserve existing local data.
+- Campaign export/import helpers live at `06_TOOLS/fushi-tabletop/src/lib/campaignTransfer.ts`.
+- Campaign transfer UI is in `SettingsPage.tsx` under the campaign management panel.
+- Public/private state preparation lives at `06_TOOLS/fushi-tabletop/src/lib/session/publicState.ts`.
+- The public state module is preparatory only; no real backend/WebSocket exists yet.
 
 ## Next Safe Technical Moves
 
