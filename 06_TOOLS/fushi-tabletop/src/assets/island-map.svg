@@ -1,0 +1,36 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="900" rx="48" fill="#06080C"/>
+  <rect x="24" y="24" width="1152" height="852" rx="36" fill="url(#sea)"/>
+  <path d="M831.74 112.582C930.679 143.451 1003.37 236.804 1032.28 337.226C1063.51 445.679 1056.31 565.303 997.708 662.126C939.634 758.073 829.931 806.096 721.99 824.06C625.751 840.072 526.114 823.967 442.621 773.467C355.892 721.01 277.81 647.201 245.077 550.595C210.597 448.832 208.809 332.068 269.85 243.103C331.411 153.383 437.695 114.153 543.737 94.3581C640.846 76.2277 738.074 83.3468 831.74 112.582Z" fill="url(#island)"/>
+  <path d="M826.555 166.442C903.914 191.878 964.403 255.346 987.521 333.258C1014.09 422.835 1007.61 521.214 961.047 601.356C913.74 682.777 829.055 745.028 738.357 763.67C639.891 783.915 530.86 770.946 445.889 716.436C367.223 665.962 302.261 590.264 276.165 499.97C248.944 405.785 253.953 299.185 311.246 219.687C367.683 141.377 468.924 112.548 564.37 109.653C657.948 106.815 737.674 137.214 826.555 166.442Z" stroke="#97C3B9" stroke-opacity="0.28" stroke-width="6"/>
+  <path d="M356 282C440.211 226.679 517.513 183.228 633.589 187.877C733.655 191.885 824.595 233.132 867.157 307.937C911.361 385.63 908.593 476.385 876.17 558.475C843.253 641.819 785.157 732.575 696.158 754.56C597.44 778.95 491.285 726.247 413.252 661.571C339.68 600.594 282.796 513.083 282.541 418.001C282.412 369.682 316.017 308.278 356 282Z" fill="url(#innerGlow)" fill-opacity="0.4"/>
+  <path d="M479 280C525.112 257.906 570.397 231.966 621.625 236.743C678.224 242.018 740.242 270.336 769.873 319.275C800.545 369.933 795.852 432.89 777.711 488.634C759.934 543.261 723.179 601.684 669.754 623.056C605.865 648.613 534.105 625.111 480.019 583.92C431.692 547.117 384.571 496.487 381.943 434.716C379.687 381.696 430.616 303.186 479 280Z" stroke="#E2D0A5" stroke-opacity="0.24" stroke-width="5"/>
+  <circle cx="374" cy="250" r="110" fill="url(#fogA)" fill-opacity="0.25"/>
+  <circle cx="880" cy="686" r="132" fill="url(#fogB)" fill-opacity="0.18"/>
+  <circle cx="792" cy="302" r="86" fill="#D4B57C" fill-opacity="0.1"/>
+  <circle cx="523" cy="624" r="96" fill="#89B6B0" fill-opacity="0.1"/>
+  <defs>
+    <linearGradient id="sea" x1="144" y1="66" x2="1092" y2="858" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#091117"/>
+      <stop offset="0.5" stop-color="#0D1720"/>
+      <stop offset="1" stop-color="#05080C"/>
+    </linearGradient>
+    <linearGradient id="island" x1="299" y1="139" x2="927" y2="768" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#16241F"/>
+      <stop offset="0.52" stop-color="#283227"/>
+      <stop offset="1" stop-color="#161A14"/>
+    </linearGradient>
+    <radialGradient id="innerGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(608 444) rotate(90) scale(287 318)">
+      <stop stop-color="#A9D6CF"/>
+      <stop offset="1" stop-color="#A9D6CF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="fogA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(374 250) rotate(90) scale(110)">
+      <stop stop-color="#97C3B9"/>
+      <stop offset="1" stop-color="#97C3B9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="fogB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(880 686) rotate(90) scale(132)">
+      <stop stop-color="#E2D0A5"/>
+      <stop offset="1" stop-color="#E2D0A5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>

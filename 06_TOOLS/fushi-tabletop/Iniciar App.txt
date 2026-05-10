@@ -1,0 +1,4 @@
+C:\RPG FUSHI\RPG-FUSHI\06_TOOLS\fushi-tabletop
+
+npm install
+npm run dev

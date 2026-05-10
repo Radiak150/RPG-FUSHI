@@ -1,0 +1,39 @@
+:root {
+  color-scheme: dark;
+  --bg-root: #05070a;
+  --bg-surface: rgba(12, 16, 22, 0.88);
+  --bg-surface-strong: rgba(18, 24, 31, 0.96);
+  --bg-muted: rgba(24, 31, 40, 0.72);
+  --line-soft: rgba(133, 163, 170, 0.14);
+  --line-strong: rgba(153, 187, 183, 0.28);
+  --text-main: #f4efe5;
+  --text-soft: #c6c0b6;
+  --text-dim: #94a0a8;
+  --accent-cool: #92c0b6;
+  --accent-warm: #d1b182;
+  --accent-danger: #ca747a;
+  --accent-watch: #c69a58;
+  --accent-steady: #7caf88;
+  --shadow-deep: 0 22px 70px rgba(0, 0, 0, 0.48);
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --font-body: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;
+  --font-display: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+}
+
+:root[data-theme='mist'] {
+  --bg-root: #07090c;
+  --bg-surface: rgba(16, 19, 25, 0.86);
+  --bg-surface-strong: rgba(22, 26, 33, 0.94);
+  --bg-muted: rgba(30, 36, 44, 0.74);
+  --line-soft: rgba(176, 193, 194, 0.16);
+  --line-strong: rgba(186, 208, 204, 0.3);
+  --text-main: #f4f1ea;
+  --text-soft: #d0cbc1;
+  --text-dim: #9ba5ab;
+  --accent-cool: #a4c8c0;
+  --accent-warm: #dbc097;
+  --shadow-deep: 0 24px 72px rgba(0, 0, 0, 0.42);
+}

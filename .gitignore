@@ -1,0 +1,69 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+build/
+out/
+.release/
+.cache/
+.vite/
+
+# env/secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+private/
+credentials/
+tokens/
+
+# local app data
+/data/
+/local-data/
+/campaigns/
+/backups/
+/uploads/
+/user-assets/
+assets/private/
+/storage/
+/sessions/
+/logs/
+*.log
+*.err
+*.out
+out.txt
+*.tmp
+*.temp
+
+# FUSHI private/runtime content
+/00_ADMIN/
+/01_LORE/
+/02_GAME_DESIGN/
+/03_DATA/
+/04_SESSIONS/
+/05_ASSETS/
+/FUSHI/
+/.fushi/
+/fushi-data/
+/fushi-campaigns/
+/fushi-assets/
+/fushi-backups/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.iml
+
+# test/cache
+coverage/
+playwright-report/
+test-results/
