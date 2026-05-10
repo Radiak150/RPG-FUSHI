@@ -1,4 +1,5 @@
 import type { CharacterSheet } from '../data/types'
+import { storageAdapter } from './storage/storageAdapter'
 
 export type WorldMundiLocationType =
   | 'ponto_importante'
@@ -384,12 +385,6 @@ export function getPersistedWorldMundiStorageKey(campaignId?: string) {
   const normalizedCampaignId = normalizeCampaignStorageId(campaignId)
 
   return `${TABLETOP_WORLD_MUNDI_STORAGE_KEY}:campaign:${normalizedCampaignId}`
-}
-
-function shouldFallbackToLegacyStorage(campaignId?: string) {
-  const normalizedCampaignId = normalizeCampaignStorageId(campaignId)
-
-  return !campaignId || normalizedCampaignId === DEFAULT_WORLD_MUNDI_CAMPAIGN_ID
 }
 
 export const WORLD_MUNDI_LOCATION_TYPES: WorldMundiLocationType[] = [
@@ -2018,18 +2013,11 @@ export function createBlankWorldMundiState(): WorldMundiState {
 
 export function readPersistedWorldMundiState(campaignId?: string): WorldMundiState {
   try {
-    const campaignKey = getPersistedWorldMundiStorageKey(campaignId)
-    const rawValue =
-      window.localStorage.getItem(campaignKey) ??
-      (shouldFallbackToLegacyStorage(campaignId)
-        ? window.localStorage.getItem(TABLETOP_WORLD_MUNDI_STORAGE_KEY)
-        : null)
+    const parsedValue = storageAdapter.loadMundiState(campaignId)
 
-    if (!rawValue) {
+    if (!parsedValue) {
       return cloneValue(EMPTY_WORLD_MUNDI_STATE)
     }
-
-    const parsedValue = JSON.parse(rawValue) as unknown
 
     if (!isRecord(parsedValue) || parsedValue.version !== 1) {
       return cloneValue(EMPTY_WORLD_MUNDI_STATE)
@@ -2046,9 +2034,9 @@ export function writePersistedWorldMundiState(
   campaignId?: string,
 ) {
   try {
-    window.localStorage.setItem(
-      getPersistedWorldMundiStorageKey(campaignId),
-      JSON.stringify(createWorldMundiState(state, { useDefaults: false })),
+    storageAdapter.saveMundiState(
+      campaignId,
+      createWorldMundiState(state, { useDefaults: false }),
     )
   } catch {
     return

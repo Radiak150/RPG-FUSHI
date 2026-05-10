@@ -3,6 +3,7 @@ import type {
   TabletopMediaAsset,
   TabletopTransitionAsset,
 } from '../data/types'
+import { storageAdapter } from './storage/storageAdapter'
 
 export type TabletopLibraryCategory = 'maps' | 'transitions' | 'music' | 'npcs'
 
@@ -56,12 +57,6 @@ export function getPersistedTabletopLibraryStorageKey(campaignId?: string) {
   return `${TABLETOP_LIBRARY_STORAGE_KEY}:campaign:${normalizedCampaignId}`
 }
 
-function shouldFallbackToLegacyStorage(campaignId?: string) {
-  const normalizedCampaignId = normalizeCampaignStorageId(campaignId)
-
-  return !campaignId || normalizedCampaignId === DEFAULT_TABLETOP_LIBRARY_CAMPAIGN_ID
-}
-
 export const EMPTY_TABLETOP_LIBRARY_STATE: PersistedTabletopLibraryState = {
   version: 1,
   folders: [],
@@ -92,22 +87,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function cloneValue<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
-}
-
-function readStorageItem(key: string) {
-  try {
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function writeStorageItem(key: string, value: string) {
-  try {
-    window.localStorage.setItem(key, value)
-  } catch {
-    return
-  }
 }
 
 function normalizeFolder(value: unknown): TabletopLibraryFolder | null {
@@ -406,11 +385,7 @@ export function createTabletopLibraryState(
 export function readPersistedTabletopLibraryState(
   campaignId?: string,
 ): PersistedTabletopLibraryState {
-  const rawValue =
-    readStorageItem(getPersistedTabletopLibraryStorageKey(campaignId)) ??
-    (shouldFallbackToLegacyStorage(campaignId)
-      ? readStorageItem(TABLETOP_LIBRARY_STORAGE_KEY)
-      : null)
+  const rawValue = storageAdapter.loadLibraryState(campaignId)
 
   if (!rawValue) {
     return cloneValue(EMPTY_TABLETOP_LIBRARY_STATE)
@@ -433,8 +408,5 @@ export function writePersistedTabletopLibraryState(
   state: PersistedTabletopLibraryState,
   campaignId?: string,
 ) {
-  writeStorageItem(
-    getPersistedTabletopLibraryStorageKey(campaignId),
-    JSON.stringify(createTabletopLibraryState(state)),
-  )
+  storageAdapter.saveLibraryState(campaignId, createTabletopLibraryState(state))
 }

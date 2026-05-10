@@ -18,6 +18,7 @@ import {
   MAX_TABLETOP_ZOOM,
   MIN_TABLETOP_ZOOM,
 } from './tabletop'
+import { storageAdapter } from './storage/storageAdapter'
 
 export const TABLETOP_SESSION_STORAGE_KEY = 'fushi-tabletop:mesa-session:v1'
 export const TABLETOP_VIEW_STORAGE_KEY = 'fushi-tabletop:mesa-view:v1'
@@ -42,12 +43,6 @@ export function getPersistedTransitionOverridesStorageKey(campaignId?: string) {
   const normalizedCampaignId = normalizeCampaignStorageId(campaignId)
 
   return `${TABLETOP_TRANSITION_OVERRIDES_STORAGE_KEY}:campaign:${normalizedCampaignId}`
-}
-
-function shouldFallbackToLegacyStorage(campaignId?: string) {
-  const normalizedCampaignId = normalizeCampaignStorageId(campaignId)
-
-  return !campaignId || normalizedCampaignId === DEFAULT_TABLETOP_SESSION_CAMPAIGN_ID
 }
 
 export interface TabletopPing {
@@ -104,82 +99,6 @@ export interface PersistedTransitionOverride {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-}
-
-function readStorageItem(key: string) {
-  try {
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function writeStorageItem(key: string, value: string) {
-  try {
-    window.localStorage.setItem(key, value)
-  } catch {
-    return
-  }
-}
-
-function readSessionStorageItem(key: string) {
-  try {
-    return window.sessionStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function writeSessionStorageItem(key: string, value: string) {
-  try {
-    window.sessionStorage.setItem(key, value)
-  } catch {
-    return
-  }
-}
-
-function removeSessionStorageItem(key: string) {
-  try {
-    window.sessionStorage.removeItem(key)
-  } catch {
-    return
-  }
-}
-
-function removeStorageItem(key: string) {
-  try {
-    window.localStorage.removeItem(key)
-  } catch {
-    return
-  }
-}
-
-function readJsonStorage(key: string): unknown {
-  const rawValue = readStorageItem(key)
-
-  if (!rawValue) {
-    return null
-  }
-
-  try {
-    return JSON.parse(rawValue) as unknown
-  } catch {
-    return null
-  }
-}
-
-function readJsonSessionStorage(key: string): unknown {
-  const rawValue = readSessionStorageItem(key)
-
-  if (!rawValue) {
-    return null
-  }
-
-  try {
-    return JSON.parse(rawValue) as unknown
-  } catch {
-    return null
-  }
 }
 
 function isValidCell(value: unknown): value is TabletopCell {
@@ -591,11 +510,7 @@ export function createPersistedTabletopSession(input?: {
 export function readPersistedTabletopSession(
   campaignId?: string,
 ): PersistedTabletopSession | null {
-  const parsedValue =
-    readJsonStorage(getPersistedTabletopSessionStorageKey(campaignId)) ??
-    (shouldFallbackToLegacyStorage(campaignId)
-      ? readJsonStorage(TABLETOP_SESSION_STORAGE_KEY)
-      : null)
+  const parsedValue = storageAdapter.loadCampaignSession(campaignId)
 
   if (!isRecord(parsedValue)) {
     return null
@@ -670,44 +585,38 @@ export function writePersistedTabletopSession(
   session: PersistedTabletopSession,
   campaignId?: string,
 ) {
-  writeStorageItem(getPersistedTabletopSessionStorageKey(campaignId), JSON.stringify(session))
+  storageAdapter.saveCampaignSession(campaignId, session)
 }
 
 export function clearPersistedTabletopSession(campaignId?: string) {
-  removeStorageItem(getPersistedTabletopSessionStorageKey(campaignId))
+  storageAdapter.clearCampaignSession(campaignId)
 }
 
 export function readSharedTransitionPlaybackState(): SharedTransitionPlaybackState | null {
   return normalizeSharedTransitionPlaybackState(
-    readJsonStorage(TABLETOP_TRANSITION_SYNC_STORAGE_KEY),
+    storageAdapter.loadTransitionPlaybackState(),
   )
 }
 
 export function writeSharedTransitionPlaybackState(
   state: SharedTransitionPlaybackState,
 ) {
-  writeStorageItem(TABLETOP_TRANSITION_SYNC_STORAGE_KEY, JSON.stringify(state))
+  storageAdapter.saveTransitionPlaybackState(state)
 }
 
 export function clearSharedTransitionPlaybackState() {
-  writeStorageItem(
-    TABLETOP_TRANSITION_SYNC_STORAGE_KEY,
-    JSON.stringify({
+  storageAdapter.saveTransitionPlaybackState({
       activeTransitionId: null,
       startedAt: 0,
       paused: false,
       currentTime: 0,
       mapTargetId: null,
-    } satisfies SharedTransitionPlaybackState),
-  )
+    } satisfies SharedTransitionPlaybackState)
 }
 
 export function readPersistedTransitionOverrides(campaignId?: string) {
   return normalizeTransitionOverrides(
-    readJsonStorage(getPersistedTransitionOverridesStorageKey(campaignId)) ??
-      (shouldFallbackToLegacyStorage(campaignId)
-        ? readJsonStorage(TABLETOP_TRANSITION_OVERRIDES_STORAGE_KEY)
-        : null),
+    storageAdapter.loadTransitionOverrides(campaignId),
   )
 }
 
@@ -715,14 +624,11 @@ export function writePersistedTransitionOverrides(
   overrides: Record<string, PersistedTransitionOverride>,
   campaignId?: string,
 ) {
-  writeStorageItem(
-    getPersistedTransitionOverridesStorageKey(campaignId),
-    JSON.stringify(overrides),
-  )
+  storageAdapter.saveTransitionOverrides(campaignId, overrides)
 }
 
 export function readPersistedViewPreferences(): PersistedViewPreferences {
-  const parsedValue = readJsonSessionStorage(TABLETOP_VIEW_STORAGE_KEY)
+  const parsedValue = storageAdapter.loadViewPreferences()
 
   if (!isRecord(parsedValue)) {
     return {
@@ -743,9 +649,9 @@ export function readPersistedViewPreferences(): PersistedViewPreferences {
 export function writePersistedViewPreferences(
   preferences: PersistedViewPreferences,
 ) {
-  writeSessionStorageItem(TABLETOP_VIEW_STORAGE_KEY, JSON.stringify(preferences))
+  storageAdapter.saveViewPreferences(preferences)
 }
 
 export function clearPersistedViewPreferences() {
-  removeSessionStorageItem(TABLETOP_VIEW_STORAGE_KEY)
+  storageAdapter.clearViewPreferences()
 }

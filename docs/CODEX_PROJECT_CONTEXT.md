@@ -24,6 +24,14 @@ FUSHI Tabletop is a custom RPG tabletop app for a living-world campaign. The app
   - temporary token permission;
   - persistent player/consciousness/body binding.
 - Campaign data should be isolated by `campaignId`.
+- Storage adapter introduced at `06_TOOLS/fushi-tabletop/src/lib/storage/storageAdapter.ts`.
+- The first migrated persistence files are:
+  - `tabletopSession.ts`;
+  - `tabletopLibraryState.ts`;
+  - `worldMundiState.ts`;
+  - `playerAccess.ts`;
+  - `physicalPersistence.ts`.
+- The adapter still uses the legacy browser storage keys to preserve existing local data.
 
 ## Next Safe Technical Moves
 

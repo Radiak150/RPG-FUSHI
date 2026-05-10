@@ -1,3 +1,5 @@
+import { storageAdapter } from './storage/storageAdapter'
+
 export type FushiAccessProfileId =
   | 'gm'
   | 'player1'
@@ -21,9 +23,6 @@ export interface FushiAccessState {
   activeProfileId: FushiAccessProfileId | ''
   profiles: FushiAccessProfile[]
 }
-
-const ACCESS_STORAGE_KEY = 'fushi-tabletop:access-control:v1'
-const ACTIVE_ACCESS_SESSION_KEY = 'fushi-tabletop:active-access-profile:v1'
 
 export const DEFAULT_FUSHI_ACCESS_PROFILES: FushiAccessProfile[] = [
   {
@@ -84,46 +83,6 @@ function cloneValue<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
 }
 
-function readStorageItem(key: string) {
-  try {
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function readSessionStorageItem(key: string) {
-  try {
-    return window.sessionStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function writeSessionStorageItem(key: string, value: string) {
-  try {
-    window.sessionStorage.setItem(key, value)
-  } catch {
-    return
-  }
-}
-
-function removeSessionStorageItem(key: string) {
-  try {
-    window.sessionStorage.removeItem(key)
-  } catch {
-    return
-  }
-}
-
-function writeStorageItem(key: string, value: string) {
-  try {
-    window.localStorage.setItem(key, value)
-  } catch {
-    return
-  }
-}
-
 function normalizeProfile(value: unknown, fallback: FushiAccessProfile) {
   if (!isRecord(value)) {
     return fallback
@@ -161,10 +120,10 @@ export function createFushiAccessState(input?: Partial<FushiAccessState>): Fushi
 }
 
 export function readFushiAccessState() {
-  const rawValue = readStorageItem(ACCESS_STORAGE_KEY)
-  const activeProfileId = readActiveFushiAccessProfileId()
+  const snapshot = storageAdapter.loadPlayerAccess()
+  const activeProfileId = normalizeActiveProfileId(snapshot.activeProfileId)
 
-  if (!rawValue) {
+  if (!snapshot.state) {
     return createFushiAccessState({
       ...cloneValue(EMPTY_FUSHI_ACCESS_STATE),
       activeProfileId,
@@ -172,7 +131,7 @@ export function readFushiAccessState() {
   }
 
   try {
-    const parsedValue = JSON.parse(rawValue) as unknown
+    const parsedValue = snapshot.state
 
     if (!isRecord(parsedValue) || parsedValue.version !== 1) {
       return cloneValue(EMPTY_FUSHI_ACCESS_STATE)
@@ -192,14 +151,13 @@ export function readFushiAccessState() {
 export function writeFushiAccessState(state: FushiAccessState) {
   const normalizedState = createFushiAccessState(state)
 
-  writeActiveFushiAccessProfileId(normalizedState.activeProfileId)
-  writeStorageItem(
-    ACCESS_STORAGE_KEY,
-    JSON.stringify({
+  storageAdapter.savePlayerAccess(undefined, {
+    activeProfileId: normalizedState.activeProfileId,
+    state: {
       ...normalizedState,
       activeProfileId: '',
-    }),
-  )
+    },
+  })
 }
 
 export function getFushiAccessProfile(
@@ -214,16 +172,18 @@ export function isFushiAccessProfileId(value: string): value is FushiAccessProfi
 }
 
 export function readActiveFushiAccessProfileId(): FushiAccessProfileId | '' {
-  const value = readSessionStorageItem(ACTIVE_ACCESS_SESSION_KEY)
+  const snapshot = storageAdapter.loadPlayerAccess()
 
-  return value && isFushiAccessProfileId(value) ? value : ''
+  return normalizeActiveProfileId(snapshot.activeProfileId)
 }
 
 export function writeActiveFushiAccessProfileId(profileId: FushiAccessProfileId | '') {
-  if (!profileId) {
-    removeSessionStorageItem(ACTIVE_ACCESS_SESSION_KEY)
-    return
-  }
+  storageAdapter.savePlayerAccess(undefined, {
+    ...storageAdapter.loadPlayerAccess(),
+    activeProfileId: profileId,
+  })
+}
 
-  writeSessionStorageItem(ACTIVE_ACCESS_SESSION_KEY, profileId)
+function normalizeActiveProfileId(value: unknown): FushiAccessProfileId | '' {
+  return typeof value === 'string' && isFushiAccessProfileId(value) ? value : ''
 }

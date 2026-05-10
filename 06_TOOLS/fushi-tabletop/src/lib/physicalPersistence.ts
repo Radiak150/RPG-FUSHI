@@ -4,6 +4,7 @@ import {
   normalizeFushiLocalBackup,
   type FushiLocalBackup,
 } from './localBackup'
+import { storageAdapter } from './storage/storageAdapter'
 
 const PHYSICAL_PERSISTENCE_ENDPOINT = '/api/fushi/persistence/state'
 const PHYSICAL_PERSISTENCE_META_KEY = 'fushi-tabletop:physical-persistence:v1'
@@ -36,79 +37,36 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
-function readLocalStorageValue(key: string) {
-  try {
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function writeLocalStorageValue(key: string, value: string) {
-  try {
-    window.localStorage.setItem(key, value)
-  } catch {
-    return
-  }
-}
-
 function readPhysicalPersistenceMeta(): PhysicalPersistenceMeta {
-  const rawValue = readLocalStorageValue(PHYSICAL_PERSISTENCE_META_KEY)
+  const parsedValue = storageAdapter.loadPhysicalPersistence()
 
-  if (!rawValue) {
+  if (!isRecord(parsedValue)) {
     return {}
   }
 
-  try {
-    const parsedValue = JSON.parse(rawValue) as unknown
-
-    if (!isRecord(parsedValue)) {
-      return {}
-    }
-
-    return {
-      hydratedAt:
-        typeof parsedValue.hydratedAt === 'string' ? parsedValue.hydratedAt : undefined,
-      lastSavedAt:
-        typeof parsedValue.lastSavedAt === 'string' ? parsedValue.lastSavedAt : undefined,
-      origin: typeof parsedValue.origin === 'string' ? parsedValue.origin : undefined,
-      storagePath:
-        typeof parsedValue.storagePath === 'string' ? parsedValue.storagePath : undefined,
-    }
-  } catch {
-    return {}
+  return {
+    hydratedAt:
+      typeof parsedValue.hydratedAt === 'string' ? parsedValue.hydratedAt : undefined,
+    lastSavedAt:
+      typeof parsedValue.lastSavedAt === 'string' ? parsedValue.lastSavedAt : undefined,
+    origin: typeof parsedValue.origin === 'string' ? parsedValue.origin : undefined,
+    storagePath:
+      typeof parsedValue.storagePath === 'string' ? parsedValue.storagePath : undefined,
   }
 }
 
 function writePhysicalPersistenceMeta(meta: PhysicalPersistenceMeta) {
-  writeLocalStorageValue(
-    PHYSICAL_PERSISTENCE_META_KEY,
-    JSON.stringify({
+  storageAdapter.savePhysicalPersistence(undefined, {
       ...readPhysicalPersistenceMeta(),
       ...meta,
-    }),
-  )
+    })
 }
 
 function getLocalStorageEntryCount() {
-  let count = 0
-
-  try {
-    for (let index = 0; index < window.localStorage.length; index += 1) {
-      const key = window.localStorage.key(index)
-
-      if (
-        key &&
-        (key.startsWith(LOCAL_STORAGE_PREFIX) || EXTRA_LOCAL_STORAGE_KEYS.includes(key))
-      ) {
-        count += 1
-      }
-    }
-  } catch {
-    return 0
-  }
-
-  return count
+  return storageAdapter.countLocalStorageEntries({
+    extraKeys: EXTRA_LOCAL_STORAGE_KEYS,
+    prefix: LOCAL_STORAGE_PREFIX,
+  })
 }
 
 function stripVolatileEntries(backup: FushiLocalBackup) {
