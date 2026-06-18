@@ -496,6 +496,7 @@ function scanLoreFolders() {
       const cataclysmSignals = countMatches(normalizedText, /\b(cataclisma|cataclismico|nivel de poder cataclisma|evento cataclisma)\b/g)
       const phaseSignals = countMatches(normalizedText, /\b(fase|bloco|forma humana|forma final|manifestacao|manifestacoes|versao|versoes|estado do mapa)\b/g)
       const mapSignals = countMatches(rawText, /\bmaps\/|map_|mun_|manifest_|estado do mapa|ponto\s+\d+|mapa/g)
+      const reconstructedFromApp = /\b(reconstrucao|reconstruida|reconstruido|workspace json|fonte desta reconstrucao)\b/.test(normalizedText)
       const folderName = getFolderDisplayName(directory)
       const protagonistLink = parseProtagonistLink(relative, path.basename(directory))
       const aliases = uniqueNormalized([
@@ -524,6 +525,7 @@ function scanLoreFolders() {
         cataclysmSignals,
         phaseSignals,
         mapSignals,
+        reconstructedFromApp,
         hasLoreText: text.trim().length > 0,
         hasHistorySection: /\bhistoria\b/.test(normalizedText),
         hasAdvancedSignals: videoFiles.length > 0 || domainSignals > 0 || eventFiles.length > 0 || phaseSignals >= 3,
@@ -609,6 +611,20 @@ function findLoreRecord(character, loreFolders) {
     .sort((a, b) => b.score - a.score)
 
   return candidates[0]?.record || null
+}
+
+function getLoreMatchKind(character, loreRecord) {
+  if (!loreRecord) return 'sem vinculo'
+
+  const name = normalizeText(character.nome || character.id)
+  const loreName = loreRecord.nomeNormalizado
+
+  if (loreName === name) return 'igual'
+  if (character.tipo === 'player' && loreRecord.categoriaLore.startsWith('Protagonista')) return 'protagonista/corpo'
+  if (namesAreClose(name, loreName)) return 'alias nome'
+  if (loreName.includes(name) || name.includes(loreName)) return 'nome parcial'
+
+  return 'vinculo indireto'
 }
 
 function getProductionClass(character, loreRecord) {
@@ -974,6 +990,7 @@ async function main() {
       const hasAppHistory = textLength(character.descricao?.historia) >= 80
       const hasPremiseLore = !hasPlaceholderName && protagonistLinks.premiseRecords.some((record) => record.hasLoreText)
       const hasLoreFile = Boolean(loreRecord?.hasLoreText || hasPremiseLore)
+      const loreMatchKind = getLoreMatchKind(character, loreRecord)
       const hasToken = Boolean(character.tokenImageUrl || character.avatarUrl)
       const mechanicOk = hasStructuredMechanic(abilities, detailedAbilities, attacks)
       const isRealWorkspaceSource = workspaceCharacters.sourceLabel === 'workspace real'
@@ -1053,6 +1070,9 @@ async function main() {
         eventosLore: loreRecord?.eventFiles || 0,
         fasesSinais: loreRecord?.phaseSignals || 0,
         mapasSugeridos: loreRecord?.mapSignals || 0,
+        nomeLore: loreRecord?.nomeLore || '',
+        loreMatch: loreMatchKind,
+        loreReconstruida: loreRecord?.reconstructedFromApp ? 'sim' : 'nao',
         premissaLore: hasPremiseLore ? 'ok' : 'nao detectada',
         corpoReal: protagonistLinks.realBody?.nomeLore || '',
         corpoVila: protagonistLinks.villageBody?.nomeLore || '',
@@ -1094,6 +1114,9 @@ async function main() {
         eventosLore: 0,
         fasesSinais: 0,
         mapasSugeridos: 0,
+        nomeLore: '',
+        loreMatch: 'sem vinculo',
+        loreReconstruida: 'nao',
         premissaLore: 'nao detectada',
         corpoReal: '',
         corpoVila: '',
@@ -1115,6 +1138,83 @@ async function main() {
     const factionRows = summarizeFactions(factions, npcMechanicsRows, loreFolders)
     const worldBiomeRows = summarizeWorldBiomes(mundi, maps)
     const campaignControl = readCampaignControl()
+    const linkedLorePaths = new Set(npcMechanicsRows.map((row) => row.lorePath).filter(Boolean))
+    const sourceDivergenceRows = [
+      ...npcMechanicsRows.flatMap((row) => {
+        const rows = []
+
+        if (!row.lorePath && row.tipo !== 'mob') {
+          rows.push({
+            status: 'CRITICO',
+            tipo: 'APP sem pasta lore',
+            personagem: row.personagem,
+            app: row.personagem,
+            lore: '',
+            faccao: row.faccaoNome || row.faccao,
+            fonte: row.fonteArquivo,
+            detalhe: 'Personagem existe no app, mas nenhuma pasta/arquivo de lore foi vinculado.',
+            acao: 'Criar/vincular pasta em 01_LORE ou marcar conscientemente como somente-app.',
+          })
+        }
+
+        if (row.lorePath && row.loreArquivo === 'falta') {
+          rows.push({
+            status: 'CRITICO',
+            tipo: 'Arquivo lore vazio',
+            personagem: row.personagem,
+            app: row.personagem,
+            lore: row.nomeLore || row.lorePath,
+            faccao: row.faccaoNome || row.faccao,
+            fonte: row.lorePath,
+            detalhe: 'A pasta existe, mas os arquivos de texto lidos nao tem conteudo suficiente.',
+            acao: 'Preencher a ficha/lore ou reconstruir a partir do app se for a unica fonte real.',
+          })
+        }
+
+        if (row.lorePath && ['alias nome', 'nome parcial', 'vinculo indireto'].includes(row.loreMatch)) {
+          rows.push({
+            status: 'FOCO',
+            tipo: 'Nome divergente',
+            personagem: row.personagem,
+            app: row.personagem,
+            lore: row.nomeLore || row.lorePath,
+            faccao: row.faccaoNome || row.faccao,
+            fonte: row.lorePath,
+            detalhe: `Vinculo aceito por ${row.loreMatch}; conferir se e apelido/erro de grafia intencional.`,
+            acao: 'Padronizar nome no app ou registrar alias aprovado para nao confundir com outro NPC.',
+          })
+        }
+
+        if (row.loreReconstruida === 'sim') {
+          rows.push({
+            status: 'FOCO',
+            tipo: 'Lore reconstruida do app',
+            personagem: row.personagem,
+            app: row.personagem,
+            lore: row.nomeLore || row.lorePath,
+            faccao: row.faccaoNome || row.faccao,
+            fonte: row.lorePath,
+            detalhe: 'A ficha foi reconstruida a partir do workspace do app, nao de um arquivo original antigo.',
+            acao: 'Revisar com o mestre quando houver tempo e decidir se vira fonte definitiva.',
+          })
+        }
+
+        return rows
+      }),
+      ...loreFolders
+        .filter((record) => record.relativePath.includes('/') && record.hasLoreText && !linkedLorePaths.has(record.relativePath))
+        .map((record) => ({
+          status: 'FOCO',
+          tipo: 'Lore sem personagem app',
+          personagem: record.nomeLore,
+          app: '',
+          lore: record.nomeLore,
+          faccao: record.factionFolder,
+          fonte: record.relativePath,
+          detalhe: 'Existe lore real na pasta, mas nenhum personagem atual do app foi ligado a ela.',
+          acao: 'Decidir se entra no app, se fica apenas como lore secreta ou se e conteudo futuro.',
+        })),
+    ]
 
     const actionRows = [
       {
@@ -1273,6 +1373,7 @@ async function main() {
       },
       campaignControl,
       actions: actionRows,
+      sourceDivergences: sourceDivergenceRows,
       npcMechanics: npcMechanicsRows,
       campaignCharacters: campaignCharacterRows,
       protagonists: protagonistRows,
@@ -1301,6 +1402,7 @@ async function main() {
     writeCsv(path.join(outputRoot, 'content-readiness-actions.csv'), actionRows)
     writeCsv(path.join(outputRoot, 'content-map-status.csv'), mapRows)
     writeCsv(path.join(outputRoot, 'content-heavy-originals.csv'), summary.heavyOriginals)
+    writeCsv(path.join(outputRoot, 'content-source-divergences.csv'), sourceDivergenceRows)
 
     console.log('Auditoria de conteudo/readiness')
     console.log(`  Mapas biblioteca: ${summary.tabletop.maps}`)
@@ -1312,6 +1414,7 @@ async function main() {
     console.log(`  Originais pesados cobertos por WebP: ${summary.campaignPack.heavyOriginalsCovered}/${summary.campaignPack.heavyOriginals}`)
     console.log(`  Economia potencial estimada: ${summary.campaignPack.potentialSavingsMiB} MiB`)
     console.log(`  Controle campanha: ${(summary.campaignControl.lanes || []).length} frentes, ${(summary.campaignControl.appChecklist || []).length} checks app`)
+    console.log(`  Divergencias fonte: ${summary.sourceDivergences.length}`)
     console.log(`  Relatorio: ${path.join(outputRoot, 'content-readiness-audit.json')}`)
   } finally {
     await vite.close()
