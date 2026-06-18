@@ -1,0 +1,256 @@
+{
+  "version": "campanha-controle-v1",
+  "updatedAt": "2026-06-17",
+  "purpose": "Painel simples de producao da campanha. Use OK para pronto/estavel, FOCO para atencao atual e CRITICO para bloqueio/placeholder.",
+  "rules": [
+    "O app estavel vem antes de conteudo novo.",
+    "Lore completa nao precisa aparecer inteira no app; o app deve conter apenas o que o jogador pode ver.",
+    "Mecanica nova precisa de gatilho, rolagem, custo, efeito, limite, risco, reversao/log e teste.",
+    "Ritual e Boss Cataclisma nao sao habilidades simples: precisam de ficha avancada, fases, mapa/topdown/3D, VFX, audio, interludio e controle de estado.",
+    "Tudo novo precisa de fallback leve para low/balanced e teste no release empacotado."
+  ],
+  "lanes": [
+    {
+      "id": "app_base",
+      "label": "App base",
+      "status": "OK",
+      "whatGoodLooksLike": "Mesa abre, dados, regua, tokens, ficha, multiplayer, MUN/Base e interludios respondem sem travar.",
+      "currentFocus": "Manter como baseline; qualquer conteudo novo precisa passar pelos smokes.",
+      "targetSheet": "App_Base"
+    },
+    {
+      "id": "protagonistas",
+      "label": "Protagonistas",
+      "status": "FOCO",
+      "whatGoodLooksLike": "Cada player tem corpo real, corpo/base da Vila, premissa, ficha segura no app, mecanica jogavel e assets rastreados.",
+      "currentFocus": "Nao misturar lore secreta com ficha visivel; transformar lore em mecanica quando fizer sentido.",
+      "targetSheet": "Protagonistas_Controle"
+    },
+    {
+      "id": "npc_mob",
+      "label": "NPCs e mobs",
+      "status": "FOCO",
+      "whatGoodLooksLike": "NPC tem funcao, lore, imagem, ficha e encaixe; mob so fica OK quando for canonico/aprovado.",
+      "currentFocus": "Separar NPC social, mob simples, boss e placeholder.",
+      "targetSheet": "NPCs_Mobs"
+    },
+    {
+      "id": "boss_ritual",
+      "label": "Bosses e rituais",
+      "status": "FOCO",
+      "whatGoodLooksLike": "Boss/ritual tem fases, mapas, audio, VFX, cinematic, controle de estado e teste multiplayer.",
+      "currentFocus": "Vhazaryon, Ryoku, Seraph e bosses Cataclisma precisam de protocolo antes de implementar.",
+      "targetSheet": "Bosses_Rituais"
+    },
+    {
+      "id": "mundo_biomas",
+      "label": "Biomas e mapas",
+      "status": "FOCO",
+      "whatGoodLooksLike": "Cada bioma tem locais, mapas, submapas, interludios, risco, faccoes e lacunas de lore visiveis.",
+      "currentFocus": "Usar MUN como fonte de mundo vivo e a planilha so como painel do que falta produzir.",
+      "targetSheet": "Biomas_Mapas"
+    },
+    {
+      "id": "audio_vfx",
+      "label": "Audio, VFX e animacao",
+      "status": "FOCO",
+      "whatGoodLooksLike": "Trilhas, SFX, topdown animado e VFX entram por manifest, fallback e budget GTX 1050 Ti.",
+      "currentFocus": "Catalogar por personagem/evento antes de adicionar asset pesado.",
+      "targetSheet": "Audio_VFX"
+    }
+  ],
+  "appChecklist": [
+    {
+      "area": "Abertura",
+      "item": "App abre sem tela branca",
+      "status": "OK",
+      "acceptance": "Abrir e fechar 3 vezes sem tela branca, sem recuperacao e sem processo preso.",
+      "evidence": "Teste fisico recente sem bug aparente.",
+      "next": "Revalidar antes de release grande."
+    },
+    {
+      "area": "Mesa",
+      "item": "Mesa Mestre carrega",
+      "status": "OK",
+      "acceptance": "Entrar como Mestre, mapa e tokens aparecem, sem readiness preso.",
+      "evidence": "Teste fisico recente estavel.",
+      "next": "Manter smoke:ui e smoke:release."
+    },
+    {
+      "area": "Multiplayer",
+      "item": "Mestre > Jogador e Jogador > Mestre",
+      "status": "OK",
+      "acceptance": "Dados, ficha, chat/rolagem, regua e visibilidade sincronizam nos dois sentidos.",
+      "evidence": "Teste fisico com 2 jogadores respondeu bem.",
+      "next": "Soak maior antes de promover release."
+    },
+    {
+      "area": "Dados",
+      "item": "Fila, cooldown e idempotencia",
+      "status": "OK",
+      "acceptance": "Rolagens rapidas nao duplicam por retry/lag.",
+      "evidence": "Usuario testou e nao bugou.",
+      "next": "Manter smoke:multiplayer."
+    },
+    {
+      "area": "Regua",
+      "item": "Regua multiplayer",
+      "status": "OK",
+      "acceptance": "Linha e label aparecem sem flicker forte para Mestre e Jogador.",
+      "evidence": "Reforcada e testada depois do bug.",
+      "next": "Revalidar em sessao longa."
+    },
+    {
+      "area": "Tokens",
+      "item": "Controle e visual de token",
+      "status": "OK",
+      "acceptance": "Mestre move; jogador nao move; borda/visibilidade nao usa transparencia feia.",
+      "evidence": "Fluxo observado como responsivo.",
+      "next": "Revalidar com 5 jogadores."
+    },
+    {
+      "area": "Interludios",
+      "item": "MUN e mapas com thumb/topdown",
+      "status": "OK",
+      "acceptance": "Abrir mapa nao fica branco/preto; interludio tem thumb e fallback coerente.",
+      "evidence": "119 interludios automaticos OK e 0 thumbs vazias.",
+      "next": "Revisao artistica por cena."
+    },
+    {
+      "area": "Base/MUN",
+      "item": "Liberar Base/MUN e preparar mapa",
+      "status": "OK",
+      "acceptance": "Mestre prepara sem puxar jogadores; ativar leva jogadores ao mapa correto.",
+      "evidence": "Corrigido e sem bug aparente depois.",
+      "next": "Revalidar no release empacotado."
+    },
+    {
+      "area": "Release",
+      "item": "Build empacotado real",
+      "status": "OK",
+      "acceptance": "release/win-unpacked abre e smokes rodam isolados.",
+      "evidence": "Baseline alpha.83 estavel.",
+      "next": "Nao promover conteudo sem smoke:release."
+    }
+  ],
+  "contentChecklist": [
+    {
+      "area": "Lore",
+      "item": "Protagonistas tem base de historia",
+      "status": "OK",
+      "acceptance": "Premissa, corpo real e corpo/base da Vila estao rastreados.",
+      "next": "Converter em mecanicas e fichas visiveis sem vazar segredo."
+    },
+    {
+      "area": "Lore",
+      "item": "NPCs principais tem lore",
+      "status": "FOCO",
+      "acceptance": "Cada NPC tem funcao, local, faccao, imagem e ficha basica/avancada marcada.",
+      "next": "Ir NPC por NPC quando for produzir cena."
+    },
+    {
+      "area": "Mobs",
+      "item": "Mobs canonicos aprovados",
+      "status": "FOCO",
+      "acceptance": "Mobs existem na campanha ou foram aprovados como criaturas simples.",
+      "next": "Validar Lobo Cinzento, Lobo Marcado por FUSHI e Eco de Liora."
+    },
+    {
+      "area": "Boss",
+      "item": "Bosses Cataclisma e fichas avancadas",
+      "status": "FOCO",
+      "acceptance": "Cada boss tem fases, mapa, ritual, VFX, audio, cinematic e teste.",
+      "next": "Comecar por Vhazaryon/Ryoku/Seraph."
+    },
+    {
+      "area": "Mundo",
+      "item": "Biomas e pontos do MUN",
+      "status": "FOCO",
+      "acceptance": "Cada bioma mostra locais OK, falta lore, falta mapa, falta evento e faccoes.",
+      "next": "Organizar por bioma quando for criar cena."
+    },
+    {
+      "area": "Audio",
+      "item": "Trilhas por personagem/evento",
+      "status": "FOCO",
+      "acceptance": "Cada personagem/evento importante tem tema, ambiencia e SFX marcados.",
+      "next": "Preencher depois do protocolo de pack/audio."
+    },
+    {
+      "area": "VFX",
+      "item": "Habilidades lendarias e expansoes",
+      "status": "FOCO",
+      "acceptance": "Ritual/expansao tem preset declarativo, fallback e sync multiplayer.",
+      "next": "Criar protocolo antes de asset pesado."
+    },
+    {
+      "area": "Mapas",
+      "item": "Topdowns animados",
+      "status": "FOCO",
+      "acceptance": "Mapas especiais podem ter video leve + fallback estatico sem travar.",
+      "next": "Definir quais mapas merecem destaque."
+    }
+  ],
+  "mechanicProtocol": [
+    {
+      "kind": "Habilidade simples",
+      "sheetArea": "Habilidades",
+      "required": "gatilho, rolagem, custo, efeito, limite, log",
+      "visualNeed": "VFX leve opcional, som curto, dado automatico quando aplicavel",
+      "releaseGate": "lint + smoke:multiplayer"
+    },
+    {
+      "kind": "Ritual",
+      "sheetArea": "Rituais",
+      "required": "preparo, custo, condicao, cinematic, troca de estado, risco, reversao",
+      "visualNeed": "overlay proprio, mapa/topdown/3D, VFX forte, audio e interludio",
+      "releaseGate": "smoke:release:deep + teste fisico Mestre/Jogador"
+    },
+    {
+      "kind": "Boss Cataclisma",
+      "sheetArea": "Ficha avancada",
+      "required": "fases, forma, mapa, HP/recursos por fase, triggers, log e controle do Mestre",
+      "visualNeed": "aparencia por fase, dominio/cataclisma, audio, particulas e fallback",
+      "releaseGate": "soak multiplayer + perf:release"
+    },
+    {
+      "kind": "Topdown animado",
+      "sheetArea": "Mapa",
+      "required": "video leve, poster, fallback, minQuality, budget VRAM",
+      "visualNeed": "movimento sutil sem roubar a mesa",
+      "releaseGate": "perf:release em low/balanced/ultra"
+    }
+  ],
+  "audioVfxBacklog": [
+    {
+      "target": "Temas dos protagonistas",
+      "status": "FOCO",
+      "need": "Tema individual para Kaíros, Davi, Connor, Kael, Grim e Fragmentado.",
+      "notes": "Catalogar antes de baixar/adicionar; separar licenca depois."
+    },
+    {
+      "target": "Riacho Claro / Nilo e Liora",
+      "status": "FOCO",
+      "need": "Ambiencia de riacho, memoria, rebobinar tempo, textura emocional.",
+      "notes": "Ja existe forte base de lore e imagens."
+    },
+    {
+      "target": "Vulcao / Vhazaryon",
+      "status": "FOCO",
+      "need": "Audio boss, fogo, pressao, dominio, fases e rugido/impacto.",
+      "notes": "Nao implementar antes do protocolo de Boss Cataclisma."
+    },
+    {
+      "target": "Seraph / expansao de dominio",
+      "status": "FOCO",
+      "need": "Cinematic de transicao, cataclisma, mudanca de mapa e VFX sincronizado.",
+      "notes": "Ritual precisa de aba propria, nao so botao simples."
+    },
+    {
+      "target": "Mapas com destaque animado",
+      "status": "FOCO",
+      "need": "Lista de mapas que merecem topdown animado, video ou camada VFX.",
+      "notes": "Priorizar mapas de boss, dominio, lava, agua, tempestade e memoria."
+    }
+  ]
+}
