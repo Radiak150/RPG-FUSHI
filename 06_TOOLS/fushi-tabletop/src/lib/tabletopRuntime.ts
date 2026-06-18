@@ -12,7 +12,7 @@ import {
 } from './tabletop'
 
 type UiThemeTone = 'default' | 'cold' | 'warm'
-type WeatherVariant = 'none' | 'snow' | 'rain' | 'dust'
+type WeatherVariant = 'none' | 'snow' | 'rain' | 'dust' | 'leaves' | 'ash' | 'wind' | 'mist'
 
 interface ThemePalette {
   screenGlow: string
@@ -257,13 +257,53 @@ function resolveWeatherRuntime(
     }
   }
 
+  if (weatherId === 'weather-leaves') {
+    return {
+      id: weatherId,
+      label: weatherAsset?.name ?? 'Folhas',
+      variant: 'leaves',
+      density: 18,
+      veilOpacity: 0.035,
+    }
+  }
+
+  if (weatherId === 'weather-ash') {
+    return {
+      id: weatherId,
+      label: weatherAsset?.name ?? 'Cinzas',
+      variant: 'ash',
+      density: 30,
+      veilOpacity: 0.1,
+    }
+  }
+
+  if (weatherId === 'weather-wind') {
+    return {
+      id: weatherId,
+      label: weatherAsset?.name ?? 'Vento',
+      variant: 'wind',
+      density: 18,
+      veilOpacity: 0.045,
+    }
+  }
+
+  if (weatherId === 'weather-mist') {
+    return {
+      id: weatherId,
+      label: weatherAsset?.name ?? 'Bruma',
+      variant: 'mist',
+      density: 18,
+      veilOpacity: 0.12,
+    }
+  }
+
   if (weatherId === 'weather-fog') {
     return {
       id: weatherId,
       label: weatherAsset?.name ?? 'Bruma',
-      variant: 'dust',
-      density: 14,
-      veilOpacity: 0.18,
+      variant: 'mist',
+      density: 18,
+      veilOpacity: 0.16,
     }
   }
 

@@ -1,0 +1,21 @@
+RPG FUSHI - Alpha
+
+Abrir normal:
+- RPG FUSHI.exe
+
+Teste local sem conflito de processos:
+- RPG FUSHI - Teste Local Multi.cmd
+- Abre Mestre, Jogador 1 e Jogador 2 como janelas do mesmo processo.
+- Use esse modo para testar mestre/jogador no mesmo PC.
+
+Evite abrir varios RPG FUSHI.exe manualmente para simular multiplayer.
+O app agora bloqueia segunda instancia independente e reaproveita o processo ativo.
+
+Multiplayer real:
+- Mestre: abrir RPG FUSHI.exe, entrar como Mestre, hospedar sessao.
+- Jogador: abrir RPG FUSHI.exe no proprio PC, entrar em Multiplayer, usar IP/host/porta/codigo do Mestre.
+
+Atualizacao:
+- Feche o app inteiro antes de substituir a pasta.
+- Substitua a pasta inteira por uma build nova.
+- Dados locais ficam no AppData do Windows, nao dentro desta pasta.

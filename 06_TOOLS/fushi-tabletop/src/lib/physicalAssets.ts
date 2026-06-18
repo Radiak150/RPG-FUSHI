@@ -16,6 +16,7 @@ export interface PhysicalAssetUploadResult {
 }
 
 interface PhysicalAssetUploadOptions {
+  campaignId?: string
   category: PhysicalAssetCategory
   contentType?: string
   filename: string
@@ -33,14 +34,51 @@ function getUploadErrorMessage(value: unknown) {
   return 'Nao foi possivel salvar o arquivo fisico.'
 }
 
+function blobToDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onerror = () => reject(new Error('Nao foi possivel ler o asset local.'))
+    reader.onload = () => resolve(String(reader.result ?? ''))
+    reader.readAsDataURL(blob)
+  })
+}
+
 export function isPhysicalAssetUrl(value: string | undefined | null) {
-  return typeof value === 'string' && value.startsWith('/api/fushi/assets/')
+  return (
+    typeof value === 'string' &&
+    (value.startsWith('/api/fushi/assets/') || value.startsWith('fushi-asset://'))
+  )
 }
 
 export async function uploadPhysicalAsset(
   asset: Blob,
   options: PhysicalAssetUploadOptions,
 ) {
+  if (window.fushiDesktop) {
+    const savedAsset = window.fushiDesktop.saveAsset(options.campaignId, {
+      category: options.category,
+      contentType: options.contentType || asset.type || 'application/octet-stream',
+      dataUrl: await blobToDataUrl(asset),
+      filename: options.filename,
+      sourceUrl: options.filename,
+    })
+
+    if (!savedAsset.ok || !savedAsset.url) {
+      throw new Error(savedAsset.error ?? 'Nao foi possivel salvar asset no desktop.')
+    }
+
+    return {
+      ok: true,
+      category: options.category,
+      contentType: options.contentType || asset.type || 'application/octet-stream',
+      filename: options.filename,
+      size: asset.size,
+      storagePath: savedAsset.url,
+      url: savedAsset.url,
+    } satisfies PhysicalAssetUploadResult
+  }
+
   const response = await fetch('/api/fushi/assets/upload', {
     method: 'POST',
     headers: {

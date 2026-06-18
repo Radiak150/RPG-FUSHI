@@ -300,8 +300,8 @@ export function getTokenColor(tone: Tone, kind: CharacterSheet['tipo']) {
   }
 
   if (tone === 'watch') {
-    return kind === 'player' ? '#d1b182' : '#c69a58'
+    return kind === 'player' ? '#d1b182' : kind === 'mob' ? '#b9704f' : '#c69a58'
   }
 
-  return kind === 'player' ? '#92c0b6' : '#7caf88'
+  return kind === 'player' ? '#92c0b6' : kind === 'mob' ? '#a2a56b' : '#7caf88'
 }

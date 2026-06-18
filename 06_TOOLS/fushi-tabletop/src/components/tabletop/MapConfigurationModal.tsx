@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { TabletopMap, TabletopMapType } from '../../data/types'
 import { uploadPhysicalAsset } from '../../lib/physicalAssets'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 
 export interface MapConfigurationFolderOption {
   id: string
@@ -12,6 +13,7 @@ export interface MapConfigurationSaveData extends TabletopMap {
 }
 
 interface MapConfigurationModalProps {
+  campaignId: string
   folderOptions: MapConfigurationFolderOption[]
   map: TabletopMap
   selectedFolderId: string
@@ -43,6 +45,32 @@ function readImageDimensions(source: string) {
   })
 }
 
+function readVideoDimensions(source: string) {
+  return new Promise<{ width: number; height: number }>((resolve, reject) => {
+    const video = document.createElement('video')
+
+    function cleanup() {
+      video.removeAttribute('src')
+      video.load()
+    }
+
+    video.onloadedmetadata = () => {
+      const dimensions = {
+        width: video.videoWidth,
+        height: video.videoHeight,
+      }
+      cleanup()
+      resolve(dimensions)
+    }
+    video.onerror = () => {
+      cleanup()
+      reject(new Error('Video invalido'))
+    }
+    video.preload = 'metadata'
+    video.src = source
+  })
+}
+
 function clampNumber(value: number, min: number, fallback: number) {
   if (!Number.isFinite(value)) {
     return fallback
@@ -52,6 +80,7 @@ function clampNumber(value: number, min: number, fallback: number) {
 }
 
 export function MapConfigurationModal({
+  campaignId,
   folderOptions,
   map,
   selectedFolderId,
@@ -59,6 +88,7 @@ export function MapConfigurationModal({
   onSave,
 }: MapConfigurationModalProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const videoInputRef = useRef<HTMLInputElement | null>(null)
   const [formData, setFormData] = useState<MapConfigurationSaveData>({
     ...map,
     folderId: map.folderId ?? selectedFolderId,
@@ -70,6 +100,7 @@ export function MapConfigurationModal({
   })
   const [uploadStatus, setUploadStatus] = useState('')
   const [isUploading, setIsUploading] = useState(false)
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false)
 
   async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -83,6 +114,7 @@ export function MapConfigurationModal({
 
     try {
       const uploadedAsset = await uploadPhysicalAsset(file, {
+        campaignId,
         category: 'maps',
         contentType: file.type || 'application/octet-stream',
         filename: file.name,
@@ -114,6 +146,61 @@ export function MapConfigurationModal({
 
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  async function handleVideoFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+
+    if (!file) {
+      return
+    }
+
+    if (file.size > 180 * 1024 * 1024) {
+      setUploadStatus(
+        'Video acima de 180 MB. Otimize para 1080p, 30 FPS e sem audio antes de importar.',
+      )
+      event.target.value = ''
+      return
+    }
+
+    setIsUploadingVideo(true)
+    setUploadStatus('Processando superficie animada...')
+
+    try {
+      const uploadedAsset = await uploadPhysicalAsset(file, {
+        campaignId,
+        category: 'maps',
+        contentType: file.type || 'application/octet-stream',
+        filename: file.name,
+      })
+      const dimensions = await readVideoDimensions(uploadedAsset.url)
+
+      setFormData((current) => ({
+        ...current,
+        animatedSurface: {
+          enabled: true,
+          loop: true,
+          minQuality: current.animatedSurface?.minQuality ?? 'balanced',
+          playbackRate: current.animatedSurface?.playbackRate ?? 1,
+          poster: current.previewImage ?? current.image,
+          source: uploadedAsset.url,
+        },
+        stageWidth: dimensions.width || current.stageWidth,
+        stageHeight: dimensions.height || current.stageHeight,
+      }))
+      setUploadStatus(`Video salvo em pasta fisica: ${file.name}`)
+      window.setTimeout(() => setUploadStatus(''), 2400)
+    } catch (error) {
+      setUploadStatus(
+        error instanceof Error ? error.message : 'Erro ao salvar video do mapa',
+      )
+    } finally {
+      setIsUploadingVideo(false)
+
+      if (videoInputRef.current) {
+        videoInputRef.current.value = ''
       }
     }
   }
@@ -245,10 +332,109 @@ export function MapConfigurationModal({
               <p className="label">Preview atual:</p>
               <img
                 alt={formData.name}
-                src={formData.previewImage ?? formData.image}
+                src={resolveRuntimeAssetUrl(formData.previewImage ?? formData.image)}
                 style={{ maxWidth: '100%', maxHeight: '260px', objectFit: 'contain' }}
               />
             </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Superficie Animada Opcional</legend>
+            <p className="support-copy">
+              MP4 ou WebM sem audio, ate 1080p e 30 FPS. A imagem acima continua
+              sendo o fallback obrigatorio.
+            </p>
+            <div className="form-group">
+              <label>
+                <span>Upload de video</span>
+                <input
+                  accept="video/mp4,video/webm"
+                  disabled={isUploadingVideo}
+                  onChange={handleVideoFileSelect}
+                  ref={videoInputRef}
+                  type="file"
+                />
+              </label>
+            </div>
+            <div className="cards-grid">
+              <label>
+                <span>Ativar nesta cena</span>
+                <input
+                  checked={formData.animatedSurface?.enabled === true}
+                  disabled={!formData.animatedSurface?.source}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      animatedSurface: current.animatedSurface
+                        ? {
+                            ...current.animatedSurface,
+                            enabled: event.target.checked,
+                          }
+                        : undefined,
+                    }))
+                  }
+                  type="checkbox"
+                />
+              </label>
+              <label>
+                <span>Qualidade minima</span>
+                <select
+                  disabled={!formData.animatedSurface?.source}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      animatedSurface: current.animatedSurface
+                        ? {
+                            ...current.animatedSurface,
+                            minQuality:
+                              event.target.value === 'ultra' ? 'ultra' : 'balanced',
+                          }
+                        : undefined,
+                    }))
+                  }
+                  value={formData.animatedSurface?.minQuality ?? 'balanced'}
+                >
+                  <option value="balanced">Balanced e Ultra</option>
+                  <option value="ultra">Somente Ultra</option>
+                </select>
+              </label>
+              <label>
+                <span>Velocidade</span>
+                <input
+                  disabled={!formData.animatedSurface?.source}
+                  max={2}
+                  min={0.25}
+                  onChange={(event) =>
+                    setFormData((current) => ({
+                      ...current,
+                      animatedSurface: current.animatedSurface
+                        ? {
+                            ...current.animatedSurface,
+                            playbackRate: Number(event.target.value),
+                          }
+                        : undefined,
+                    }))
+                  }
+                  step={0.05}
+                  type="number"
+                  value={formData.animatedSurface?.playbackRate ?? 1}
+                />
+              </label>
+            </div>
+            {formData.animatedSurface?.source ? (
+              <button
+                className="button"
+                onClick={() =>
+                  setFormData((current) => ({
+                    ...current,
+                    animatedSurface: undefined,
+                  }))
+                }
+                type="button"
+              >
+                Remover video animado
+              </button>
+            ) : null}
           </fieldset>
 
           <fieldset>

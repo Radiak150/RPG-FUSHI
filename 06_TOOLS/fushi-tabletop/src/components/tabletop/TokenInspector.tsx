@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type {
+  CharacterFeatureActivationRequest,
   CharacterSheet,
   FactionItem,
   TabletopOriginalConsciousnessState,
@@ -22,6 +23,8 @@ interface IdentityResourceOption {
   profileId: FushiAccessProfileId
 }
 
+type MasterInspectorTab = 'token' | 'identity' | 'binding'
+
 interface TokenInspectorProps {
   character: CharacterSheet | null
   factionName: string | null
@@ -29,9 +32,12 @@ interface TokenInspectorProps {
   selectedCount: number
   canEdit: boolean
   canEditToken: boolean
+  canDuplicateMobToken: boolean
+  canResizeToken: boolean
   canRemoveToken: boolean
   factions: FactionItem[]
   playerProfiles: FushiAccessProfile[]
+  showMasterControls: boolean
   showSensitiveNotes: boolean
   sharedBodySheetOptions: SharedBodySheetOption[]
   activeSharedBodySheetSelectionId: string
@@ -39,20 +45,44 @@ interface TokenInspectorProps {
   activeIdentityResourceProfileId: FushiAccessProfileId | ''
   tokenSizePreset: TabletopTokenSizePreset | null
   tokenSizeSummary: string | null
+  restoreSignal?: number | string
   onCharacterChange: (nextCharacter: CharacterSheet) => void
+  onActivateFeature?: (input: CharacterFeatureActivationRequest) => void
   onPreviewImage: (src: string, label: string) => void
   onBroadcastImage?: (src: string, label: string) => void
   onRemoveToken: () => void
   onSharedBodySheetSelect: (selectionId: string) => void
   onIdentityResourceSelect: (profileId: FushiAccessProfileId | '') => void
   onBindTokenAsPlayerBody?: (
-    playerId: FushiAccessProfileId,
+    playerIds: FushiAccessProfileId[],
     originalState: TabletopOriginalConsciousnessState,
   ) => void
-  onTokenControlChange?: (playerIds: FushiAccessProfileId[]) => void
   onTokenSizeChange: (preset: Exclude<TabletopTokenSizePreset, 'custom'>) => void
+  onToggleStealth?: () => void
   onToggleVisibility?: () => void
   onClose: () => void
+  onDuplicateMobToken?: () => void
+}
+
+function getTokenControlPlayerIds(
+  token: TabletopToken | null,
+  playerProfiles: FushiAccessProfile[],
+) {
+  const playerIds = new Set(
+    playerProfiles
+      .filter((profile) => profile.role === 'player')
+      .map((profile) => profile.id),
+  )
+
+  return Array.from(
+    new Set([
+      ...(token?.control?.controlledByPlayerIds ?? []),
+      token?.persistentControl?.playerId ?? '',
+    ]),
+  ).filter(
+    (playerId): playerId is FushiAccessProfileId =>
+      Boolean(playerId) && playerIds.has(playerId as FushiAccessProfileId),
+  )
 }
 
 export function TokenInspector({
@@ -62,9 +92,12 @@ export function TokenInspector({
   selectedCount,
   canEdit,
   canEditToken,
+  canDuplicateMobToken,
+  canResizeToken,
   canRemoveToken,
   factions,
   playerProfiles,
+  showMasterControls,
   showSensitiveNotes,
   sharedBodySheetOptions,
   activeSharedBodySheetSelectionId,
@@ -72,23 +105,40 @@ export function TokenInspector({
   activeIdentityResourceProfileId,
   tokenSizePreset,
   tokenSizeSummary,
+  restoreSignal,
   onCharacterChange,
+  onActivateFeature,
   onPreviewImage,
   onBroadcastImage,
   onRemoveToken,
   onSharedBodySheetSelect,
   onIdentityResourceSelect,
   onBindTokenAsPlayerBody,
-  onTokenControlChange,
   onTokenSizeChange,
+  onToggleStealth,
   onToggleVisibility,
   onClose,
+  onDuplicateMobToken,
 }: TokenInspectorProps) {
   const [editingSheetKey, setEditingSheetKey] = useState('')
-  const [bodyBindingPlayerId, setBodyBindingPlayerId] =
-    useState<FushiAccessProfileId | ''>('')
+  const [isMasterPanelOpen, setIsMasterPanelOpen] = useState(false)
+  const [masterInspectorTab, setMasterInspectorTab] =
+    useState<MasterInspectorTab>('token')
+  const [bodyBindingDraft, setBodyBindingDraft] = useState<{
+    key: string
+    playerIds: FushiAccessProfileId[]
+  }>({ key: '', playerIds: [] })
   const [bodyBindingState, setBodyBindingState] =
     useState<TabletopOriginalConsciousnessState>('em_disputa')
+  const bodyBindingKey = [
+    token?.id ?? '',
+    token?.persistentControl?.playerId ?? '',
+    ...(token?.control?.controlledByPlayerIds ?? []),
+  ].join('|')
+  const bodyBindingPlayerIds =
+    bodyBindingDraft.key === bodyBindingKey
+      ? bodyBindingDraft.playerIds
+      : getTokenControlPlayerIds(token, playerProfiles)
 
   if (!character || !token) {
     return null
@@ -100,23 +150,23 @@ export function TokenInspector({
     token.visibility === 'gm'
       ? 'Visivel somente para o mestre'
       : 'Visivel para todos os jogadores'
-  const controlledByPlayerIds = token.control?.controlledByPlayerIds ?? []
   const playerProfileOptions = playerProfiles.filter((profile) => profile.role === 'player')
-  const persistentPlayer = token.persistentControl?.playerId
-    ? playerProfiles.find((profile) => profile.id === token.persistentControl?.playerId)
-    : null
-
-  function togglePlayerControl(profileId: FushiAccessProfileId) {
-    if (!onTokenControlChange) {
-      return
-    }
-
-    const nextPlayerIds = controlledByPlayerIds.includes(profileId)
-      ? controlledByPlayerIds.filter((playerId) => playerId !== profileId)
-      : [...controlledByPlayerIds, profileId]
-
-    onTokenControlChange(nextPlayerIds as FushiAccessProfileId[])
-  }
+  const persistentPlayers = bodyBindingPlayerIds
+    .map((playerId) => playerProfiles.find((profile) => profile.id === playerId))
+    .filter((profile): profile is FushiAccessProfile => Boolean(profile))
+  const persistentPlayerLabel =
+    persistentPlayers.length > 0
+      ? persistentPlayers.map((profile) => profile.label).join(', ')
+      : 'sem vinculo'
+  const canShowMasterPanel = showMasterControls && canEditToken
+  const masterTabOptions: Array<{
+    id: MasterInspectorTab
+    label: string
+  }> = [
+    { id: 'token', label: 'Token em mesa' },
+    { id: 'identity', label: 'Identidade' },
+    { id: 'binding', label: 'Vinculo Permanente' },
+  ]
 
   return (
     <FloatingWindow
@@ -124,16 +174,53 @@ export function TokenInspector({
       initialPosition={{ x: 120, y: 72 }}
       initialSize={{ width: 980, height: 760 }}
       onClose={onClose}
+      restoreSignal={restoreSignal}
       subtitle={selectedCount > 1 ? `${selectedCount} tokens selecionados` : visibilityLabel}
       title={character.nome}
     >
       <div className="list-stack">
-        {canEditToken && (onToggleVisibility || sheetIsEditable) ? (
+        {canShowMasterPanel ? (
+          <article className="list-card">
+            <div className="list-card__top">
+              <div>
+                <p className="eyebrow">Controles reservados</p>
+                <h3>Mestre</h3>
+              </div>
+              <button
+                className={`button${isMasterPanelOpen ? ' button--primary' : ''}`}
+                onClick={() => setIsMasterPanelOpen((currentValue) => !currentValue)}
+                type="button"
+              >
+                Mestre
+              </button>
+            </div>
+
+            {isMasterPanelOpen ? (
+              <div className="tabletop-hud-panel__actions" role="tablist">
+                {masterTabOptions.map((option) => (
+                  <button
+                    className={`button${
+                      masterInspectorTab === option.id ? ' button--primary' : ''
+                    }`}
+                    key={option.id}
+                    onClick={() => setMasterInspectorTab(option.id)}
+                    role="tab"
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </article>
+        ) : null}
+
+        {canShowMasterPanel && isMasterPanelOpen && masterInspectorTab === 'token' ? (
           <article className="list-card">
             <div className="list-card__top">
               <div>
                 <p className="eyebrow">Token em mesa</p>
-                <h3>{sheetIsEditable ? 'Escala e ocupacao' : 'Visibilidade'}</h3>
+                <h3>Visibilidade e tamanho</h3>
               </div>
               {tokenSizeSummary ? <span className="tag">{tokenSizeSummary}</span> : null}
             </div>
@@ -150,7 +237,16 @@ export function TokenInspector({
                     : 'Ocultar dos jogadores'}
                 </button>
               ) : null}
-              {sheetIsEditable ? (
+              {onToggleStealth ? (
+                <button
+                  className={`button${token.stealth?.enabled ? ' button--primary' : ''}`}
+                  onClick={onToggleStealth}
+                  type="button"
+                >
+                  {token.stealth?.enabled ? 'Remover furtividade' : 'Furtivo'}
+                </button>
+              ) : null}
+              {canResizeToken ? (
                 <>
                   {(['1x1', '2x2', '3x3'] as const).map((preset) => (
                     <button
@@ -162,156 +258,126 @@ export function TokenInspector({
                       {preset}
                     </button>
                   ))}
-                  <button className="button" disabled type="button">
-                    Custom futuro
-                  </button>
-                  {canRemoveToken ? (
-                    <button className="button" onClick={onRemoveToken} type="button">
-                      Remover token da cena
-                    </button>
-                  ) : null}
                 </>
+              ) : null}
+              {canDuplicateMobToken && onDuplicateMobToken ? (
+                <button className="button" onClick={onDuplicateMobToken} type="button">
+                  Duplicar mob
+                </button>
+              ) : null}
+              {canRemoveToken ? (
+                <button className="button" onClick={onRemoveToken} type="button">
+                  Remover token da cena
+                </button>
               ) : null}
             </div>
           </article>
         ) : null}
 
-        {sharedBodySheetOptions.length > 0 ? (
-          <article className="list-card">
-            <div className="list-card__top">
-              <div>
-                <p className="eyebrow">Corpo compartilhado</p>
-                <h3>Ficha por jogador</h3>
-              </div>
-              <span className="tag">{sharedBodySheetOptions.length} ficha(s)</span>
-            </div>
-
-            <div className="tabletop-hud-panel__actions">
-              <button
-                className={`button${
-                  activeSharedBodySheetSelectionId ? '' : ' button--primary'
-                }`}
-                onClick={() => onSharedBodySheetSelect('')}
-                type="button"
-              >
-                Corpo
-              </button>
-              {sharedBodySheetOptions.map((option) => (
-                <button
-                  className={`button${
-                    activeSharedBodySheetSelectionId === option.selectionId
-                      ? ' button--primary'
-                      : ''
-                  }`}
-                  key={option.selectionId}
-                  onClick={() => onSharedBodySheetSelect(option.selectionId)}
-                  type="button"
-                  title={option.characterName}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </article>
-        ) : null}
-
-        {identityResourceOptions.length > 0 ? (
+        {canShowMasterPanel && isMasterPanelOpen && masterInspectorTab === 'identity' ? (
           <article className="list-card">
             <div className="list-card__top">
               <div>
                 <p className="eyebrow">Identidade</p>
-                <h3>Atributos, pericias e FUSHI</h3>
-              </div>
-              <span className="tag">{identityResourceOptions.length} jogador(es)</span>
-            </div>
-
-            <div className="tabletop-hud-panel__actions">
-              <button
-                className={`button${
-                  activeIdentityResourceProfileId ? '' : ' button--primary'
-                }`}
-                onClick={() => onIdentityResourceSelect('')}
-                type="button"
-              >
-                Corpo
-              </button>
-              {identityResourceOptions.map((option) => (
-                <button
-                  className={`button${
-                    activeIdentityResourceProfileId === option.profileId
-                      ? ' button--primary'
-                      : ''
-                  }`}
-                  key={option.profileId}
-                  onClick={() => onIdentityResourceSelect(option.profileId)}
-                  type="button"
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </article>
-        ) : null}
-
-        {onTokenControlChange ? (
-          <article className="list-card">
-            <div className="list-card__top">
-              <div>
-                <p className="eyebrow">Permissao temporaria</p>
-                <h3>Controle nesta cena</h3>
+                <h3>Fichas e recursos por jogador</h3>
               </div>
               <span className="tag">
-                {controlledByPlayerIds.length > 0
-                  ? `${controlledByPlayerIds.length} controlando`
-                  : 'sem player'}
+                {identityResourceOptions.length + sharedBodySheetOptions.length} vinculo(s)
               </span>
             </div>
 
-            <div className="tabletop-control-grid">
-              {playerProfileOptions.map((profile) => {
-                  const isChecked = controlledByPlayerIds.includes(profile.id)
+            {sharedBodySheetOptions.length > 0 ? (
+              <>
+                <p className="support-copy">
+                  Ficha visivel na janela do mestre para corpos compartilhados.
+                </p>
+                <div className="tabletop-hud-panel__actions">
+                  <button
+                    className={`button${
+                      activeSharedBodySheetSelectionId ? '' : ' button--primary'
+                    }`}
+                    onClick={() => onSharedBodySheetSelect('')}
+                    type="button"
+                  >
+                    Corpo
+                  </button>
+                  {sharedBodySheetOptions.map((option) => (
+                    <button
+                      className={`button${
+                        activeSharedBodySheetSelectionId === option.selectionId
+                          ? ' button--primary'
+                          : ''
+                      }`}
+                      key={option.selectionId}
+                      onClick={() => onSharedBodySheetSelect(option.selectionId)}
+                      type="button"
+                      title={option.characterName}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
 
-                  return (
-                    <label className="tabletop-control-toggle" key={profile.id}>
-                      <input
-                        checked={isChecked}
-                        onChange={() => togglePlayerControl(profile.id)}
-                        type="checkbox"
-                      />
-                      <span>{profile.label}</span>
-                    </label>
-                  )
-                })}
-            </div>
+            {identityResourceOptions.length > 0 ? (
+              <>
+                <p className="support-copy">
+                  Recurso de identidade aplicado na ficha enquanto o mestre consulta o
+                  corpo.
+                </p>
+                <div className="tabletop-hud-panel__actions">
+                  <button
+                    className={`button${
+                      activeIdentityResourceProfileId ? '' : ' button--primary'
+                    }`}
+                    onClick={() => onIdentityResourceSelect('')}
+                    type="button"
+                  >
+                    Corpo
+                  </button>
+                  {identityResourceOptions.map((option) => (
+                    <button
+                      className={`button${
+                        activeIdentityResourceProfileId === option.profileId
+                          ? ' button--primary'
+                          : ''
+                      }`}
+                      key={option.profileId}
+                      onClick={() => onIdentityResourceSelect(option.profileId)}
+                      type="button"
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
 
-            <div className="tabletop-hud-panel__actions">
-              <button
-                className="button"
-                disabled={controlledByPlayerIds.length === 0}
-                onClick={() => onTokenControlChange([])}
-                type="button"
-              >
-                Descontrolar todos
-              </button>
-            </div>
+            {sharedBodySheetOptions.length === 0 && identityResourceOptions.length === 0 ? (
+              <p className="support-copy">
+                Nenhum jogador vinculado a este corpo por enquanto.
+              </p>
+            ) : null}
           </article>
         ) : null}
 
-        {onBindTokenAsPlayerBody ? (
+        {canShowMasterPanel &&
+        isMasterPanelOpen &&
+        masterInspectorTab === 'binding' &&
+        onBindTokenAsPlayerBody ? (
           <article className="list-card">
             <div className="list-card__top">
               <div>
                 <p className="eyebrow">Vinculo permanente</p>
                 <h3>Corpo atual de jogador</h3>
               </div>
-              <span className="tag">
-                {persistentPlayer ? persistentPlayer.label : 'sem vinculo'}
-              </span>
+              <span className="tag">{persistentPlayerLabel}</span>
             </div>
 
-            {persistentPlayer ? (
+            {persistentPlayers.length > 0 ? (
               <p className="support-copy">
-                {persistentPlayer.label} ocupa este corpo. Esse vinculo persiste entre MUN,
+                {persistentPlayerLabel} ocupa este corpo. Esse vinculo persiste entre MUN,
                 MAP, cenas e grupos.
               </p>
             ) : (
@@ -321,27 +387,36 @@ export function TokenInspector({
               </p>
             )}
 
-            <div className="form-grid form-grid--two">
-              <label className="field">
-                <span>Jogador</span>
-                <select
-                  className="field__input"
-                  onChange={(event) =>
-                    setBodyBindingPlayerId(event.target.value as FushiAccessProfileId | '')
-                  }
-                  value={bodyBindingPlayerId}
-                >
-                  <option value="">Escolher jogador</option>
-                  {playerProfileOptions.map((profile) => (
-                    <option key={profile.id} value={profile.id}>
-                      {profile.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <div className="tabletop-control-grid">
+              {playerProfileOptions.map((profile) => {
+                const isChecked = bodyBindingPlayerIds.includes(profile.id)
 
+                return (
+                  <label className="tabletop-control-toggle" key={profile.id}>
+                    <input
+                      checked={isChecked}
+                      onChange={() =>
+                        setBodyBindingDraft({
+                          key: bodyBindingKey,
+                          playerIds: isChecked
+                            ? bodyBindingPlayerIds.filter(
+                                (playerId) => playerId !== profile.id,
+                              )
+                            : [...bodyBindingPlayerIds, profile.id],
+                        })
+                      }
+                      type="checkbox"
+                    />
+                    <span>{profile.label}</span>
+                  </label>
+                )
+              })}
+            </div>
+
+            <details className="details-block">
+              <summary>Opcoes avancadas de reencarnacao</summary>
               <label className="field">
-                <span>Consciencia original</span>
+                <span>Estado da consciencia original</span>
                 <select
                   className="field__input"
                   onChange={(event) =>
@@ -358,18 +433,18 @@ export function TokenInspector({
                   <option value="desconhecida">desconhecida</option>
                 </select>
               </label>
-            </div>
+            </details>
 
             <div className="tabletop-hud-panel__actions">
               <button
                 className="button button--primary"
-                disabled={!bodyBindingPlayerId}
+                disabled={bodyBindingPlayerIds.length === 0}
                 onClick={() => {
-                  if (!bodyBindingPlayerId) {
+                  if (bodyBindingPlayerIds.length === 0) {
                     return
                   }
 
-                  onBindTokenAsPlayerBody(bodyBindingPlayerId, bodyBindingState)
+                  onBindTokenAsPlayerBody(bodyBindingPlayerIds, bodyBindingState)
                 }}
                 type="button"
               >
@@ -379,22 +454,15 @@ export function TokenInspector({
           </article>
         ) : null}
 
-        {sheetIsEditable && (character.permissions || token.control) ? (
+        {sheetIsEditable && character.permissions ? (
           <article className="list-card">
             <div className="list-card__top">
               <div>
                 <p className="eyebrow">Controle e permissao</p>
                 <h3>Preparado para compartilhamento</h3>
               </div>
-              {token.control?.sharedControl ? <span className="tag">compartilhado</span> : null}
+              <span className="tag">avancado</span>
             </div>
-
-            {token.control ? (
-              <p className="support-copy">
-                Token controlado por: {token.control.controlledByPlayerIds.join(', ') || 'ninguem'}
-                . Primario: {token.control.primaryControllerId ?? 'nao definido'}.
-              </p>
-            ) : null}
 
             {character.permissions ? (
               <p className="support-copy">
@@ -417,6 +485,7 @@ export function TokenInspector({
           editable={sheetIsEditable}
           factionName={factionName ?? character.faccao}
           factions={factions}
+          onActivateFeature={onActivateFeature}
           onBroadcastImage={onBroadcastImage}
           onChange={onCharacterChange}
           onPreviewImage={onPreviewImage}

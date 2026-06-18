@@ -19,6 +19,7 @@ As chaves antigas continuam validas para manter compatibilidade com dados ja sal
 - `fushi-tabletop:access-control:v1`
 - `fushi-tabletop:active-access-profile:v1`
 - `fushi-tabletop:physical-persistence:v1`
+- `fushi-tabletop:campaign-backups:v1:campaign:{campaignId}`
 - `tabletop_session_state`
 - `fushi-tabletop:transition-overrides:v1`
 - `fushi-tabletop:transition-overrides:v1:campaign:{campaignId}`
@@ -40,6 +41,10 @@ O adapter expõe metodos de alto nivel:
 - `savePlayerAccess(campaignId, data)`
 - `loadPhysicalPersistence(campaignId)`
 - `savePhysicalPersistence(campaignId, data)`
+- `loadCampaignBackups(campaignId)`
+- `saveCampaignBackups(campaignId, data)`
+- `loadMasterWorkspace()`
+- `saveMasterWorkspace(data)`
 - `exportCampaign(campaignId)`
 - `importCampaign(data)`
 
@@ -56,21 +61,24 @@ Os seguintes arquivos deixaram de acessar `window.localStorage` ou `window.sessi
 - `src/lib/worldMundiState.ts`
 - `src/lib/playerAccess.ts`
 - `src/lib/physicalPersistence.ts`
+- `src/lib/masterWorkspace.ts`
 
 ## Por que isso prepara desktop
 
-No futuro, `BrowserStorageAdapter` pode ser trocado por um adapter de filesystem para Electron/Tauri, salvando dados em uma pasta local do app:
+No navegador, `BrowserStorageAdapter` continua usando `localStorage/sessionStorage`.
+
+No Electron, `DesktopStorageAdapter` usa a API segura `window.fushiDesktop` exposta pelo preload e salva JSON em `%APPDATA%/FUSHI`:
 
 ```text
-FUSHI/
+%APPDATA%/FUSHI/
+  workspace.json
   campaigns/
     campaign-id/
       session.json
       library.json
       mundi.json
       access.json
-      assets/
-  backups/
+      backups/
 ```
 
 As telas nao precisam saber se os dados vieram do navegador ou do disco.

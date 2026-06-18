@@ -1,5 +1,6 @@
 import type { CharacterAttributes, CharacterSkill } from '../../data/types'
 import { createAttributeRollConfig, formatAttributeLabel } from '../../lib/rolls'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 
 interface CharacterSkillListProps {
   attributeValues: CharacterAttributes
@@ -9,6 +10,21 @@ interface CharacterSkillListProps {
     contextLabel: string
     config: ReturnType<typeof createAttributeRollConfig>
   }) => void
+}
+
+const SKILL_ICON_ASSETS: Record<string, string> = {
+  acrobacia: '/assets/ui/icons/skill-acrobatics.svg',
+  adestramento: '/assets/ui/icons/skill-animal.svg',
+}
+
+function getSkillIconAsset(skillName: string) {
+  const normalizedName = skillName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+
+  return SKILL_ICON_ASSETS[normalizedName] ?? '/assets/ui/icons/skill-default.svg'
 }
 
 export function CharacterSkillList({
@@ -25,6 +41,11 @@ export function CharacterSkillList({
         return (
           <article key={item.id} className="action-card action-card--compact">
             <div className="action-card__compact-top">
+              <img
+                alt=""
+                className="action-card__skill-icon"
+                src={resolveRuntimeAssetUrl(getSkillIconAsset(item.nome))}
+              />
               <details className="action-card__details">
                 <summary className="action-card__summary">
                   <div>

@@ -6,7 +6,7 @@ export interface LocalImageOptions {
   quality?: number
 }
 
-function readFileAsDataUrl(file: File) {
+export function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
 
@@ -27,7 +27,7 @@ function readFileAsDataUrl(file: File) {
   })
 }
 
-function loadImage(src: string) {
+export function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
 
@@ -68,6 +68,20 @@ function replaceFileExtension(filename: string, extension: string) {
   const baseName = filename.replace(/\.[^.]+$/, '')
 
   return `${baseName || 'imagem'}${extension}`
+}
+
+export function replaceImageFileExtension(filename: string, extension: string) {
+  return replaceFileExtension(filename, extension)
+}
+
+export async function uploadImageBlobAsAsset(blob: Blob, filename: string) {
+  const uploadedImage = await uploadPhysicalAsset(blob, {
+    category: 'images',
+    contentType: blob.type || 'image/webp',
+    filename,
+  })
+
+  return uploadedImage.url
 }
 
 export function isImageFile(file: File) {

@@ -1,7 +1,15 @@
 export type Tone = 'steady' | 'watch' | 'critical'
 export type AppViewMode = 'gm' | 'player'
-export type CharacterKind = 'player' | 'npc'
+export type CharacterKind = 'player' | 'npc' | 'mob'
 export type RollMode = 'highest' | 'lowest' | 'sum'
+export type CharacterActionKind =
+  | 'ataque'
+  | 'tecnica'
+  | 'passiva'
+  | 'instintiva'
+  | 'ritual'
+  | 'item'
+export type CharacterActionCostResource = 'vida' | 'fushi' | 'determinacao'
 export type TabletopTokenSize = 1 | 2 | 3
 export type TabletopTokenSizePreset = '1x1' | '2x2' | '3x3' | 'custom'
 export type EncounterDifficulty = 'facil' | 'medio' | 'dificil' | 'boss'
@@ -72,6 +80,7 @@ export interface RollRecord extends RollConfig {
   resultadoBase: number
   total: number
   resultadoTexto: string
+  visualColor?: string
 }
 
 export interface CharacterSkill {
@@ -90,12 +99,77 @@ export interface CharacterAttack {
   dano: string
   alcance: string
   resumo: string
+  automation?: CharacterActionAutomation
+}
+
+export interface CharacterActionCost {
+  resource: CharacterActionCostResource
+  amount: number
+  label?: string
+}
+
+export type CharacterActionEffectTarget = 'self'
+
+export interface CharacterActionResourceEffect {
+  type: 'resource'
+  target?: CharacterActionEffectTarget
+  resource: CharacterActionCostResource
+  amount: number
+  label?: string
+}
+
+export interface CharacterActionStatusEffect {
+  type: 'status'
+  target?: CharacterActionEffectTarget
+  mode?: 'add' | 'remove'
+  status: string
+  label?: string
+}
+
+export type CharacterActionEffect =
+  | CharacterActionResourceEffect
+  | CharacterActionStatusEffect
+
+export interface CharacterActionRoll extends RollConfig {
+  contexto?: string
+  visibility?: 'public' | 'gm'
+  visualColor?: string
+}
+
+export interface CharacterActionAutomation {
+  kind?: CharacterActionKind
+  activation?: string
+  target?: string
+  range?: string
+  duration?: string
+  limit?: string
+  tags?: string[]
+  costs?: CharacterActionCost[]
+  effects?: CharacterActionEffect[]
+  roll?: CharacterActionRoll
+  publicText?: string
+  gmText?: string
+  visualColor?: string
 }
 
 export interface CharacterFeatureDetail {
   id: string
   nome: string
   descricao: string
+  tipo?: CharacterActionKind
+  automation?: CharacterActionAutomation
+}
+
+export type CharacterFeatureActivationSource =
+  | 'habilidade'
+  | 'ritual'
+  | 'ataque'
+  | 'item'
+
+export interface CharacterFeatureActivationRequest {
+  character: CharacterSheet
+  feature: CharacterFeatureDetail
+  source: CharacterFeatureActivationSource
 }
 
 export interface CharacterInventoryItem {
@@ -104,6 +178,7 @@ export interface CharacterInventoryItem {
   descricao: string
   efeitos: string[]
   imagemUrl?: string
+  automation?: CharacterActionAutomation
 }
 
 export interface CharacterDescription {
@@ -139,7 +214,6 @@ export interface CharacterSheet {
   nome: string
   avatarUrl?: string
   tokenImageUrl?: string
-  topdownImageUrl?: string
   tokenSize?: TabletopTokenSize
   isSharedBodyHost?: boolean
   jogador?: string
@@ -227,6 +301,15 @@ export interface TabletopGridSpan {
   rows: number
 }
 
+export interface TabletopAnimatedSurface {
+  enabled?: boolean
+  loop?: boolean
+  minQuality?: 'balanced' | 'ultra'
+  playbackRate?: number
+  poster?: string
+  source: string
+}
+
 export interface TabletopMap {
   id: string
   campaignId?: string
@@ -241,6 +324,7 @@ export interface TabletopMap {
   imageUrl?: string
   previewImage?: string
   thumbnailUrl?: string
+  animatedSurface?: TabletopAnimatedSurface
   biome?: string
   summary?: string
   stageWidth: number
@@ -253,6 +337,8 @@ export interface TabletopMap {
 
 export type TabletopTokenVisibility = 'public' | 'gm'
 export type TabletopTokenKind = 'player_corpo' | 'npc' | 'mob' | 'grupo'
+export type TabletopObjectVisibility = 'public' | 'gm'
+export type TabletopObjectRenderMode = 'sprite' | 'three'
 export type TabletopOriginalConsciousnessState =
   | 'suprimida'
   | 'em_disputa'
@@ -268,13 +354,21 @@ export interface TabletopPersistentBodyControl {
   playerId: string
 }
 
+export interface TabletopTokenStealthState {
+  enabled: boolean
+  ownerPlayerId?: string
+}
+
 export interface TabletopToken {
   id: string
   characterId: string
+  avatarUrl?: string
   bodyId?: string
   npcId?: string
   mobId?: string
+  mobInstanceNumber?: number
   tokenKind?: TabletopTokenKind
+  tokenImageUrl?: string
   controladoPorJogadorId?: string
   label: string
   color: string
@@ -284,12 +378,58 @@ export interface TabletopToken {
   visibility: TabletopTokenVisibility
   control?: TokenControl
   persistentControl?: TabletopPersistentBodyControl
+  resourceOverride?: CharacterResources
+  stealth?: TabletopTokenStealthState
+}
+
+export interface TabletopBoardObject {
+  id: string
+  name: string
+  label: string
+  description?: string
+  objectType: 'item' | 'prop' | 'hazard' | 'objective'
+  renderMode: TabletopObjectRenderMode
+  assetUrl?: string
+  modelUrl?: string
+  modelNodeName?: string
+  color?: string
+  cell: TabletopCell
+  size: TabletopTokenSize
+  customSize?: TabletopGridSpan
+  placement3d?: TabletopObject3DPlacement
+  visibility: TabletopObjectVisibility
+  linkedItemId?: string
+  interactable?: boolean
 }
 
 export interface TabletopCameraState {
   zoom?: number
   scrollLeft?: number
   scrollTop?: number
+}
+
+export interface TabletopObject3DPlacement {
+  x: number
+  y: number
+  z?: number
+  rotationX?: number
+  rotationY?: number
+  rotationZ?: number
+  scale?: number
+  scaleX?: number
+  scaleY?: number
+  scaleZ?: number
+}
+
+export interface TabletopCamera3DState {
+  enabled?: boolean
+  mode?: 'topdown' | 'free'
+  yaw?: number
+  pitch?: number
+  distance?: number
+  targetX?: number
+  targetY?: number
+  targetZ?: number
 }
 
 export interface TabletopSceneMetadata {
@@ -309,8 +449,10 @@ export interface TabletopScene {
   name: string
   mapId: string
   tokens: TabletopToken[]
+  objects?: TabletopBoardObject[]
   gridCellSize?: number
   cameraState?: TabletopCameraState
+  camera3dState?: TabletopCamera3DState
   metadata: TabletopSceneMetadata
 }
 

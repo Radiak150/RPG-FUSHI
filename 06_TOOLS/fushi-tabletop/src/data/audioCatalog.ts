@@ -1,0 +1,180 @@
+export type TabletopSfxCategory = 'ui' | 'impact' | 'rpg'
+
+export interface TabletopSfxDefinition {
+  category: TabletopSfxCategory
+  cooldownMs: number
+  defaultVolume: number
+  license: 'CC0'
+  name: string
+  priority: 1 | 2 | 3
+  source: string
+  sourceUrl: string
+  tags: string[]
+}
+
+export const TABLETOP_SFX_CATALOG = {
+  'dice-result': {
+    category: 'ui',
+    cooldownMs: 140,
+    defaultVolume: 0.42,
+    license: 'CC0',
+    name: 'Resultado de dado',
+    priority: 2,
+    source: '/assets/audio/sfx/ui/bong_001.ogg',
+    sourceUrl: 'https://kenney.nl/assets/interface-sounds',
+    tags: ['dado', 'resultado', 'notificacao'],
+  },
+  confirm: {
+    category: 'ui',
+    cooldownMs: 100,
+    defaultVolume: 0.34,
+    license: 'CC0',
+    name: 'Confirmar',
+    priority: 2,
+    source: '/assets/audio/sfx/ui/confirmation_002.ogg',
+    sourceUrl: 'https://kenney.nl/assets/interface-sounds',
+    tags: ['interface', 'confirmacao'],
+  },
+  error: {
+    category: 'ui',
+    cooldownMs: 240,
+    defaultVolume: 0.32,
+    license: 'CC0',
+    name: 'Erro',
+    priority: 3,
+    source: '/assets/audio/sfx/ui/error_003.ogg',
+    sourceUrl: 'https://kenney.nl/assets/interface-sounds',
+    tags: ['interface', 'erro'],
+  },
+  'window-open': {
+    category: 'ui',
+    cooldownMs: 80,
+    defaultVolume: 0.22,
+    license: 'CC0',
+    name: 'Abrir janela',
+    priority: 1,
+    source: '/assets/audio/sfx/ui/open_002.ogg',
+    sourceUrl: 'https://kenney.nl/assets/interface-sounds',
+    tags: ['interface', 'janela'],
+  },
+  'window-close': {
+    category: 'ui',
+    cooldownMs: 80,
+    defaultVolume: 0.22,
+    license: 'CC0',
+    name: 'Fechar janela',
+    priority: 1,
+    source: '/assets/audio/sfx/ui/close_002.ogg',
+    sourceUrl: 'https://kenney.nl/assets/interface-sounds',
+    tags: ['interface', 'janela'],
+  },
+  select: {
+    category: 'ui',
+    cooldownMs: 65,
+    defaultVolume: 0.18,
+    license: 'CC0',
+    name: 'Selecionar',
+    priority: 1,
+    source: '/assets/audio/sfx/ui/select_003.ogg',
+    sourceUrl: 'https://kenney.nl/assets/interface-sounds',
+    tags: ['interface', 'selecao'],
+  },
+  'impact-light': {
+    category: 'impact',
+    cooldownMs: 90,
+    defaultVolume: 0.38,
+    license: 'CC0',
+    name: 'Impacto leve',
+    priority: 2,
+    source: '/assets/audio/sfx/impacts/impactGeneric_light_002.ogg',
+    sourceUrl: 'https://kenney.nl/assets/impact-sounds',
+    tags: ['combate', 'impacto'],
+  },
+  'impact-heavy': {
+    category: 'impact',
+    cooldownMs: 120,
+    defaultVolume: 0.48,
+    license: 'CC0',
+    name: 'Impacto pesado',
+    priority: 3,
+    source: '/assets/audio/sfx/impacts/impactPunch_heavy_001.ogg',
+    sourceUrl: 'https://kenney.nl/assets/impact-sounds',
+    tags: ['combate', 'impacto', 'pesado'],
+  },
+  'impact-metal': {
+    category: 'impact',
+    cooldownMs: 110,
+    defaultVolume: 0.4,
+    license: 'CC0',
+    name: 'Impacto metalico',
+    priority: 2,
+    source: '/assets/audio/sfx/impacts/impactMetal_heavy_002.ogg',
+    sourceUrl: 'https://kenney.nl/assets/impact-sounds',
+    tags: ['combate', 'metal', 'bloqueio'],
+  },
+  'impact-wood': {
+    category: 'impact',
+    cooldownMs: 110,
+    defaultVolume: 0.38,
+    license: 'CC0',
+    name: 'Impacto em madeira',
+    priority: 2,
+    source: '/assets/audio/sfx/impacts/impactWood_heavy_003.ogg',
+    sourceUrl: 'https://kenney.nl/assets/impact-sounds',
+    tags: ['objeto', 'madeira'],
+  },
+  'book-open': {
+    category: 'rpg',
+    cooldownMs: 180,
+    defaultVolume: 0.3,
+    license: 'CC0',
+    name: 'Abrir livro',
+    priority: 1,
+    source: '/assets/audio/sfx/rpg/bookOpen.ogg',
+    sourceUrl: 'https://kenney.nl/assets/rpg-audio',
+    tags: ['livro', 'ficha', 'lore'],
+  },
+  'door-open': {
+    category: 'rpg',
+    cooldownMs: 300,
+    defaultVolume: 0.36,
+    license: 'CC0',
+    name: 'Abrir porta',
+    priority: 2,
+    source: '/assets/audio/sfx/rpg/doorOpen_1.ogg',
+    sourceUrl: 'https://kenney.nl/assets/rpg-audio',
+    tags: ['porta', 'dungeon', 'transicao'],
+  },
+  'draw-knife': {
+    category: 'rpg',
+    cooldownMs: 220,
+    defaultVolume: 0.38,
+    license: 'CC0',
+    name: 'Sacar lamina',
+    priority: 2,
+    source: '/assets/audio/sfx/rpg/drawKnife2.ogg',
+    sourceUrl: 'https://kenney.nl/assets/rpg-audio',
+    tags: ['combate', 'lamina'],
+  },
+  coins: {
+    category: 'rpg',
+    cooldownMs: 220,
+    defaultVolume: 0.32,
+    license: 'CC0',
+    name: 'Moedas',
+    priority: 1,
+    source: '/assets/audio/sfx/rpg/handleCoins2.ogg',
+    sourceUrl: 'https://kenney.nl/assets/rpg-audio',
+    tags: ['inventario', 'comercio'],
+  },
+} as const satisfies Record<string, TabletopSfxDefinition>
+
+export type TabletopSfxId = keyof typeof TABLETOP_SFX_CATALOG
+
+export const TABLETOP_CHARACTER_THEME_SLOTS = [
+  { id: 'player-1', label: 'Jogador 1', color: '#8b5cf6', trackId: '' },
+  { id: 'player-2', label: 'Jogador 2', color: '#f4d35e', trackId: '' },
+  { id: 'player-3', label: 'Jogador 3', color: '#4caf72', trackId: '' },
+  { id: 'player-4', label: 'Jogador 4', color: '#f3f4f6', trackId: '' },
+  { id: 'player-5', label: 'Jogador 5', color: '#20242b', trackId: '' },
+] as const

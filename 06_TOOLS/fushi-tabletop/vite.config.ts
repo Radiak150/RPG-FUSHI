@@ -410,6 +410,45 @@ function fushiPersistencePlugin(): Plugin {
 // `import.meta.hot` from being active and stops the refresh runtime from
 // throwing in environments that don't expose the expected preamble.
 export default defineConfig({
+  base: './',
+  build: {
+    chunkSizeWarningLimit: 750,
+    copyPublicDir: false,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'pixi-renderers',
+              test: /node_modules[\\/]pixi\.js[\\/]lib[\\/]rendering[\\/]renderers[\\/]/,
+            },
+            {
+              name: 'pixi-scene',
+              test: /node_modules[\\/]pixi\.js[\\/]lib[\\/]scene[\\/]/,
+            },
+            {
+              name: 'pixi-assets',
+              test:
+                /node_modules[\\/]pixi\.js[\\/]lib[\\/](?:assets|compressed-textures|_virtual)[\\/]/,
+            },
+            {
+              name: 'pixi-filters',
+              test:
+                /node_modules[\\/](?:pixi\.js[\\/]lib[\\/]filters|pixi-filters)[\\/]/,
+            },
+            {
+              name: 'pixi-core',
+              test: /node_modules[\\/]pixi\.js[\\/]/,
+            },
+            {
+              name: 'xmldom',
+              test: /node_modules[\\/]@xmldom[\\/]xmldom[\\/]/,
+            },
+          ],
+        },
+      },
+    },
+  },
   server: {
     hmr: false,
   },

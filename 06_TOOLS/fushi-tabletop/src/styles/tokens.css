@@ -14,6 +14,10 @@
   --accent-danger: #ca747a;
   --accent-watch: #c69a58;
   --accent-steady: #7caf88;
+  --fx-glow-strength: 0.72;
+  --fx-blur-strength: 1;
+  --fx-motion-strength: 1;
+  --fx-noise-opacity: 0.08;
   --shadow-deep: 0 22px 70px rgba(0, 0, 0, 0.48);
   --radius-xl: 28px;
   --radius-lg: 20px;
@@ -36,4 +40,25 @@
   --accent-cool: #a4c8c0;
   --accent-warm: #dbc097;
   --shadow-deep: 0 24px 72px rgba(0, 0, 0, 0.42);
+}
+
+:root[data-visual-quality='low'] {
+  --fx-glow-strength: 0.28;
+  --fx-blur-strength: 0;
+  --fx-motion-strength: 0;
+  --fx-noise-opacity: 0;
+}
+
+:root[data-visual-quality='balanced'] {
+  --fx-glow-strength: 0.72;
+  --fx-blur-strength: 1;
+  --fx-motion-strength: 1;
+  --fx-noise-opacity: 0.08;
+}
+
+:root[data-visual-quality='ultra'] {
+  --fx-glow-strength: 1;
+  --fx-blur-strength: 1.2;
+  --fx-motion-strength: 1;
+  --fx-noise-opacity: 0.12;
 }

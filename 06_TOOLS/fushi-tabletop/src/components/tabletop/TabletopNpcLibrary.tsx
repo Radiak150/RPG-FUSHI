@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react'
-import type { CharacterSheet } from '../../data/types'
+import { useEffect, useMemo, useState } from 'react'
+import type { CharacterSheet, FactionItem } from '../../data/types'
 import type { TabletopLibraryFolder } from '../../lib/tabletopLibraryState'
 import { getCharacterSheetModel } from '../../lib/characterSheet'
+import { getFactionLogoUrl } from '../../lib/factionAssets'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 
 interface TabletopNpcLibraryProps {
   activeCharacterIds: string[]
   characterFolders: Record<string, string>
   characters: CharacterSheet[]
+  factions?: FactionItem[]
   folders: TabletopLibraryFolder[]
   onAssignCharacterFolder: (characterId: string, folderId: string) => void
   onCreateFolder: (parentId: string, name: string) => void
@@ -14,17 +17,26 @@ interface TabletopNpcLibraryProps {
   onHideCharacter: (characterId: string) => void
   onMoveFolder: (folderId: string, direction: 'up' | 'down') => void
   onRenameFolder: (folderId: string, name: string) => void
+  onRenameVirtualFaction?: (currentName: string, nextName: string) => void
   onSpawn: (characterId: string) => void
   onRemoveFromScene: (characterId: string) => void
 }
 
 interface FolderView extends TabletopLibraryFolder {
+  factionId?: string
+  factionKey?: string
   isVirtual?: boolean
 }
 
 interface NpcDragPayload {
   category: 'npcs'
   id: string
+}
+
+interface FolderContextMenuState {
+  folderId: string
+  x: number
+  y: number
 }
 
 const ROOT_FOLDER_ID = ''
@@ -57,7 +69,15 @@ function getVirtualFactionFolderId(value: string) {
   return `virtual:npcs:faction:${slugify(value || 'sem-faccao')}`
 }
 
+function isVirtualFactionFolderId(folderId: string) {
+  return folderId.startsWith('virtual:npcs:faction:')
+}
+
 function isMobCharacter(character: CharacterSheet) {
+  if (character.tipo === 'mob') {
+    return true
+  }
+
   const searchText = [
     character.nome,
     character.faccao,
@@ -97,14 +117,28 @@ function resolveCharacterFolderId(
   return getVirtualFactionFolderId(character.faccao || 'Sem faccao')
 }
 
-function buildVirtualFolders(characters: CharacterSheet[]): FolderView[] {
-  const factionLabels = Array.from(
+function buildVirtualFolders(
+  characters: CharacterSheet[],
+  factions: FactionItem[] = [],
+): FolderView[] {
+  const factionById = new Map(factions.map((faction) => [faction.id, faction]))
+  const factionEntries = Array.from(
     new Set(
       characters
         .filter((character) => character.tipo !== 'player' && !isMobCharacter(character))
         .map((character) => character.faccao || 'Sem faccao'),
     ),
-  ).sort((a, b) => a.localeCompare(b))
+  )
+    .map((factionKey) => {
+      const faction = factionById.get(factionKey)
+
+      return {
+        faction,
+        factionKey,
+        label: faction?.nome ?? factionKey,
+      }
+    })
+    .sort((a, b) => a.label.localeCompare(b.label))
 
   return [
     {
@@ -112,7 +146,7 @@ function buildVirtualFolders(characters: CharacterSheet[]): FolderView[] {
       category: 'npcs',
       parentId: ROOT_FOLDER_ID,
       name: 'Protagonistas',
-      icon: '⭐',
+      icon: 'PC',
       sortOrder: 10,
       isVirtual: true,
     },
@@ -121,7 +155,7 @@ function buildVirtualFolders(characters: CharacterSheet[]): FolderView[] {
       category: 'npcs',
       parentId: ROOT_FOLDER_ID,
       name: 'Personagens principais',
-      icon: '🎭',
+      icon: 'NPC',
       sortOrder: 20,
       isVirtual: true,
     },
@@ -130,7 +164,7 @@ function buildVirtualFolders(characters: CharacterSheet[]): FolderView[] {
       category: 'npcs',
       parentId: ROOT_FOLDER_ID,
       name: 'Mobs',
-      icon: '⚔️',
+      icon: 'MOB',
       sortOrder: 30,
       isVirtual: true,
     },
@@ -139,16 +173,18 @@ function buildVirtualFolders(characters: CharacterSheet[]): FolderView[] {
       category: 'npcs',
       parentId: MAIN_CHARACTERS_FOLDER_ID,
       name: 'Faccoes',
-      icon: '🏛️',
+      icon: 'FAC',
       sortOrder: 10,
       isVirtual: true,
     },
-    ...factionLabels.map((label, index) => ({
-      id: getVirtualFactionFolderId(label),
+    ...factionEntries.map((entry, index) => ({
+      id: getVirtualFactionFolderId(entry.factionKey),
       category: 'npcs' as const,
       parentId: FACTIONS_FOLDER_ID,
-      name: label,
-      icon: '🧭',
+      name: entry.label,
+      icon: 'F',
+      factionId: entry.faction?.id,
+      factionKey: entry.factionKey,
       sortOrder: index + 1,
       isVirtual: true,
     })),
@@ -197,6 +233,34 @@ function getFolderItemCount(
   return childFolderCount + directItemCount
 }
 
+function getFolderVisualLabel(folder: FolderView) {
+  if (folder.id === PROTAGONISTS_FOLDER_ID) return 'PC'
+  if (folder.id === MAIN_CHARACTERS_FOLDER_ID) return 'NPC'
+  if (folder.id === MOBS_FOLDER_ID) return 'MOB'
+  if (folder.id === FACTIONS_FOLDER_ID) return 'FAC'
+  if (isVirtualFactionFolderId(folder.id)) return 'F'
+
+  return folder.icon ?? 'DIR'
+}
+
+function getFolderLogoUrl(folder: FolderView) {
+  return folder.factionId ? getFactionLogoUrl(folder.factionId) : ''
+}
+
+function renderFolderIcon(folder: FolderView, className: string) {
+  const logoUrl = getFolderLogoUrl(folder)
+
+  if (logoUrl) {
+    return (
+      <span className={`${className} ${className}--logo`}>
+        <img alt="" src={resolveRuntimeAssetUrl(logoUrl)} />
+      </span>
+    )
+  }
+
+  return <span className={className}>{getFolderVisualLabel(folder)}</span>
+}
+
 function startItemDrag(event: React.DragEvent, characterId: string) {
   event.dataTransfer.effectAllowed = 'move'
   event.dataTransfer.setData(
@@ -232,6 +296,7 @@ export function TabletopNpcLibrary({
   activeCharacterIds,
   characterFolders,
   characters,
+  factions = [],
   folders,
   onAssignCharacterFolder,
   onCreateFolder,
@@ -239,6 +304,7 @@ export function TabletopNpcLibrary({
   onHideCharacter,
   onMoveFolder,
   onRenameFolder,
+  onRenameVirtualFaction,
   onSpawn,
   onRemoveFromScene,
 }: TabletopNpcLibraryProps) {
@@ -246,7 +312,12 @@ export function TabletopNpcLibrary({
   const [newFolderName, setNewFolderName] = useState('')
   const [renamingFolderId, setRenamingFolderId] = useState('')
   const [renamingFolderName, setRenamingFolderName] = useState('')
-  const virtualFolders = useMemo(() => buildVirtualFolders(characters), [characters])
+  const [folderContextMenu, setFolderContextMenu] =
+    useState<FolderContextMenuState | null>(null)
+  const virtualFolders = useMemo(
+    () => buildVirtualFolders(characters, factions),
+    [characters, factions],
+  )
   const effectiveFolders = [
     ...virtualFolders,
     ...(folders.filter((folder) => folder.category === 'npcs') as FolderView[]),
@@ -296,6 +367,54 @@ export function TabletopNpcLibrary({
     setRenamingFolderName('')
   }
 
+  function beginRenameFolder(folder: FolderView) {
+    if (folder.isVirtual) {
+      return
+    }
+
+    setRenamingFolderId(folder.id)
+    setRenamingFolderName(folder.name)
+    setSelectedFolderId(folder.parentId)
+    setFolderContextMenu(null)
+  }
+
+  function createChildFolder(parentId: string) {
+    const name = window.prompt('Nome da nova subpasta')
+
+    if (!name?.trim()) {
+      return
+    }
+
+    onCreateFolder(parentId, name.trim())
+    setFolderContextMenu(null)
+  }
+
+  function renameVirtualFaction(folder: FolderView) {
+    if (!isVirtualFactionFolderId(folder.id) || folder.factionId || !onRenameVirtualFaction) {
+      return
+    }
+
+    const nextName = window.prompt('Novo nome da faccao', folder.name)
+
+    if (!nextName?.trim() || nextName.trim() === folder.name) {
+      setFolderContextMenu(null)
+      return
+    }
+
+    onRenameVirtualFaction(folder.factionKey ?? folder.name, nextName.trim())
+    setFolderContextMenu(null)
+  }
+
+  function handleFolderContextMenu(event: React.MouseEvent, folderId: string) {
+    event.preventDefault()
+    event.stopPropagation()
+    setFolderContextMenu({
+      folderId,
+      x: event.clientX,
+      y: event.clientY,
+    })
+  }
+
   function handleFolderDrop(event: React.DragEvent, folderId: string) {
     event.preventDefault()
     const payload = readDragPayload(event)
@@ -313,6 +432,24 @@ export function TabletopNpcLibrary({
       setSelectedFolderId(folderId)
     }
   }
+
+  useEffect(() => {
+    if (!folderContextMenu) {
+      return
+    }
+
+    function closeMenu() {
+      setFolderContextMenu(null)
+    }
+
+    window.addEventListener('click', closeMenu)
+    window.addEventListener('contextmenu', closeMenu)
+
+    return () => {
+      window.removeEventListener('click', closeMenu)
+      window.removeEventListener('contextmenu', closeMenu)
+    }
+  }, [folderContextMenu])
 
   return (
     <section className="tabletop-library tabletop-library--folders">
@@ -350,7 +487,16 @@ export function TabletopNpcLibrary({
               onDrop={(event) => handleFolderDrop(event, folder.id)}
               type="button"
             >
-              {folder.icon ?? '📁'} {folder.name}
+              {getFolderLogoUrl(folder) ? (
+                <img
+                  alt=""
+                  className="tabletop-library-breadcrumb__logo"
+                  src={resolveRuntimeAssetUrl(getFolderLogoUrl(folder))}
+                />
+              ) : (
+                getFolderVisualLabel(folder)
+              )}{' '}
+              {folder.name}
             </button>
           ))}
         </div>
@@ -384,7 +530,7 @@ export function TabletopNpcLibrary({
             }
             type="button"
           >
-            <span>↩</span>
+            <span>Voltar</span>
             <strong>Voltar</strong>
           </button>
         ) : null}
@@ -402,11 +548,12 @@ export function TabletopNpcLibrary({
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => handleFolderDrop(event, folder.id)}
               onKeyDown={(event) => handleFolderKeyDown(event, folder.id)}
+              onContextMenu={(event) => handleFolderContextMenu(event, folder.id)}
               role="button"
               tabIndex={0}
               title="Solte um personagem aqui para mover para esta pasta"
             >
-              <span>{folder.icon ?? '📁'}</span>
+              {renderFolderIcon(folder, 'tabletop-library-folder-card__icon')}
               {isRenaming ? (
                 <input
                   autoFocus
@@ -467,14 +614,14 @@ export function TabletopNpcLibrary({
                         onClick={() => onMoveFolder(folder.id, 'up')}
                         type="button"
                       >
-                        ↑
+                        Subir
                       </button>
                       <button
                         className="button button--compact"
                         onClick={() => onMoveFolder(folder.id, 'down')}
                         type="button"
                       >
-                        ↓
+                        Descer
                       </button>
                       <button
                         className="button button--compact"
@@ -502,8 +649,13 @@ export function TabletopNpcLibrary({
         {selectedCharacters.map((character) => {
           const model = getCharacterSheetModel(character)
           const initials = buildInitials(model.nome)
-          const isActive = activeCharacterIds.includes(character.id)
-          const typeLabel = character.tipo === 'player' ? 'Player' : 'NPC'
+          const activeInstances = activeCharacterIds.filter(
+            (characterId) => characterId === character.id,
+          ).length
+          const isActive = activeInstances > 0
+          const isMob = character.tipo === 'mob'
+          const typeLabel =
+            character.tipo === 'player' ? 'Player' : character.tipo === 'mob' ? 'Mob' : 'NPC'
 
           return (
             <article
@@ -520,7 +672,7 @@ export function TabletopNpcLibrary({
                     <img
                       alt={model.nome}
                       className="tabletop-library-npc__portrait-image"
-                      src={model.avatarUrl}
+                      src={resolveRuntimeAssetUrl(model.avatarUrl)}
                     />
                   ) : (
                     <div
@@ -544,11 +696,15 @@ export function TabletopNpcLibrary({
               <div className="tabletop-library-card__actions">
                 <button
                   className={`button${isActive ? '' : ' button--primary'}`}
-                  disabled={isActive}
+                  disabled={isActive && !isMob}
                   onClick={() => onSpawn(character.id)}
                   type="button"
                 >
-                  {isActive ? 'Ja na cena' : 'Spawnar'}
+                  {isMob && isActive
+                    ? `Spawnar +1 (${activeInstances})`
+                    : isActive
+                      ? 'Ja na cena'
+                      : 'Spawnar'}
                 </button>
                 {isActive ? (
                   <button
@@ -556,7 +712,7 @@ export function TabletopNpcLibrary({
                     onClick={() => onRemoveFromScene(character.id)}
                     type="button"
                   >
-                    Remover
+                    {isMob ? 'Remover 1' : 'Remover'}
                   </button>
                 ) : null}
                 <button
@@ -575,6 +731,58 @@ export function TabletopNpcLibrary({
           )
         })}
       </div>
+
+      {folderContextMenu ? (() => {
+        const folder = effectiveFolders.find((item) => item.id === folderContextMenu.folderId)
+
+        if (!folder) {
+          return null
+        }
+
+        const itemCount = getFolderItemCount(folder.id, effectiveFolders, characterFolderIds)
+        const canDeleteFolder = !folder.isVirtual && itemCount === 0
+        const canRenameVirtualFaction =
+          Boolean(onRenameVirtualFaction) && isVirtualFactionFolderId(folder.id) && !folder.factionId
+
+        return (
+          <div
+            className="tabletop-library-folder-menu"
+            onClick={(event) => event.stopPropagation()}
+            role="menu"
+            style={{
+              left: folderContextMenu.x,
+              top: folderContextMenu.y,
+            }}
+          >
+            <button onClick={() => setSelectedFolderId(folder.id)} type="button">
+              Abrir pasta
+            </button>
+            <button
+              disabled={folder.isVirtual && !canRenameVirtualFaction}
+              onClick={() =>
+                canRenameVirtualFaction ? renameVirtualFaction(folder) : beginRenameFolder(folder)
+              }
+              type="button"
+            >
+              {canRenameVirtualFaction ? 'Renomear faccao' : 'Renomear'}
+            </button>
+            <button onClick={() => createChildFolder(folder.id)} type="button">
+              Nova subpasta
+            </button>
+            <button
+              className="tabletop-library-folder-menu__danger"
+              disabled={!canDeleteFolder}
+              onClick={() => {
+                onDeleteFolder(folder.id)
+                setFolderContextMenu(null)
+              }}
+              type="button"
+            >
+              Excluir pasta
+            </button>
+          </div>
+        )
+      })() : null}
     </section>
   )
 }

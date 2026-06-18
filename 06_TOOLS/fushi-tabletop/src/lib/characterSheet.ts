@@ -1,4 +1,5 @@
 import type {
+  CharacterActionAutomation,
   CharacterDescription,
   CharacterFeatureDetail,
   CharacterInventoryItem,
@@ -32,6 +33,94 @@ function buildInventoryDetails(items: string[]): CharacterInventoryItem[] {
   }))
 }
 
+function cloneFeatureAutomation(
+  automation?: CharacterActionAutomation,
+): CharacterActionAutomation | undefined {
+  if (!automation) {
+    return undefined
+  }
+
+  return {
+    ...automation,
+    costs: automation.costs?.map((cost) => ({ ...cost })),
+    effects: automation.effects?.map((effect) => ({ ...effect })),
+    roll: automation.roll ? { ...automation.roll } : undefined,
+    tags: automation.tags ? [...automation.tags] : undefined,
+  }
+}
+
+function cloneFeatureDetail(item: CharacterFeatureDetail): CharacterFeatureDetail {
+  return {
+    ...item,
+    automation: cloneFeatureAutomation(item.automation),
+  }
+}
+
+function normalizeFeatureDetail(item: CharacterFeatureDetail): CharacterFeatureDetail {
+  const automation = cloneFeatureAutomation(item.automation)
+
+  return {
+    ...item,
+    nome: item.nome.trim(),
+    descricao: item.descricao.trim(),
+    automation: automation
+      ? {
+          ...automation,
+          activation: automation.activation?.trim() || undefined,
+          target: automation.target?.trim() || undefined,
+          range: automation.range?.trim() || undefined,
+          duration: automation.duration?.trim() || undefined,
+          limit: automation.limit?.trim() || undefined,
+          publicText: automation.publicText?.trim() || undefined,
+          gmText: automation.gmText?.trim() || undefined,
+          visualColor: automation.visualColor?.trim() || undefined,
+          tags: automation.tags?.map((tag) => tag.trim()).filter(Boolean),
+          costs: automation.costs
+            ?.map((cost) => ({
+              ...cost,
+              amount: Math.max(0, Math.floor(cost.amount)),
+              label: cost.label?.trim() || undefined,
+            }))
+            .filter((cost) => cost.amount > 0),
+          effects: automation.effects
+            ?.map((effect) => {
+              if (effect.type === 'resource') {
+                return {
+                  ...effect,
+                  amount: Math.trunc(effect.amount),
+                  label: effect.label?.trim() || undefined,
+                  target: effect.target ?? 'self',
+                }
+              }
+
+              return {
+                ...effect,
+                label: effect.label?.trim() || undefined,
+                mode: effect.mode ?? 'add',
+                status: effect.status.trim(),
+                target: effect.target ?? 'self',
+              }
+            })
+            .filter((effect) =>
+              effect.type === 'resource'
+                ? effect.amount !== 0
+                : Boolean(effect.status.trim()),
+            ),
+          roll: automation.roll
+            ? {
+                ...automation.roll,
+                quantidadeDados: Math.max(1, Math.floor(automation.roll.quantidadeDados)),
+                tipoDado: Math.max(2, Math.floor(automation.roll.tipoDado)),
+                bonus: automation.roll.bonus ?? 0,
+                contexto: automation.roll.contexto?.trim() || undefined,
+                visualColor: automation.roll.visualColor?.trim() || undefined,
+              }
+            : undefined,
+        }
+      : undefined,
+  }
+}
+
 export function getCharacterDescription(
   character: CharacterSheet,
 ): CharacterDescription {
@@ -57,7 +146,6 @@ export function prepareCharacterForEditing(character: CharacterSheet): Character
     ...character,
     avatarUrl: character.avatarUrl ?? '',
     tokenImageUrl: character.tokenImageUrl ?? '',
-    topdownImageUrl: character.topdownImageUrl ?? '',
     tokenSize: character.tokenSize ?? 1,
     jogador: character.jogador ?? '',
     classe: character.classe ?? '',
@@ -73,9 +161,9 @@ export function prepareCharacterForEditing(character: CharacterSheet): Character
     proficiencias: [...(character.proficiencias ?? [])],
     habilidadesDetalhadas:
       character.habilidadesDetalhadas && character.habilidadesDetalhadas.length > 0
-        ? character.habilidadesDetalhadas.map((item) => ({ ...item }))
+        ? character.habilidadesDetalhadas.map(cloneFeatureDetail)
         : buildFeatureDetails(character.habilidades),
-    rituais: (character.rituais ?? []).map((item) => ({ ...item })),
+    rituais: (character.rituais ?? []).map(cloneFeatureDetail),
     inventarioDetalhado:
       character.inventarioDetalhado && character.inventarioDetalhado.length > 0
         ? character.inventarioDetalhado.map((item) => ({
@@ -117,7 +205,6 @@ export function getCharacterSheetModel(character: CharacterSheet) {
     ...character,
     avatarUrl: character.avatarUrl?.trim() ?? '',
     tokenImageUrl: character.tokenImageUrl?.trim() ?? '',
-    topdownImageUrl: character.topdownImageUrl?.trim() ?? '',
     tokenSize: character.tokenSize ?? 1,
     jogador: character.jogador?.trim() || 'Sem jogador',
     classe: character.classe?.trim() || 'Sem classe',
@@ -151,7 +238,6 @@ export function createEmptyCharacter(factionId: string): CharacterSheet {
     nome: 'Novo personagem',
     avatarUrl: '',
     tokenImageUrl: '',
-    topdownImageUrl: '',
     tokenSize: 1,
     jogador: '',
     classe: '',
@@ -235,9 +321,6 @@ export function normalizeCharacterSheet(draft: CharacterSheet): CharacterSheet {
     tokenImageUrl: draft.tokenImageUrl?.trim()
       ? draft.tokenImageUrl.trim()
       : undefined,
-    topdownImageUrl: draft.topdownImageUrl?.trim()
-      ? draft.topdownImageUrl.trim()
-      : undefined,
     tokenSize:
       draft.tokenSize === 2 || draft.tokenSize === 3 ? draft.tokenSize : 1,
     jogador: editableDraft.jogador?.trim() || undefined,
@@ -260,18 +343,10 @@ export function normalizeCharacterSheet(draft: CharacterSheet): CharacterSheet {
       .map((item) => item.nome.trim())
       .filter(Boolean),
     habilidadesDetalhadas: detailedSkills
-      .map((item) => ({
-        ...item,
-        nome: item.nome.trim(),
-        descricao: item.descricao.trim(),
-      }))
+      .map(normalizeFeatureDetail)
       .filter((item) => item.nome),
     rituais: rituals
-      .map((item) => ({
-        ...item,
-        nome: item.nome.trim(),
-        descricao: item.descricao.trim(),
-      }))
+      .map(normalizeFeatureDetail)
       .filter((item) => item.nome),
     inventario: inventory
       .map((item) => item.nome.trim())

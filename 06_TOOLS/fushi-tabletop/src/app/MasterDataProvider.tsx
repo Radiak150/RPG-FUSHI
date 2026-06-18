@@ -2,7 +2,9 @@ import {
   type PropsWithChildren,
   startTransition,
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { mockMasterRepository } from '../data/repositories/mockMasterRepository'
@@ -16,14 +18,18 @@ import {
   readMasterWorkspace,
   writeMasterWorkspace,
 } from '../lib/masterWorkspace'
+import { useMultiplayer } from '../hooks/useMultiplayer'
 import { MasterDataContext, type MasterDataStatus } from './MasterDataContext'
 
 export function MasterDataProvider({ children }: PropsWithChildren) {
+  const { connectionStatus, publicState } = useMultiplayer()
   const [status, setStatus] = useState<MasterDataStatus>('loading')
   const [baseData, setBaseData] = useState<MasterPanelData | null>(null)
   const [workspace, setWorkspace] = useState<ReturnType<
     typeof readMasterWorkspace
   > | null>(null)
+  const skipNextWorkspaceSaveRef = useRef(false)
+  const latestWorkspaceRef = useRef<ReturnType<typeof readMasterWorkspace> | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const data = useMemo(() => {
@@ -31,8 +37,41 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
       return null
     }
 
-    return mergeMasterPanelData(baseData, workspace)
-  }, [baseData, workspace])
+    const mergedData = mergeMasterPanelData(baseData, workspace)
+
+    if (connectionStatus !== 'connected' || !Array.isArray(publicState?.characters)) {
+      return mergedData
+    }
+
+    const charactersById = new Map(
+      mergedData.characters.items.map((character) => [character.id, character]),
+    )
+
+    publicState.characters.forEach((character) => {
+      if (!character || typeof character !== 'object') {
+        return
+      }
+
+      const candidate = character as Partial<CharacterSheet>
+
+      if (typeof candidate.id !== 'string' || !candidate.id) {
+        return
+      }
+
+      charactersById.set(candidate.id, {
+        ...(charactersById.get(candidate.id) ?? {}),
+        ...candidate,
+      } as CharacterSheet)
+    })
+
+    return {
+      ...mergedData,
+      characters: {
+        ...mergedData.characters,
+        items: Array.from(charactersById.values()),
+      },
+    }
+  }, [baseData, connectionStatus, publicState, workspace])
 
   async function load() {
     setStatus('loading')
@@ -66,13 +105,67 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
     })
   }, [])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    latestWorkspaceRef.current = workspace
+
     if (!workspace) {
+      return
+    }
+
+    if (skipNextWorkspaceSaveRef.current) {
+      skipNextWorkspaceSaveRef.current = false
       return
     }
 
     writeMasterWorkspace(workspace)
   }, [workspace])
+
+  useEffect(() => {
+    function flushWorkspaceBeforeClose() {
+      if (latestWorkspaceRef.current) {
+        writeMasterWorkspace(latestWorkspaceRef.current)
+      }
+    }
+
+    window.addEventListener('beforeunload', flushWorkspaceBeforeClose)
+
+    return () => {
+      window.removeEventListener('beforeunload', flushWorkspaceBeforeClose)
+      flushWorkspaceBeforeClose()
+    }
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = window.fushiDesktop?.onStorageChanged((event) => {
+      if (event.name !== 'workspace') {
+        return
+      }
+
+      skipNextWorkspaceSaveRef.current = true
+      void load()
+    })
+
+    return () => {
+      unsubscribe?.()
+    }
+  }, [])
+
+  function updateWorkspaceState(
+    updater: (
+      currentWorkspace: ReturnType<typeof readMasterWorkspace> | null,
+    ) => ReturnType<typeof readMasterWorkspace> | null,
+  ) {
+    setWorkspace((currentWorkspace) => {
+      const nextWorkspace = updater(currentWorkspace)
+
+      if (nextWorkspace) {
+        latestWorkspaceRef.current = nextWorkspace
+        writeMasterWorkspace(nextWorkspace)
+      }
+
+      return nextWorkspace
+    })
+  }
 
   function createCharacter(character: CharacterSheet) {
     if (!workspace) {
@@ -83,7 +176,7 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
       ...character,
     }
 
-    setWorkspace((currentWorkspace) => {
+    updateWorkspaceState((currentWorkspace) => {
       if (!currentWorkspace) {
         return currentWorkspace
       }
@@ -106,7 +199,7 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
       ...character,
     }
 
-    setWorkspace((currentWorkspace) => {
+    updateWorkspaceState((currentWorkspace) => {
       if (!currentWorkspace) {
         return currentWorkspace
       }
@@ -123,7 +216,7 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
   }
 
   function deleteCharacter(characterId: string) {
-    setWorkspace((currentWorkspace) => {
+    updateWorkspaceState((currentWorkspace) => {
       if (!currentWorkspace) {
         return currentWorkspace
       }
@@ -146,7 +239,7 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
       ...campaign,
     }
 
-    setWorkspace((currentWorkspace) => {
+    updateWorkspaceState((currentWorkspace) => {
       if (!currentWorkspace) {
         return currentWorkspace
       }
@@ -163,6 +256,47 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
     return nextCampaign
   }
 
+  function mergeImportedCampaign(input: {
+    campaign: LocalCampaign
+    characters: CharacterSheet[]
+    mode: 'new' | 'replace'
+  }) {
+    updateWorkspaceState((currentWorkspace) => {
+      if (!currentWorkspace) {
+        return currentWorkspace
+      }
+
+      const charactersById = new Map(
+        currentWorkspace.characters.map((character) => [character.id, character]),
+      )
+
+      input.characters.forEach((character) => {
+        charactersById.set(character.id, { ...character })
+      })
+
+      const withoutTargetCampaign = currentWorkspace.campaigns.items.filter(
+        (campaign) => campaign.id !== input.campaign.id,
+      )
+      const nextItems =
+        input.mode === 'replace'
+          ? currentWorkspace.campaigns.items.map((campaign) =>
+              campaign.id === input.campaign.id ? input.campaign : campaign,
+            )
+          : [input.campaign, ...withoutTargetCampaign]
+
+      return {
+        ...currentWorkspace,
+        characters: Array.from(charactersById.values()),
+        campaigns: {
+          activeCampaignId: input.campaign.id,
+          items: nextItems.some((campaign) => campaign.id === input.campaign.id)
+            ? nextItems
+            : [input.campaign, ...nextItems],
+        },
+      }
+    })
+  }
+
   function updateCampaign(campaign: LocalCampaign) {
     if (!workspace) {
       return null
@@ -172,7 +306,7 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
       ...campaign,
     }
 
-    setWorkspace((currentWorkspace) => {
+    updateWorkspaceState((currentWorkspace) => {
       if (!currentWorkspace) {
         return currentWorkspace
       }
@@ -192,7 +326,7 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
   }
 
   function deleteCampaign(campaignId: string) {
-    setWorkspace((currentWorkspace) => {
+    updateWorkspaceState((currentWorkspace) => {
       if (!currentWorkspace) {
         return currentWorkspace
       }
@@ -216,7 +350,7 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
   }
 
   function setActiveCampaign(campaignId: string) {
-    setWorkspace((currentWorkspace) => {
+    updateWorkspaceState((currentWorkspace) => {
       if (
         !currentWorkspace ||
         !currentWorkspace.campaigns.items.some(
@@ -247,6 +381,7 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
         updateCharacter,
         deleteCharacter,
         createCampaign,
+        mergeImportedCampaign,
         updateCampaign,
         deleteCampaign,
         setActiveCampaign,

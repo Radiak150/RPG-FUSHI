@@ -15,7 +15,7 @@
 ## Inicio da campanha
 
 - Todos comecam com 1 em cada atributo.
-- A sessao 01 comeca em Tier 0.
+- A sessao 01 comeca antes do Nivel de Poder Basico, no corpo recem-nascido/fraco.
 - Apos o combate dos lobos, cada consciencia ganha +1 atributo.
 - Ate o fim da primeira sessao ou inicio da segunda, cada consciencia deve liberar +4 atributos distribuiveis.
 - Pericias iniciais: 5 pericias treinadas (+5).
@@ -23,37 +23,38 @@
 
 ## Defesa e reacao
 
-- Defesa base humanoide = 10 + Agilidade + equipamento + habilidades.
-- Esquiva = Defesa + Reflexos.
-- Bloqueio reduz dano pela metade.
-- Esquiva evita todo dano se funcionar.
-- Cada consciencia pode reagir 1 vez por turno inimigo.
+- CA base = valor da ficha/equipamento/Nivel de Poder.
+- Esquiva = CA base + Agilidade + Reflexos.
+- Bloqueio reduz metade da CA base do dano recebido.
+- Contra-ataque usa CA base; se o ataque inimigo nao alcancar a CA base, o defensor contra-ataca.
+- Cada consciencia pode escolher apenas 1 reacao por turno: Bloqueio, Esquiva ou Contra-ataque.
 - A reacao volta quando a iniciativa retorna para aquela consciencia.
 
 ## Ataque coreografado / multi-hit
 
 - Ataque normal usa o atributo como quantidade de d20 e pega o melhor.
-- Se quiser atacar mais vezes no mesmo turno, sacrifica qualidade.
+- Se quiser aumentar dano no mesmo ataque, sacrifica dados de acerto.
 - Exemplo com Forca 3:
-  - 1 ataque: 3d20 pega o melhor
-  - 2 ataques: 2d20 pega o pior
-  - 3 ataques: 1d20
-  - 4 ataques: 2d20 pega o pior, se a regra de esforco extremo for liberada depois
+  - sem coreografia: 3d20 pega o melhor; dano base
+  - sacrifica 1 dado: 2d20 pega o melhor; +1 dado de dano
+  - sacrifica 2 dados: 1d20; +2 dados de dano
+  - sacrifica 3 dados: 3d20 pega o pior; +3 dados de dano
+  - sacrifica 4+ dados: rola a quantidade sacrificada e pega o pior; continua somando dados de dano
 - Essa regra representa coreografia, brutalidade e risco.
 
 ## Dificuldade
 
-- Facil: inimigo abaixo do tier do grupo.
-- Medio: inimigo igual ao tier do grupo.
-- Dificil: inimigo 1 tier acima.
-- Boss: inimigo 2+ tiers acima ou com mecanica especial.
+- Facil: inimigo abaixo do Nivel de Poder do grupo.
+- Medio: inimigo igual ao Nivel de Poder do grupo.
+- Dificil: inimigo 1 Nivel de Poder acima.
+- Boss: inimigo 2+ Niveis de Poder acima ou com mecanica especial.
 
-## Escala inicial de poder
+## Escala inicial de poder antiga
 
-- Tier 0: Corpo recem-nascido / fraco
-- Tier 1: Humano comum treinado
-- Tier 2: Usuario iniciante de FUSHI
-- Tier 3: Usuario competente
-- Tier 4: Usuario forte
-- Tier 5: Elite / chefe importante
-- Tier 6+: Boss / evento especial
+Esta escala virou legado. Para regra nova, usar sempre `Niveis de Poder`:
+
+- Inicial / corpo recem-nascido.
+- Basico.
+- Avancado.
+- Ascensao.
+- Cataclisma.

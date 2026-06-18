@@ -6,6 +6,7 @@ import {
   readProductPreferences,
   writeProductPreferences,
   type ThemeMode,
+  type VisualQualityMode,
 } from '../lib/productPreferences'
 
 export function ProductPreferencesProvider({
@@ -21,10 +22,21 @@ export function ProductPreferencesProvider({
     document.documentElement.dataset.theme = preferences.theme
   }, [preferences.theme])
 
+  useEffect(() => {
+    document.documentElement.dataset.visualQuality = preferences.visualQuality
+  }, [preferences.visualQuality])
+
   function setTheme(theme: ThemeMode) {
     setPreferences((currentPreferences) => ({
       ...currentPreferences,
       theme,
+    }))
+  }
+
+  function setVisualQuality(visualQuality: VisualQualityMode) {
+    setPreferences((currentPreferences) => ({
+      ...currentPreferences,
+      visualQuality,
     }))
   }
 
@@ -35,13 +47,24 @@ export function ProductPreferencesProvider({
     }))
   }
 
+  function setShowPerformanceOverlay(value: boolean) {
+    setPreferences((currentPreferences) => ({
+      ...currentPreferences,
+      showPerformanceOverlay: value,
+    }))
+  }
+
   return (
     <ProductPreferencesContext.Provider
       value={{
         theme: preferences.theme,
+        visualQuality: preferences.visualQuality,
         showModuleDescriptions: preferences.showModuleDescriptions,
+        showPerformanceOverlay: preferences.showPerformanceOverlay,
         setTheme,
+        setVisualQuality,
         setShowModuleDescriptions,
+        setShowPerformanceOverlay,
       }}
     >
       {children}

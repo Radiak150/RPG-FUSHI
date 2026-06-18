@@ -18,13 +18,29 @@ export function TabletopWeatherOverlay({
             ? 0.9 + (index % 5) * 0.14
             : runtime.variant === 'snow'
               ? 3.2 + (index % 5) * 0.4
-              : 4.2 + (index % 6) * 0.5
+              : runtime.variant === 'wind'
+                ? 2.8 + (index % 5) * 0.22
+                : runtime.variant === 'leaves'
+                  ? 5 + (index % 5) * 0.34
+                  : runtime.variant === 'ash'
+                    ? 3.8 + (index % 6) * 0.28
+                    : runtime.variant === 'mist'
+                      ? 6.4 + (index % 5) * 0.42
+                      : 4.2 + (index % 6) * 0.5
         const size =
           runtime.variant === 'rain'
             ? 1 + (index % 2)
             : runtime.variant === 'snow'
               ? 3 + (index % 4)
-              : 5 + (index % 5)
+              : runtime.variant === 'wind'
+                ? 16 + (index % 5) * 4
+                : runtime.variant === 'leaves'
+                  ? 5 + (index % 5)
+                  : runtime.variant === 'ash'
+                    ? 2 + (index % 4)
+                    : runtime.variant === 'mist'
+                      ? 18 + (index % 6) * 3
+                      : 5 + (index % 5)
 
         return {
           id: `${runtime.id}-${index}`,

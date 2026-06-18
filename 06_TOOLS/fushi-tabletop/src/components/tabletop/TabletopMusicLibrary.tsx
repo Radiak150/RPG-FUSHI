@@ -1,7 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
 import type { TabletopMediaAsset } from '../../data/types'
 import { uploadPhysicalAsset } from '../../lib/physicalAssets'
-import type { TabletopLibraryFolder } from '../../lib/tabletopLibraryState'
+import type {
+  TabletopLibraryFolder,
+  TabletopMusicFavoritePreset,
+} from '../../lib/tabletopLibraryState'
 
 export interface TabletopMusicLibraryItem extends TabletopMediaAsset {
   libraryType: 'music' | 'ambience'
@@ -23,11 +26,14 @@ export interface TabletopMixerTrackState {
   currentTime: number
   duration: number
   status: TabletopMixerTrackStatus
+  updatedAt: number
   volume: number
 }
 
 interface TabletopMusicLibraryProps {
+  campaignId?: string
   favoriteTrackIds: string[]
+  favoritePresets: TabletopMusicFavoritePreset[]
   folders: TabletopLibraryFolder[]
   mixerTracks: Record<string, TabletopMixerTrackState>
   statusMessage: string
@@ -42,8 +48,13 @@ interface TabletopMusicLibraryProps {
   onMoveFolder: (folderId: string, direction: 'up' | 'down') => void
   onPauseAll: () => void
   onPauseTrack: (trackId: string) => void
+  onApplyFavoritePreset: (presetId: string) => void
+  onDeleteFavoritePreset: (presetId: string) => void
   onPlayFavorites: () => void
+  onPlayFavoritePreset: (presetId: string) => void
   onPlayTrack: (track: TabletopMusicLibraryItem) => void
+  onRenameFavoritePreset: (presetId: string, name: string) => void
+  onSaveFavoritePreset: (name: string) => void
   onRenameFolder: (folderId: string, name: string) => void
   onSeekTrack: (trackId: string, time: number) => void
   onStopAll: () => void
@@ -62,8 +73,21 @@ interface MusicDragPayload {
 }
 
 const ROOT_FOLDER_ID = ''
+const ACTIVE_FOLDER_ID = 'virtual:music:ativos'
+const FAVORITES_FOLDER_ID = 'virtual:music:favoritos'
 const LIBRARY_DRAG_DATA_TYPE = 'application/x-fushi-library-item'
 const DEFAULT_TRACK_VOLUME = 0.35
+const AUDIO_CATEGORY_OPTIONS = [
+  'efeitos de trilha',
+  'Musicas de trilha',
+  'Musicas Cinematicas',
+  'Musicas para batalhas',
+  'Musicas temas',
+  'Musicas para Expansao de dominio e habilidades especiais',
+  'Efeitos sonoros de impactos narrativos',
+]
+const AUDIO_FILE_ACCEPT =
+  'audio/*,video/*,.mp3,.m4a,.ogg,.wav,.flac,.aac,.mp4,.webm,.mov,.mkv'
 
 function slugify(value: string) {
   return value
@@ -164,6 +188,28 @@ function formatDuration(seconds: number) {
   return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`
 }
 
+function readBlobAsDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onerror = () => reject(new Error('Nao foi possivel ler a midia local.'))
+    reader.onload = () => resolve(String(reader.result ?? ''))
+    reader.readAsDataURL(blob)
+  })
+}
+
+function isVideoFile(file: File) {
+  const name = file.name.toLowerCase()
+
+  return (
+    file.type.startsWith('video/') ||
+    name.endsWith('.mp4') ||
+    name.endsWith('.webm') ||
+    name.endsWith('.mov') ||
+    name.endsWith('.mkv')
+  )
+}
+
 function getTrackState(
   trackId: string,
   mixerTracks: Record<string, TabletopMixerTrackState>,
@@ -174,6 +220,7 @@ function getTrackState(
       currentTime: 0,
       duration: 0,
       status: 'stopped',
+      updatedAt: Date.now(),
       volume: trackVolumes[trackId] ?? DEFAULT_TRACK_VOLUME,
     }
   )
@@ -211,7 +258,9 @@ function readDragPayload(event: React.DragEvent): MusicDragPayload | null {
 }
 
 export function TabletopMusicLibrary({
+  campaignId,
   favoriteTrackIds,
+  favoritePresets,
   folders,
   mixerTracks,
   statusMessage,
@@ -226,8 +275,13 @@ export function TabletopMusicLibrary({
   onMoveFolder,
   onPauseAll,
   onPauseTrack,
+  onApplyFavoritePreset,
+  onDeleteFavoritePreset,
   onPlayFavorites,
+  onPlayFavoritePreset,
   onPlayTrack,
+  onRenameFavoritePreset,
+  onSaveFavoritePreset,
   onRenameFolder,
   onSeekTrack,
   onStopAll,
@@ -238,6 +292,7 @@ export function TabletopMusicLibrary({
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [selectedFolderId, setSelectedFolderId] = useState(ROOT_FOLDER_ID)
   const [newFolderName, setNewFolderName] = useState('')
+  const [newPresetName, setNewPresetName] = useState('')
   const [renamingFolderId, setRenamingFolderId] = useState('')
   const [renamingFolderName, setRenamingFolderName] = useState('')
   const [isCreatingTrack, setIsCreatingTrack] = useState(false)
@@ -245,7 +300,7 @@ export function TabletopMusicLibrary({
   const [activeScrubTrackId, setActiveScrubTrackId] = useState('')
   const [scrubValues, setScrubValues] = useState<Record<string, number>>({})
   const [createForm, setCreateForm] = useState<TabletopMusicCreateInput>({
-    category: 'MSC',
+    category: 'Musicas de trilha',
     folderId: ROOT_FOLDER_ID,
     libraryType: 'music',
     name: '',
@@ -258,27 +313,51 @@ export function TabletopMusicLibrary({
     ...virtualFolders,
     ...(folders.filter((folder) => folder.category === 'music') as FolderView[]),
   ]
+  const isSelectedSpecialView =
+    selectedFolderId === ACTIVE_FOLDER_ID || selectedFolderId === FAVORITES_FOLDER_ID
   const currentFolderId =
+    isSelectedSpecialView ||
     selectedFolderId === ROOT_FOLDER_ID ||
     effectiveFolders.some((folder) => folder.id === selectedFolderId)
       ? selectedFolderId
       : ROOT_FOLDER_ID
-  const breadcrumb = buildBreadcrumb(effectiveFolders, currentFolderId)
+  const isActiveView = currentFolderId === ACTIVE_FOLDER_ID
+  const isFavoritesView = currentFolderId === FAVORITES_FOLDER_ID
+  const isSpecialView = isActiveView || isFavoritesView
+  const breadcrumb = isSpecialView
+    ? [
+        {
+          id: currentFolderId,
+          category: 'music' as const,
+          parentId: ROOT_FOLDER_ID,
+          name: isActiveView ? 'Ativos' : 'Favoritos',
+          icon: isActiveView ? 'ON' : '*',
+          isVirtual: true,
+        },
+      ]
+    : buildBreadcrumb(effectiveFolders, currentFolderId)
   const directFolders = effectiveFolders
-    .filter((folder) => folder.parentId === currentFolderId)
+    .filter((folder) => !isSpecialView && folder.parentId === currentFolderId)
     .sort(compareFolders)
   const trackFolderIds = tracks.map((track) => resolveTrackFolderId(track, trackFolders))
-  const selectedTracks = tracks
-    .filter((track) => resolveTrackFolderId(track, trackFolders) === currentFolderId)
+  const activeTracks = tracks
+    .filter((track) => getTrackState(track.id, mixerTracks, trackVolumes).status !== 'stopped')
     .sort((a, b) => a.name.localeCompare(b.name))
   const favoriteTracks = favoriteTrackIds
     .map((trackId) => tracks.find((track) => track.id === trackId))
     .filter((track): track is TabletopMusicLibraryItem => Boolean(track))
+  const selectedTracks = (
+    isActiveView
+      ? activeTracks
+      : isFavoritesView
+        ? favoriteTracks
+        : tracks.filter((track) => resolveTrackFolderId(track, trackFolders) === currentFolderId)
+  ).sort((a, b) => a.name.localeCompare(b.name))
 
   function handleCreateFolder() {
     const trimmedName = newFolderName.trim()
 
-    if (!trimmedName) {
+    if (!trimmedName || isSpecialView) {
       return
     }
 
@@ -298,6 +377,23 @@ export function TabletopMusicLibrary({
     setRenamingFolderName('')
   }
 
+  function handleSaveFavoritePreset() {
+    const trimmedName = newPresetName.trim() || `Favoritos ${favoritePresets.length + 1}`
+
+    onSaveFavoritePreset(trimmedName)
+    setNewPresetName('')
+  }
+
+  function handleRenameFavoritePreset(preset: TabletopMusicFavoritePreset) {
+    const nextName = window.prompt('Nome do preset de favoritos', preset.name)?.trim()
+
+    if (!nextName) {
+      return
+    }
+
+    onRenameFavoritePreset(preset.id, nextName)
+  }
+
   async function handleTrackFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
 
@@ -308,18 +404,53 @@ export function TabletopMusicLibrary({
     setUploadStatus('Carregando audio...')
 
     try {
-      const uploadedAsset = await uploadPhysicalAsset(file, {
-        category: 'audio',
-        contentType: file.type || 'application/octet-stream',
-        filename: file.name,
-      })
+      const isVideo = isVideoFile(file)
+      let uploadedAsset = null as Awaited<ReturnType<typeof uploadPhysicalAsset>> | null
+
+      if (isVideo && window.fushiDesktop?.extractAudioFromMedia) {
+        setUploadStatus('Extraindo audio do video...')
+        const extractedAsset = await window.fushiDesktop.extractAudioFromMedia(campaignId, {
+          contentType: file.type || 'application/octet-stream',
+          dataUrl: await readBlobAsDataUrl(file),
+          filename: file.name,
+        })
+
+        if (extractedAsset.ok && extractedAsset.url && extractedAsset.filename) {
+          uploadedAsset = {
+            ok: true,
+            category: 'audio',
+            contentType: extractedAsset.contentType ?? 'audio/mp4',
+            filename: extractedAsset.filename,
+            size: extractedAsset.size ?? file.size,
+            storagePath: extractedAsset.storagePath ?? extractedAsset.url,
+            url: extractedAsset.url,
+          }
+        } else {
+          setUploadStatus(
+            `${extractedAsset.error ?? 'Nao foi possivel extrair audio.'} Salvando video como fonte de audio.`,
+          )
+        }
+      }
+
+      if (!uploadedAsset) {
+        uploadedAsset = await uploadPhysicalAsset(file, {
+          campaignId,
+          category: 'audio',
+          contentType: file.type || 'application/octet-stream',
+          filename: file.name,
+        })
+      }
 
       setCreateForm((current) => ({
         ...current,
         name: current.name || file.name.replace(/\.[^.]+$/, ''),
         source: uploadedAsset.url,
       }))
-      setUploadStatus(`Audio salvo em pasta fisica: ${file.name}`)
+      setUploadStatus(
+        isVideo
+          ? `Audio pronto para tocar no MSC: ${uploadedAsset.filename}`
+          : `Audio salvo em pasta fisica: ${file.name}`,
+      )
       window.setTimeout(() => setUploadStatus(''), 2400)
     } catch (error) {
       setUploadStatus(error instanceof Error ? error.message : 'Erro ao salvar audio')
@@ -338,14 +469,14 @@ export function TabletopMusicLibrary({
 
     onCreateTrack({
       ...createForm,
-      folderId: currentFolderId,
-      libraryType: 'music',
+      folderId: isSpecialView ? ROOT_FOLDER_ID : currentFolderId,
+      libraryType: createForm.libraryType,
       name: createForm.name.trim(),
       summary: createForm.summary.trim() || 'Faixa local adicionada pelo mestre.',
-      category: createForm.category.trim() || 'MSC',
+      category: createForm.category.trim() || 'Musicas de trilha',
     })
     setCreateForm({
-      category: 'MSC',
+      category: 'Musicas de trilha',
       folderId: ROOT_FOLDER_ID,
       libraryType: 'music',
       name: '',
@@ -492,8 +623,33 @@ export function TabletopMusicLibrary({
         </div>
         <div className="tabletop-library__hero-actions">
           <div className="tag-row">
-            <span className="tag">{tracks.length} sons</span>
-            <span className="tag">{favoriteTracks.length} favoritos</span>
+            <button
+              className={`tag tabletop-library__quick-filter${
+                currentFolderId === ROOT_FOLDER_ID ? ' tabletop-library__quick-filter--active' : ''
+              }`}
+              onClick={() => setSelectedFolderId(ROOT_FOLDER_ID)}
+              type="button"
+            >
+              {tracks.length} sons
+            </button>
+            <button
+              className={`tag tabletop-library__quick-filter${
+                isFavoritesView ? ' tabletop-library__quick-filter--active' : ''
+              }`}
+              onClick={() => setSelectedFolderId(FAVORITES_FOLDER_ID)}
+              type="button"
+            >
+              {favoriteTracks.length} favoritos
+            </button>
+            <button
+              className={`tag tabletop-library__quick-filter${
+                isActiveView ? ' tabletop-library__quick-filter--active' : ''
+              }`}
+              onClick={() => setSelectedFolderId(ACTIVE_FOLDER_ID)}
+              type="button"
+            >
+              {activeTracks.length} ativos
+            </button>
           </div>
           <button className="button" onClick={() => setIsMixerOpen((current) => !current)} type="button">
             {isMixerOpen ? 'Fechar mix tecnico' : 'Abrir mix tecnico'}
@@ -521,6 +677,74 @@ export function TabletopMusicLibrary({
                 Stop todos
               </button>
             </div>
+          </div>
+          <div className="tabletop-music-presets">
+            <div className="tabletop-music-presets__save">
+              <input
+                className="field__input"
+                onChange={(event) => setNewPresetName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    handleSaveFavoritePreset()
+                  }
+                }}
+                placeholder={`Nome do preset ${favoritePresets.length + 1}`}
+                value={newPresetName}
+              />
+              <button
+                className="button"
+                disabled={favoriteTracks.length === 0}
+                onClick={handleSaveFavoritePreset}
+                title={
+                  favoriteTracks.length === 0
+                    ? 'Favorite pelo menos um som antes de salvar um preset'
+                    : 'Salvar favoritos atuais como preset'
+                }
+                type="button"
+              >
+                Salvar preset
+              </button>
+            </div>
+            {favoritePresets.length > 0 ? (
+              <div className="tabletop-music-presets__list">
+                {favoritePresets.map((preset) => (
+                  <article className="tabletop-music-preset" key={preset.id}>
+                    <div>
+                      <strong>{preset.name}</strong>
+                      <span>{preset.trackIds.length} som(ns)</span>
+                    </div>
+                    <button
+                      className="button button--compact button--primary"
+                      onClick={() => onPlayFavoritePreset(preset.id)}
+                      type="button"
+                    >
+                      Play
+                    </button>
+                    <button
+                      className="button button--compact"
+                      onClick={() => onApplyFavoritePreset(preset.id)}
+                      type="button"
+                    >
+                      Usar
+                    </button>
+                    <button
+                      className="button button--compact"
+                      onClick={() => handleRenameFavoritePreset(preset)}
+                      type="button"
+                    >
+                      Nome
+                    </button>
+                    <button
+                      className="button button--compact"
+                      onClick={() => onDeleteFavoritePreset(preset.id)}
+                      type="button"
+                    >
+                      Excluir
+                    </button>
+                  </article>
+                ))}
+              </div>
+            ) : null}
           </div>
           {favoriteTracks.length ? (
             <div className="tabletop-library-list">
@@ -572,20 +796,24 @@ export function TabletopMusicLibrary({
           ))}
         </div>
         <div className="tabletop-library-toolbar__actions">
-          <input
-            className="field__input tabletop-library-toolbar__input"
-            onChange={(event) => setNewFolderName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                handleCreateFolder()
-              }
-            }}
-            placeholder="Nome da pasta"
-            value={newFolderName}
-          />
-          <button className="button" onClick={handleCreateFolder} type="button">
-            + Pasta
-          </button>
+          {!isSpecialView ? (
+            <>
+              <input
+                className="field__input tabletop-library-toolbar__input"
+                onChange={(event) => setNewFolderName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    handleCreateFolder()
+                  }
+                }}
+                placeholder="Nome da pasta"
+                value={newFolderName}
+              />
+              <button className="button" onClick={handleCreateFolder} type="button">
+                + Pasta
+              </button>
+            </>
+          ) : null}
           <button
             className="button button--primary"
             onClick={() => setIsCreatingTrack((current) => !current)}
@@ -610,21 +838,42 @@ export function TabletopMusicLibrary({
               />
             </label>
             <label className="field">
+              <span>Tipo</span>
+              <select
+                className="field__input"
+                onChange={(event) =>
+                  setCreateForm((current) => ({
+                    ...current,
+                    libraryType: event.target.value as 'music' | 'ambience',
+                  }))
+                }
+                value={createForm.libraryType}
+              >
+                <option value="music">Musica</option>
+                <option value="ambience">Ambiencia/SFX</option>
+              </select>
+            </label>
+            <label className="field">
               <span>Categoria</span>
-              <input
+              <select
                 className="field__input"
                 onChange={(event) =>
                   setCreateForm((current) => ({ ...current, category: event.target.value }))
                 }
-                placeholder="acao, triste, cidade, boss..."
                 value={createForm.category}
-              />
+              >
+                {AUDIO_CATEGORY_OPTIONS.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
           <label className="field">
-            <span>Arquivo</span>
+            <span>Arquivo de audio ou video</span>
             <input
-              accept="audio/*"
+              accept={AUDIO_FILE_ACCEPT}
               className="field__input"
               onChange={handleTrackFileSelect}
               ref={fileInputRef}

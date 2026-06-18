@@ -1,0 +1,180 @@
+{
+  "appId": "com.fushi.tabletop",
+  "productName": "RPG FUSHI",
+  "detectUpdateChannel": false,
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "!dist/assets/audio/**/*",
+    "!dist/assets/ambience/**/*",
+    "!dist/assets/biomes/**/*",
+    "!dist/assets/cinematics/**/*",
+    "!dist/assets/fx/video/**/*",
+    "!dist/assets/interludes/**/*",
+    "!dist/assets/items/**/*",
+    "!dist/assets/maps/**/*",
+    "!dist/assets/mundi/**/*",
+    "!dist/assets/music/**/*",
+    "!dist/assets/objects/**/*",
+    "!dist/assets/portraits/**/*",
+    "!dist/assets/tokens/**/*",
+    "!dist/assets/transitions/**/*",
+    "!dist/assets/video/**/*",
+    "!dist/assets/videos/**/*",
+    "electron/**/*",
+    "package.json"
+  ],
+  "extraFiles": [
+    {
+      "from": "launchers",
+      "to": ".",
+      "filter": [
+        "*.cmd",
+        "*.txt"
+      ]
+    }
+  ],
+  "extraResources": [
+    {
+      "from": "public/assets/maps/base-upgrades",
+      "to": "assets/maps/base-upgrades",
+      "filter": [
+        "base-upgrades-manifest.json",
+        "**/*_topdown_thumb_640.jpg",
+        "**/*_arrival_empty.png",
+        "**/*_arrival_empty_thumb_640.jpg",
+        "**/*_arrival.png",
+        "**/*_arrival_thumb_640.jpg"
+      ]
+    },
+    {
+      "from": "public/assets/_optimized/maps/base-upgrades",
+      "to": "assets/_optimized/maps/base-upgrades",
+      "filter": [
+        "**/*_topdown.webp"
+      ]
+    },
+    {
+      "from": "public/assets/_optimized/ui/base/upgrade-webs",
+      "to": "assets/_optimized/ui/base/upgrade-webs",
+      "filter": [
+        "*.webp"
+      ]
+    },
+    {
+      "from": "public/assets/maps/planicie",
+      "to": "assets/maps/planicie",
+      "filter": [
+        "caverna-inicial/**/*",
+        "planicie_aberta.png",
+        "regiao_vila.png",
+        "trilha_sobrevivencia.png"
+      ]
+    },
+    {
+      "from": "public/assets/transitions/planicie",
+      "to": "assets/transitions/planicie"
+    },
+    {
+      "from": "public/assets/audio",
+      "to": "assets/audio"
+    },
+    {
+      "from": "public/assets/biomes/8-biomas",
+      "to": "assets/biomes/8-biomas"
+    },
+    {
+      "from": "public/assets/biomes/8-biomas-ultra",
+      "to": "assets/biomes/8-biomas-ultra"
+    },
+    {
+      "from": "public/assets/objects",
+      "to": "assets/objects",
+      "filter": [
+        "*.svg",
+        "3d/SOURCE.md",
+        "3d/inbox-1k/stone_pack.glb",
+        "3d/inbox-1k/the_sword_in_the_stone.glb"
+      ]
+    },
+    {
+      "from": "public/assets/dice-box",
+      "to": "assets/dice-box"
+    },
+    {
+      "from": "public/assets/fx",
+      "to": "assets/fx"
+    },
+    {
+      "from": "public/assets/ui",
+      "to": "assets/ui",
+      "filter": [
+        "fushi-sigil.svg",
+        "icons/**/*"
+      ]
+    },
+    {
+      "from": "public/assets/factions",
+      "to": "assets/factions"
+    }
+  ],
+  "win": {
+    "icon": "build/icon.ico",
+    "signAndEditExecutable": false,
+    "target": [
+      {
+        "target": "nsis-web",
+        "arch": [
+          "x64"
+        ]
+      },
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      {
+        "target": "dir",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "artifactName": "RPG-FUSHI-${version}-${arch}.${ext}"
+  },
+  "nsisWeb": {
+    "artifactName": "RPG-FUSHI-Web-Setup-${version}-${arch}.${ext}",
+    "oneClick": false,
+    "perMachine": false,
+    "allowElevation": true,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "deleteAppDataOnUninstall": false,
+    "shortcutName": "RPG FUSHI"
+  },
+  "nsis": {
+    "artifactName": "RPG-FUSHI-Setup-${version}-${arch}.${ext}",
+    "oneClick": false,
+    "perMachine": false,
+    "allowElevation": true,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "deleteAppDataOnUninstall": false,
+    "shortcutName": "RPG FUSHI"
+  },
+  "publish": [
+    {
+      "provider": "generic",
+      "url": "https://updates.example.invalid/rpg-fushi/win"
+    }
+  ],
+  "asar": true,
+  "asarUnpack": [
+    "node_modules/ffmpeg-static/**/*"
+  ]
+}

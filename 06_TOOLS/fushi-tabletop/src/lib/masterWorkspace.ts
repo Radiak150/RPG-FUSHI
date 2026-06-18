@@ -12,8 +12,7 @@ import type {
   MasterPanelData,
   RollConfig,
 } from '../data/types'
-
-const MASTER_WORKSPACE_STORAGE_KEY = 'fushi-tabletop:workspace:v1'
+import { storageAdapter } from './storage/storageAdapter'
 
 interface MasterWorkspaceState {
   version: 1
@@ -29,29 +28,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
-function readStorageItem(key: string) {
-  try {
-    return window.localStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function writeStorageItem(key: string, value: string) {
-  try {
-    window.localStorage.setItem(key, value)
-  } catch {
-    return
-  }
-}
-
 function isRollConfig(value: unknown): value is RollConfig {
   return (
     isRecord(value) &&
     Number.isInteger(value.quantidadeDados) &&
     Number.isInteger(value.tipoDado) &&
     (value.bonus === undefined || typeof value.bonus === 'number') &&
-    (value.modo === undefined || value.modo === 'highest' || value.modo === 'sum')
+    (value.modo === undefined ||
+      value.modo === 'highest' ||
+      value.modo === 'lowest' ||
+      value.modo === 'sum')
   )
 }
 
@@ -140,8 +126,6 @@ function isCharacterSheet(value: unknown): value is CharacterSheet {
     typeof value.nome === 'string' &&
     (value.avatarUrl === undefined || typeof value.avatarUrl === 'string') &&
     (value.tokenImageUrl === undefined || typeof value.tokenImageUrl === 'string') &&
-    (value.topdownImageUrl === undefined ||
-      typeof value.topdownImageUrl === 'string') &&
     (value.tokenSize === undefined ||
       value.tokenSize === 1 ||
       value.tokenSize === 2 ||
@@ -149,7 +133,7 @@ function isCharacterSheet(value: unknown): value is CharacterSheet {
     (value.jogador === undefined || typeof value.jogador === 'string') &&
     (value.classe === undefined || typeof value.classe === 'string') &&
     (value.origem === undefined || typeof value.origem === 'string') &&
-    (value.tipo === 'player' || value.tipo === 'npc') &&
+    (value.tipo === 'player' || value.tipo === 'npc' || value.tipo === 'mob') &&
     typeof value.faccao === 'string' &&
     typeof value.localAtual === 'string' &&
     typeof value.notas === 'string' &&
@@ -206,6 +190,80 @@ function isLocalCampaign(value: unknown): value is LocalCampaign {
   )
 }
 
+function isLikelySeedCharacterList(characters: CharacterSheet[]) {
+  const names = new Set(characters.map((character) => character.nome))
+
+  return (
+    characters.length <= 10 &&
+    (names.has('Fragmento Desperto I') ||
+      names.has('Fragmento Desperto II') ||
+      names.has('Corpo Compartilhado Inicial') ||
+      Array.from(names).some((name) => name.startsWith('NPC Placeholder')))
+  )
+}
+
+function shouldPreserveCharacterImages(character: CharacterSheet) {
+  return (
+    character.nome.trim().length > 0 &&
+    !character.nome.trim().toLowerCase().startsWith('npc placeholder')
+  )
+}
+
+function mergeCanonicalWorkspaceCharacter(
+  currentCharacter: CharacterSheet,
+  canonicalCharacter: CharacterSheet,
+): CharacterSheet {
+  const preserveImages = shouldPreserveCharacterImages(currentCharacter)
+
+  return {
+    ...cloneValue(canonicalCharacter),
+    avatarUrl:
+      preserveImages && currentCharacter.avatarUrl
+        ? currentCharacter.avatarUrl
+        : canonicalCharacter.avatarUrl,
+    tokenImageUrl:
+      preserveImages && currentCharacter.tokenImageUrl
+        ? currentCharacter.tokenImageUrl
+        : canonicalCharacter.tokenImageUrl,
+    tokenSize: currentCharacter.tokenSize ?? canonicalCharacter.tokenSize,
+    permissions: currentCharacter.permissions ?? canonicalCharacter.permissions,
+  }
+}
+
+function repairCanonicalWorkspaceCharacters(
+  characters: CharacterSheet[],
+  baseData: MasterPanelData,
+) {
+  const canonicalMaira = baseData.characters.items.find(
+    (character) => character.id === 'npc-d1',
+  )
+
+  if (!canonicalMaira || canonicalMaira.nome !== 'Maira Velan') {
+    return characters
+  }
+
+  const hasCanonicalSlot = characters.some((character) => character.id === canonicalMaira.id)
+  let hasMaira = false
+  const repairedCharacters = characters.map((character) => {
+    const normalizedName = character.nome.trim().toLowerCase()
+    const isMairaSlot =
+      character.id === canonicalMaira.id ||
+      (!hasCanonicalSlot &&
+        (normalizedName === 'maira' || normalizedName === 'maira velan'))
+
+    if (!isMairaSlot) {
+      return character
+    }
+
+    hasMaira = true
+    return mergeCanonicalWorkspaceCharacter(character, canonicalMaira)
+  })
+
+  return hasMaira
+    ? repairedCharacters
+    : [...repairedCharacters, cloneValue(canonicalMaira)]
+}
+
 function createDefaultCampaign(baseData: MasterPanelData): LocalCampaign {
   return {
     id: 'campaign-local-default',
@@ -239,24 +297,25 @@ export function createDefaultMasterWorkspace(
 export function readMasterWorkspace(
   baseData: MasterPanelData,
 ): MasterWorkspaceState {
-  const rawValue = readStorageItem(MASTER_WORKSPACE_STORAGE_KEY)
+  const parsedValue = storageAdapter.loadMasterWorkspace()
 
-  if (!rawValue) {
+  if (!parsedValue) {
     return createDefaultMasterWorkspace(baseData)
   }
 
   try {
-    const parsedValue = JSON.parse(rawValue) as unknown
-
     if (!isRecord(parsedValue) || parsedValue.version !== 1) {
       return createDefaultMasterWorkspace(baseData)
     }
 
+    const parsedCharacters = Array.isArray(parsedValue.characters)
+      ? parsedValue.characters.filter(isCharacterSheet)
+      : []
     const characters =
-      Array.isArray(parsedValue.characters) &&
-      parsedValue.characters.every(isCharacterSheet)
-        ? parsedValue.characters
+      parsedCharacters.length > 0
+        ? parsedCharacters
         : cloneValue(baseData.characters.items)
+    const repairedCharacters = repairCanonicalWorkspaceCharacters(characters, baseData)
     const parsedCampaigns = isRecord(parsedValue.campaigns)
       ? parsedValue.campaigns
       : null
@@ -277,7 +336,7 @@ export function readMasterWorkspace(
 
     return {
       version: 1,
-      characters: cloneValue(characters),
+      characters: cloneValue(repairedCharacters),
       campaigns: {
         activeCampaignId,
         items: cloneValue(items),
@@ -289,7 +348,27 @@ export function readMasterWorkspace(
 }
 
 export function writeMasterWorkspace(workspace: MasterWorkspaceState) {
-  writeStorageItem(MASTER_WORKSPACE_STORAGE_KEY, JSON.stringify(workspace))
+  const currentWorkspace = storageAdapter.loadMasterWorkspace()
+  const currentCharacters = isRecord(currentWorkspace) && Array.isArray(currentWorkspace.characters)
+    ? currentWorkspace.characters.filter(isCharacterSheet)
+    : []
+
+  if (
+    currentCharacters.length > 20 &&
+    workspace.characters.length < currentCharacters.length &&
+    isLikelySeedCharacterList(workspace.characters)
+  ) {
+    console.warn(
+      '[FUSHI workspace] Bloqueado overwrite destrutivo do elenco por seed placeholder.',
+      {
+        currentCharacters: currentCharacters.length,
+        nextCharacters: workspace.characters.length,
+      },
+    )
+    return
+  }
+
+  storageAdapter.saveMasterWorkspace(workspace)
 }
 
 export function mergeMasterPanelData(

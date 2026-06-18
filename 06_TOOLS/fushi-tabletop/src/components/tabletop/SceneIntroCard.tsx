@@ -1,4 +1,5 @@
 import type { TabletopIntroCardRuntime } from '../../lib/tabletopRuntime'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 
 interface SceneIntroCardProps {
   introCard: TabletopIntroCardRuntime
@@ -24,7 +25,7 @@ export function SceneIntroCard({
           <img
             alt={introCard.title}
             className="scene-intro-card__image"
-            src={introCard.imageSource}
+            src={resolveRuntimeAssetUrl(introCard.imageSource)}
           />
         ) : null}
 

@@ -1,0 +1,360 @@
+[
+  {
+    "changes": [],
+    "id": "npc-e1",
+    "name": "Eiran",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-317d37b0-0ef8-43cc-89cb-48383d0edc72",
+    "name": "Aureon",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-52a4bd61-9a98-4526-ad01-a40c52787230",
+    "name": "Kael",
+    "powerLevel": "Avancado",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-63f669b8-e592-4335-b255-4ec5b4b5c732",
+    "name": "Lux",
+    "powerLevel": "Avancado",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-073b29d3-5f70-4e41-95d0-e26f4a519da8",
+    "name": "Gorin",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-29c41ff7-5811-48a3-9a02-0201dab0c35a",
+    "name": "Musashi",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+    "name": "Yanzik",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+    "name": "Seraph",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-21db1e04-ce97-47d9-91ac-1765d98f8c01",
+    "name": "Velkar",
+    "powerLevel": "Avancado",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+    "name": "Ryoku",
+    "powerLevel": "Cataclisma",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-c2ec2518-b254-4ef3-8b63-7a5dfb9eb909",
+    "name": "Jaxir",
+    "powerLevel": "Avancado",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-d363865a-77b1-4415-97d6-3dad86744a40",
+    "name": "Lyssara",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-038258c8-aea8-4b52-97b6-112b21b4ad2f",
+    "name": "Kairo",
+    "powerLevel": "Avancado",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-19595965-a972-4ff9-af7e-c2d58bcd3857",
+    "name": "Elion",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-36ce8cc9-8621-48fb-9206-925e6126c5c6",
+    "name": "Arven",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-f4b53e99-7640-4a1d-852b-16951ff3b86e",
+    "name": "Varek",
+    "powerLevel": "Avancado",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-0204b270-a761-4248-9110-724c76155792",
+    "name": "Aeron",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-d2d4a2a0-7cfb-4157-b012-b10b55639dc5",
+    "name": "Sélian Velan",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+    "name": "Yor",
+    "powerLevel": "Avancado",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-dcffbf0f-fe93-4e2d-83b2-7799dfc06c03",
+    "name": "Maelra",
+    "powerLevel": "Avancado",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-3ed3206c-769e-4475-96d3-9002d6b7d8ba",
+    "name": "Veyra",
+    "powerLevel": "Avancado",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-6a172a0f-5f32-4529-b5e8-e83dbe450849",
+    "name": "Liryssa",
+    "powerLevel": "Avancado",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-c924a24e-a2e8-4227-8a51-ee815d0b0b2b",
+    "name": "Varden",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+    "name": "Nyx",
+    "powerLevel": "Avancado",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-3bb5c7d5-f6f2-410c-8934-2f2caa58c0f1",
+    "name": "Bront",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+    "name": "Morghast",
+    "powerLevel": "Ascensao",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+    "name": "Euryaleth",
+    "powerLevel": "Ascensao",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+    "name": "Vorashk",
+    "powerLevel": "Ascensao",
+    "type": "npc",
+    "warnings": [
+      "Ascensao com Vida abaixo de 250; mantido por seguranca autoral."
+    ]
+  },
+  {
+    "changes": [],
+    "id": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+    "name": "Aeronyx",
+    "powerLevel": "Ascensao",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+    "name": "Thal’Zhyr",
+    "powerLevel": "Cataclisma",
+    "type": "npc",
+    "warnings": [
+      "Cataclisma com Vida abaixo de 450; mantido por poder de fase/evento."
+    ]
+  },
+  {
+    "changes": [],
+    "id": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+    "name": "Astrael",
+    "powerLevel": "Cataclisma",
+    "type": "npc",
+    "warnings": [
+      "Cataclisma com Vida abaixo de 450; mantido por poder de fase/evento."
+    ]
+  },
+  {
+    "changes": [],
+    "id": "npc-vila-elara-vonn",
+    "name": "Elara Vonn",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "npc-vila-orian-vonn",
+    "name": "Orian Vonn",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "npc-vila-nilo-arven",
+    "name": "Nilo Arven",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "npc-d1",
+    "name": "Maira Velan",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "npc-vila-dalvo-seren",
+    "name": "Dalvo Seren",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "npc-vila-elias-norem",
+    "name": "Elias Norem",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "npc-vila-nayr-velcaris",
+    "name": "Nayr Velcaris",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "npc-vila-renji-akimura",
+    "name": "Renji Akimura",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "npc-vila-kazuo-kato",
+    "name": "Kazuo",
+    "powerLevel": "Basico",
+    "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "mob-lobo-cinzento-basico",
+    "name": "Lobo Cinzento",
+    "powerLevel": "Basico",
+    "type": "mob",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "mob-lobo-fushi-marcado",
+    "name": "Lobo Marcado por FUSHI",
+    "powerLevel": "Basico",
+    "type": "mob",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "mob-eco-liora-riacho",
+    "name": "Eco de Liora",
+    "powerLevel": "Basico",
+    "type": "mob",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "npc-lore-vhazaryon",
+    "name": "Vhazaryon",
+    "powerLevel": "Cataclisma",
+    "type": "npc",
+    "warnings": []
+  }
+]

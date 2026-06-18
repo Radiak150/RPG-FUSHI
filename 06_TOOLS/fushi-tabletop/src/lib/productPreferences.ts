@@ -1,8 +1,11 @@
 export type ThemeMode = 'obsidian' | 'mist'
+export type VisualQualityMode = 'low' | 'balanced' | 'ultra'
 
 export interface ProductPreferences {
   theme: ThemeMode
+  visualQuality: VisualQualityMode
   showModuleDescriptions: boolean
+  showPerformanceOverlay: boolean
 }
 
 const PRODUCT_PREFERENCES_STORAGE_KEY = 'fushi-tabletop:product-preferences:v1'
@@ -30,7 +33,9 @@ function writeStorageItem(key: string, value: string) {
 export function getDefaultProductPreferences(): ProductPreferences {
   return {
     theme: 'obsidian',
+    visualQuality: 'balanced',
     showModuleDescriptions: false,
+    showPerformanceOverlay: false,
   }
 }
 
@@ -50,9 +55,18 @@ export function readProductPreferences(): ProductPreferences {
 
     return {
       theme: parsedValue.theme === 'mist' ? 'mist' : 'obsidian',
+      visualQuality:
+        parsedValue.visualQuality === 'low' ||
+        parsedValue.visualQuality === 'ultra'
+          ? parsedValue.visualQuality
+          : 'balanced',
       showModuleDescriptions:
         typeof parsedValue.showModuleDescriptions === 'boolean'
           ? parsedValue.showModuleDescriptions
+          : false,
+      showPerformanceOverlay:
+        typeof parsedValue.showPerformanceOverlay === 'boolean'
+          ? parsedValue.showPerformanceOverlay
           : false,
     }
   } catch {

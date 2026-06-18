@@ -9,6 +9,8 @@ O export de campanha gera um JSON puro com:
 - estado do MUN (`worldMundiState`);
 - estado do MAP/biblioteca (`libraryState`);
 - acessos de jogadores (`playerAccess`);
+- workspace do mestre quando disponivel, incluindo fichas/personagens/NPCs locais;
+- manifest de assets embutidos quando o export encontra imagens/midias locais;
 - metadados de persistencia fisica, se existirem;
 - logs que ja estejam persistidos dentro desses estados;
 - versao do formato de export.
@@ -39,7 +41,33 @@ O botao "Criar backup da campanha atual" usa o mesmo formato do export, mas nome
 fushi-backup-[campaignId]-[data].json
 ```
 
-No navegador, o arquivo e baixado manualmente. No futuro desktop, esse mesmo fluxo pode salvar em uma pasta `/backups`.
+No navegador, o arquivo e baixado manualmente. No desktop, o snapshot interno tambem e salvo em `%APPDATA%/FUSHI/campaigns/[campaignId]/backups/`.
+
+O backup manual tambem cria um snapshot interno da campanha atual para restauracao rapida.
+
+## Backup automatico
+
+Enquanto o app esta aberto, a campanha ativa cria snapshots internos periodicos.
+
+Comportamento atual:
+
+- intervalo padrao: 5 minutos;
+- limite: ultimos 5 snapshots por campanha;
+- snapshots repetidos nao sao duplicados quando o estado nao mudou;
+- antes de substituir ou restaurar campanha, um snapshot do estado atual e preservado.
+
+No navegador, esses snapshots ficam no storage local. No desktop, ficam como arquivos JSON fisicos em `%APPDATA%/FUSHI/campaigns/[campaignId]/backups/`.
+
+## Restaurar backup
+
+Em Configuracoes, a area "Restaurar backup" lista snapshots internos da campanha atual.
+
+Cada item permite:
+
+- exportar o snapshot como JSON;
+- restaurar o snapshot com confirmacao.
+
+Ao restaurar, o app preserva um snapshot do estado atual antes de aplicar o backup selecionado.
 
 ## Importacao
 
@@ -56,11 +84,17 @@ Importar como nova campanha gera um novo `campaignId` e troca referencias intern
 
 Substituir campanha atual baixa um backup automatico antes de aplicar.
 
+Quando o export contem workspace do mestre, as fichas/personagens/NPCs sao mesclados no workspace atual pelo `id`. Isso evita o desktop limpo cair nos placeholders/template depois de importar uma campanha real.
+
+Quando o export contem assets embutidos, o desktop salva esses arquivos em `%APPDATA%/FUSHI/campaigns/[campaignId]/assets/` e atualiza referencias para `fushi-asset://...`.
+
 ## Limitacoes atuais
 
 - `playerAccess` ainda e global no navegador local, entao importar uma campanha pode atualizar o estado de acessos local.
 - Assets fisicos referenciados por URL/caminho precisam continuar disponiveis.
 - O fluxo ainda nao envia arquivos para servidor, porque multiplayer/backend ainda nao existe.
+- Snapshots automaticos no navegador dependem do storage local do proprio navegador/perfil.
+- O desktop V1 gera app desempacotado; instalador e dialogos nativos de salvar ainda ficam para uma etapa futura.
 
 ## Preparacao para desktop e multiplayer
 

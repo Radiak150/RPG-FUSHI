@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { TabletopBiome, TabletopMap, TabletopTransitionAsset } from '../../data/types'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 import type {
   TabletopLibraryCategory,
   TabletopLibraryFolder,
@@ -51,8 +52,72 @@ interface LibraryDragPayload {
   id: string
 }
 
+interface FolderContextMenuState {
+  folderId: string
+  x: number
+  y: number
+}
+
 const ROOT_FOLDER_ID = ''
 const LIBRARY_DRAG_DATA_TYPE = 'application/x-fushi-library-item'
+const BASE_MAP_FOLDER_ID = 'virtual:maps:bases'
+const BASE_TRANSITION_FOLDER_ID = 'virtual:transitions:bases'
+const MUN_TRANSITION_FOLDER_ID = 'virtual:transitions:mun'
+const AUTOMATIC_MUN_TRANSITION_PREFIX = 'interlude-map-'
+
+function isBaseLibraryMap(map: TabletopMap) {
+  return (
+    map.type === 'base' ||
+    map.id.startsWith('base_') ||
+    map.munLocationId?.startsWith('base_') === true
+  )
+}
+
+function isBaseLibraryTransition(transition: TabletopTransitionAsset) {
+  return (
+    transition.id.startsWith('transicao_chegada_base_') ||
+    transition.toMapId?.startsWith('base_') === true ||
+    transition.category === 'Bases'
+  )
+}
+
+function buildBaseVirtualFolder(
+  category: Extract<TabletopLibraryCategory, 'maps' | 'transitions'>,
+): FolderView {
+  return {
+    id: category === 'maps' ? BASE_MAP_FOLDER_ID : BASE_TRANSITION_FOLDER_ID,
+    category,
+    parentId: ROOT_FOLDER_ID,
+    name: 'Bases',
+    icon: 'BASE',
+    isVirtual: true,
+  }
+}
+
+function buildMunVirtualFolder(): FolderView {
+  return {
+    id: MUN_TRANSITION_FOLDER_ID,
+    category: 'transitions',
+    parentId: ROOT_FOLDER_ID,
+    name: 'MUN',
+    icon: 'MUN',
+    isVirtual: true,
+  }
+}
+
+function getMapLibraryPreviewAsset(map: TabletopMap) {
+  const preferredAsset = map.thumbnailUrl ?? map.previewImage ?? map.image
+
+  if (preferredAsset.endsWith('_4000.png')) {
+    return preferredAsset.replace(/_4000\.png$/, '_thumb_640.jpg')
+  }
+
+  if (preferredAsset.endsWith('_4000.jpg')) {
+    return preferredAsset.replace(/_4000\.jpg$/, '_thumb_640.jpg')
+  }
+
+  return preferredAsset
+}
 
 function getMapTypeLabel(type: TabletopMap['type']) {
   switch (type) {
@@ -92,6 +157,16 @@ function getTransitionTypeLabel(type: TabletopTransitionAsset['type']) {
   return type === 'video' ? 'Video' : 'Imagem'
 }
 
+function getTransitionMediaType(transition: TabletopTransitionAsset): TabletopTransitionAsset['type'] {
+  const assetUrl = transition.assetUrl.split('?')[0].toLowerCase()
+
+  if (assetUrl.endsWith('.mp4') || assetUrl.endsWith('.webm')) {
+    return 'video'
+  }
+
+  return transition.type
+}
+
 function slugify(value: string) {
   return value
     .trim()
@@ -117,9 +192,9 @@ function buildVirtualBiomeFolders(
   const biomeFolders = biomes.map((biome) => ({
     id: getVirtualBiomeFolderId(category, biome.id),
     category,
-    parentId: ROOT_FOLDER_ID,
+    parentId: category === 'transitions' ? MUN_TRANSITION_FOLDER_ID : ROOT_FOLDER_ID,
     name: biome.name,
-    icon: category === 'maps' ? '🗺️' : '🎬',
+    icon: category === 'maps' ? 'MAP' : 'BIO',
     isVirtual: true,
   }))
 
@@ -132,9 +207,9 @@ function buildVirtualBiomeFolders(
     .map((biomeName) => ({
       id: getVirtualBiomeFolderId(category, `loose-${slugify(biomeName)}`),
       category,
-      parentId: ROOT_FOLDER_ID,
+      parentId: category === 'transitions' ? MUN_TRANSITION_FOLDER_ID : ROOT_FOLDER_ID,
       name: biomeName,
-      icon: category === 'maps' ? '🗺️' : '🎬',
+      icon: category === 'maps' ? 'MAP' : 'BIO',
       isVirtual: true,
     }))
 
@@ -163,6 +238,16 @@ function resolveMapFolderId(
   const hasAssignedFolder = Object.prototype.hasOwnProperty.call(folderAssignments, map.id)
   const assignedFolderId = hasAssignedFolder ? folderAssignments[map.id] : map.folderId
 
+  if (
+    isBaseLibraryMap(map) &&
+    (assignedFolderId === undefined ||
+      assignedFolderId === '' ||
+      assignedFolderId === BASE_MAP_FOLDER_ID ||
+      assignedFolderId.startsWith('virtual:maps:biome:'))
+  ) {
+    return BASE_MAP_FOLDER_ID
+  }
+
   if (typeof assignedFolderId === 'string') {
     return assignedFolderId
   }
@@ -190,11 +275,32 @@ function resolveTransitionFolderId(
     ? folderAssignments[transition.id]
     : transition.folderId
 
+  if (
+    isBaseLibraryTransition(transition) &&
+    (assignedFolderId === undefined ||
+      assignedFolderId === '' ||
+      assignedFolderId === BASE_MAP_FOLDER_ID ||
+      assignedFolderId === BASE_TRANSITION_FOLDER_ID ||
+      assignedFolderId.startsWith('virtual:maps:') ||
+      assignedFolderId.startsWith('virtual:transitions:biome:'))
+  ) {
+    return BASE_TRANSITION_FOLDER_ID
+  }
+
+  if (
+    transition.id.startsWith(AUTOMATIC_MUN_TRANSITION_PREFIX) &&
+    (!assignedFolderId ||
+      assignedFolderId.startsWith('virtual:maps:') ||
+      assignedFolderId.startsWith('virtual:transitions:biome:'))
+  ) {
+    return getVirtualBiomeFolderId('transitions', transition.biomeId)
+  }
+
   if (typeof assignedFolderId === 'string') {
     return assignedFolderId
   }
 
-  return getVirtualBiomeFolderId('transitions', transition.biomeId)
+  return ROOT_FOLDER_ID
 }
 
 function buildBreadcrumb(folders: FolderView[], selectedFolderId: string) {
@@ -226,6 +332,12 @@ function getFolderItemCount(
   const directItemCount = itemFolderIds.filter((itemFolderId) => itemFolderId === folderId).length
 
   return childFolderCount + directItemCount
+}
+
+function getFolderPathLabel(folder: FolderView, folders: FolderView[]) {
+  const path = buildBreadcrumb(folders, folder.id).map((entry) => entry.name)
+
+  return path.join(' / ') || folder.name
 }
 
 function startItemDrag(
@@ -300,6 +412,9 @@ export function TabletopMapLibrary({
   const [newFolderName, setNewFolderName] = useState('')
   const [renamingFolderId, setRenamingFolderId] = useState('')
   const [renamingFolderName, setRenamingFolderName] = useState('')
+  const [folderContextMenu, setFolderContextMenu] = useState<FolderContextMenuState | null>(null)
+  const [draggingPayload, setDraggingPayload] = useState<LibraryDragPayload | null>(null)
+  const lastFocusedMapIdRef = useRef('')
 
   const categoryFolders = folders.filter(
     (folder) => folder.category === activeTab,
@@ -309,10 +424,27 @@ export function TabletopMapLibrary({
       .filter((map) => !map.biomeId && map.biome)
       .map((map) => map.biome ?? '')
 
-    return activeTab === 'maps'
-      ? buildVirtualBiomeFolders('maps', biomes, looseMapBiomeNames)
-      : buildVirtualBiomeFolders('transitions', biomes, [])
-  }, [activeTab, biomes, maps])
+    if (activeTab === 'maps') {
+      const baseFolders = maps.some(isBaseLibraryMap) ? [buildBaseVirtualFolder('maps')] : []
+
+      return [...baseFolders, ...buildVirtualBiomeFolders('maps', biomes, looseMapBiomeNames)]
+    }
+
+    const baseFolders = transitions.some(isBaseLibraryTransition)
+      ? [buildBaseVirtualFolder('transitions')]
+      : []
+    const munFolders = transitions.some((transition) =>
+      transition.id.startsWith(AUTOMATIC_MUN_TRANSITION_PREFIX),
+    )
+      ? [buildMunVirtualFolder()]
+      : []
+
+    return [
+      ...baseFolders,
+      ...munFolders,
+      ...buildVirtualBiomeFolders('transitions', biomes, []),
+    ]
+  }, [activeTab, biomes, maps, transitions])
   const effectiveFolders = [...virtualFolders, ...categoryFolders]
   const selectedFolderId = selectedFolderIds[activeTab]
   const selectedFolderExists =
@@ -339,9 +471,21 @@ export function TabletopMapLibrary({
     )
     .sort((a, b) => a.name.localeCompare(b.name))
   const itemFolderIds = activeTab === 'maps' ? mapFolderIds : transitionFolderIds
+  const moveFolderOptions = [
+    { id: ROOT_FOLDER_ID, label: 'Todas' },
+    ...effectiveFolders
+      .slice()
+      .sort((a, b) => getFolderPathLabel(a, effectiveFolders).localeCompare(
+        getFolderPathLabel(b, effectiveFolders),
+      ))
+      .map((folder) => ({
+        id: folder.id,
+        label: getFolderPathLabel(folder, effectiveFolders),
+      })),
+  ]
 
   useEffect(() => {
-    if (!focusedMapId) {
+    if (!focusedMapId || lastFocusedMapIdRef.current === focusedMapId) {
       return
     }
 
@@ -351,6 +495,7 @@ export function TabletopMapLibrary({
       return
     }
 
+    lastFocusedMapIdRef.current = focusedMapId
     const timeoutId = window.setTimeout(() => {
       setActiveTab('maps')
       setSelectedFolderIds((currentFolders) => ({
@@ -363,6 +508,24 @@ export function TabletopMapLibrary({
       window.clearTimeout(timeoutId)
     }
   }, [focusedMapId, mapFolders, maps])
+
+  useEffect(() => {
+    if (!folderContextMenu) {
+      return
+    }
+
+    function closeContextMenu() {
+      setFolderContextMenu(null)
+    }
+
+    window.addEventListener('pointerdown', closeContextMenu)
+    window.addEventListener('keydown', closeContextMenu)
+
+    return () => {
+      window.removeEventListener('pointerdown', closeContextMenu)
+      window.removeEventListener('keydown', closeContextMenu)
+    }
+  }, [folderContextMenu])
 
   function selectFolder(folderId: string) {
     setSelectedFolderIds((currentFolders) => ({
@@ -404,16 +567,138 @@ export function TabletopMapLibrary({
 
     if (payload.category === 'maps') {
       onAssignMapFolder(payload.id, folderId)
+      setDraggingPayload(null)
       return
     }
 
     onAssignTransitionFolder(payload.id, folderId)
+    setDraggingPayload(null)
+  }
+
+  function handleItemDragStart(
+    event: React.DragEvent,
+    payload: LibraryDragPayload,
+  ) {
+    startItemDrag(event, payload)
+    setDraggingPayload(payload)
+  }
+
+  function handleLibraryDragOver(event: React.DragEvent<HTMLElement>) {
+    if (!draggingPayload) {
+      return
+    }
+
+    event.preventDefault()
+    const scrollContainer = event.currentTarget.closest(
+      '.floating-window__body',
+    ) as HTMLElement | null
+    const threshold = 84
+    const speed = 28
+
+    if (scrollContainer) {
+      const bounds = scrollContainer.getBoundingClientRect()
+
+      if (event.clientY < bounds.top + threshold) {
+        scrollContainer.scrollBy({ top: -speed })
+      } else if (event.clientY > bounds.bottom - threshold) {
+        scrollContainer.scrollBy({ top: speed })
+      }
+      return
+    }
+
+    if (event.clientY < threshold) {
+      window.scrollBy({ top: -speed })
+    } else if (event.clientY > window.innerHeight - threshold) {
+      window.scrollBy({ top: speed })
+    }
   }
 
   function handleFolderKeyDown(event: React.KeyboardEvent, folderId: string) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       selectFolder(folderId)
+    }
+  }
+
+  function handleFolderContextMenu(event: React.MouseEvent, folderId: string) {
+    event.preventDefault()
+    event.stopPropagation()
+    setFolderContextMenu({
+      folderId,
+      x: event.clientX,
+      y: event.clientY,
+    })
+  }
+
+  function beginFolderRename(folder: FolderView) {
+    if (folder.isVirtual) {
+      window.alert('Esta e uma pasta automatica de bioma. Para renomear de verdade, ajuste o nome do bioma.')
+      return
+    }
+
+    setRenamingFolderId(folder.id)
+    setRenamingFolderName(folder.name)
+    setFolderContextMenu(null)
+  }
+
+  function createItemInsideFolder(folder: FolderView) {
+    setFolderContextMenu(null)
+    if (activeTab === 'maps') {
+      onCreateMap(folder.id)
+      return
+    }
+
+    onCreateTransition(folder.id)
+  }
+
+  function createChildFolderInside(folder: FolderView) {
+    setFolderContextMenu(null)
+    const name = window.prompt('Nome da nova subpasta')
+
+    if (!name?.trim()) {
+      return
+    }
+
+    onCreateFolder(activeTab, folder.id, name)
+  }
+
+  function deleteFolderFromMenu(folder: FolderView) {
+    setFolderContextMenu(null)
+
+    if (folder.isVirtual) {
+      const message =
+        activeTab === 'maps'
+          ? `Remover o agrupamento automatico "${folder.name}" da tela? Os mapas nao serao apagados; eles vao para "Todas".`
+          : `Remover o agrupamento automatico "${folder.name}" da tela? Os interludios nao serao apagados; eles vao para "Todas".`
+
+      if (!window.confirm(message)) {
+        return
+      }
+
+      if (activeTab === 'maps') {
+        maps
+          .filter((map) => resolveMapFolderId(map, mapFolders) === folder.id)
+          .forEach((map) => onAssignMapFolder(map.id, ROOT_FOLDER_ID))
+        return
+      }
+
+      transitions
+        .filter(
+          (transition) =>
+            resolveTransitionFolderId(transition, transitionFolders) === folder.id,
+        )
+        .forEach((transition) => onAssignTransitionFolder(transition.id, ROOT_FOLDER_ID))
+      return
+    }
+
+    const itemCount = getFolderItemCount(folder.id, effectiveFolders, itemFolderIds)
+    const message =
+      itemCount > 0
+        ? `Excluir a pasta "${folder.name}"? Os itens e subpastas serao movidos para a pasta anterior ou para o agrupamento automatico.`
+        : `Excluir a pasta vazia "${folder.name}"?`
+
+    if (window.confirm(message)) {
+      onDeleteFolder(folder.id)
     }
   }
 
@@ -429,13 +714,22 @@ export function TabletopMapLibrary({
   }
 
   function handleDeleteTransition(transition: TabletopTransitionAsset) {
-    if (window.confirm(`Excluir "${transition.name}" da biblioteca?`)) {
+    const isAutomatic = transition.id.startsWith(AUTOMATIC_MUN_TRANSITION_PREFIX)
+    const message = isAutomatic
+      ? `Restaurar "${transition.name}" para a configuracao automatica do MUN?`
+      : `Excluir "${transition.name}" da biblioteca?`
+
+    if (window.confirm(message)) {
       onDeleteTransition(transition.id)
     }
   }
 
   return (
-    <section className="tabletop-library tabletop-library--folders">
+    <section
+      className="tabletop-library tabletop-library--folders"
+      onDragEnd={() => setDraggingPayload(null)}
+      onDragOver={handleLibraryDragOver}
+    >
       <div className="tabletop-library__hero">
         <div>
           <p className="eyebrow">Biblioteca da mesa</p>
@@ -476,7 +770,7 @@ export function TabletopMapLibrary({
           onClick={() => setActiveTab('maps')}
           type="button"
         >
-          🗺️ MAPAS
+          MAPAS
         </button>
         <button
           className={`tabletop-library-tabs__button${
@@ -485,7 +779,7 @@ export function TabletopMapLibrary({
           onClick={() => setActiveTab('transitions')}
           type="button"
         >
-          🎬 INTERLUDIOS
+          INTERLUDIOS
         </button>
       </div>
 
@@ -509,7 +803,10 @@ export function TabletopMapLibrary({
               onDrop={(event) => handleFolderDrop(event, folder.id)}
               type="button"
             >
-              {folder.icon ?? '📁'} {folder.name}
+              <span className="tabletop-library-breadcrumb__folder-icon">
+                {folder.icon ?? 'DIR'}
+              </span>
+              {folder.name}
             </button>
           ))}
         </div>
@@ -542,6 +839,27 @@ export function TabletopMapLibrary({
         </div>
       </div>
 
+      {draggingPayload?.category === activeTab ? (
+        <div className="tabletop-library-drop-dock" role="region" aria-label="Mover item">
+          <strong>Mover para</strong>
+          <div className="tabletop-library-drop-dock__targets">
+            {moveFolderOptions.map((folder) => (
+              <button
+                key={folder.id || 'root'}
+                onDragOver={(event) => {
+                  event.preventDefault()
+                  event.dataTransfer.dropEffect = 'move'
+                }}
+                onDrop={(event) => handleFolderDrop(event, folder.id)}
+                type="button"
+              >
+                {folder.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div className="tabletop-library-folder-grid">
         {currentFolderId ? (
           <button
@@ -560,9 +878,12 @@ export function TabletopMapLibrary({
         ) : null}
         {directFolders.map((folder) => {
           const itemCount = getFolderItemCount(folder.id, effectiveFolders, itemFolderIds)
-          const canDeleteFolder = !folder.isVirtual && itemCount === 0
           const canEditFolder = !folder.isVirtual
           const isRenaming = renamingFolderId === folder.id
+
+          if (folder.isVirtual && itemCount === 0) {
+            return null
+          }
 
           return (
             <article
@@ -571,12 +892,15 @@ export function TabletopMapLibrary({
               onClick={() => selectFolder(folder.id)}
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => handleFolderDrop(event, folder.id)}
+              onContextMenu={(event) => handleFolderContextMenu(event, folder.id)}
               onKeyDown={(event) => handleFolderKeyDown(event, folder.id)}
               role="button"
               tabIndex={0}
               title="Solte um item aqui para mover para esta pasta"
             >
-              <span>{folder.icon ?? '📁'}</span>
+              <span className="tabletop-library-folder-card__icon">
+                {folder.icon ?? 'DIR'}
+              </span>
               {isRenaming ? (
                 <input
                   autoFocus
@@ -597,7 +921,9 @@ export function TabletopMapLibrary({
               ) : (
                 <strong>{folder.name}</strong>
               )}
-              <small>{itemCount} item(s)</small>
+              <small>
+                {folder.isVirtual ? 'Sistema' : 'Pasta'} - {itemCount} item(s)
+              </small>
               {canEditFolder ? (
                 <div
                   className="tabletop-library-folder-card__actions"
@@ -625,8 +951,7 @@ export function TabletopMapLibrary({
                       <button
                         className="button button--compact"
                         onClick={() => {
-                          setRenamingFolderId(folder.id)
-                          setRenamingFolderName(folder.name)
+                          beginFolderRename(folder)
                         }}
                         type="button"
                       >
@@ -648,13 +973,8 @@ export function TabletopMapLibrary({
                       </button>
                       <button
                         className="button button--compact"
-                        disabled={!canDeleteFolder}
-                        onClick={() => onDeleteFolder(folder.id)}
-                        title={
-                          canDeleteFolder
-                            ? 'Excluir pasta vazia'
-                            : 'So e possivel excluir uma pasta vazia'
-                        }
+                        onClick={() => deleteFolderFromMenu(folder)}
+                        title="Excluir pasta e reorganizar o conteudo com seguranca"
                         type="button"
                       >
                         Excluir
@@ -668,6 +988,50 @@ export function TabletopMapLibrary({
         })}
       </div>
 
+      {folderContextMenu ? (() => {
+        const folder = effectiveFolders.find((item) => item.id === folderContextMenu.folderId)
+
+        if (!folder) {
+          return null
+        }
+
+        return (
+          <div
+            className="tabletop-library-folder-menu"
+            onClick={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+            style={{
+              left: folderContextMenu.x,
+              top: folderContextMenu.y,
+            }}
+          >
+            <button onClick={() => selectFolder(folder.id)} type="button">
+              Abrir pasta
+            </button>
+            {!folder.isVirtual ? (
+              <button onClick={() => beginFolderRename(folder)} type="button">
+                Renomear
+              </button>
+            ) : null}
+            <button onClick={() => createChildFolderInside(folder)} type="button">
+              Nova subpasta
+            </button>
+            <button onClick={() => createItemInsideFolder(folder)} type="button">
+              {activeTab === 'maps' ? 'Novo mapa aqui' : 'Novo interludio aqui'}
+            </button>
+            {!folder.isVirtual ? (
+              <button
+                className="tabletop-library-folder-menu__danger"
+                onClick={() => deleteFolderFromMenu(folder)}
+                type="button"
+              >
+                Excluir pasta
+              </button>
+            ) : null}
+          </div>
+        )
+      })() : null}
+
       {activeTab === 'maps' ? (
         <div className="tabletop-library__grid tabletop-library__grid--maps">
           {selectedMaps.map((map) => {
@@ -675,6 +1039,8 @@ export function TabletopMapLibrary({
             const isFocused = map.id === focusedMapId
             const visibility = map.mapVisibility ?? 'ativo_para_jogadores'
             const isVisibleToPlayers = visibility === 'ativo_para_jogadores'
+            const previewAsset = getMapLibraryPreviewAsset(map)
+            const fallbackAsset = map.previewImage ?? map.image
 
             return (
               <article
@@ -684,13 +1050,28 @@ export function TabletopMapLibrary({
                 }`}
                 draggable
                 key={map.id}
-                onDragStart={(event) => startItemDrag(event, { category: 'maps', id: map.id })}
+                onDragEnd={() => setDraggingPayload(null)}
+                onDragStart={(event) =>
+                  handleItemDragStart(event, { category: 'maps', id: map.id })
+                }
               >
                 <div className="tabletop-library-card__media tabletop-library-card__media--wide">
                   <img
                     alt={map.name}
                     className="tabletop-library-card__image"
-                    src={map.thumbnailUrl ?? map.previewImage ?? map.image}
+                    decoding="async"
+                    loading="lazy"
+                    onError={(event) => {
+                      if (event.currentTarget.dataset.fallbackApplied === 'true') {
+                        return
+                      }
+
+                      const fallbackUrl = resolveRuntimeAssetUrl(fallbackAsset)
+
+                      event.currentTarget.dataset.fallbackApplied = 'true'
+                      event.currentTarget.src = fallbackUrl
+                    }}
+                    src={resolveRuntimeAssetUrl(previewAsset)}
                   />
                 </div>
 
@@ -714,6 +1095,19 @@ export function TabletopMapLibrary({
                 </div>
 
                 <div className="tabletop-library-card__actions">
+                  <label className="tabletop-library-card__folder-select">
+                    <span>Pasta</span>
+                    <select
+                      onChange={(event) => onAssignMapFolder(map.id, event.target.value)}
+                      value={resolveMapFolderId(map, mapFolders)}
+                    >
+                      {moveFolderOptions.map((folder) => (
+                        <option key={folder.id || 'root'} value={folder.id}>
+                          {folder.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <button
                     className="button"
                     disabled={visibility === 'preparado'}
@@ -757,29 +1151,51 @@ export function TabletopMapLibrary({
         <div className="tabletop-library__grid tabletop-library__grid--cinematics">
           {selectedTransitions.map((transition) => {
             const targetMap = maps.find((map) => map.id === transition.toMapId) ?? null
+            const mediaType = getTransitionMediaType(transition)
+            const fallbackPreview = targetMap ? getMapLibraryPreviewAsset(targetMap) : ''
 
             return (
               <article
                 className="tabletop-library-card"
                 draggable
                 key={transition.id}
+                onDragEnd={() => setDraggingPayload(null)}
                 onDragStart={(event) =>
-                  startItemDrag(event, { category: 'transitions', id: transition.id })
+                  handleItemDragStart(event, {
+                    category: 'transitions',
+                    id: transition.id,
+                  })
                 }
               >
                 <div className="tabletop-library-card__media tabletop-library-card__media--wide">
-                  {transition.type === 'video' ? (
+                  {mediaType === 'video' ? (
                     <video
                       className="tabletop-library-card__image"
                       muted
+                      poster={resolveRuntimeAssetUrl(
+                        transition.thumbnailUrl || fallbackPreview,
+                      )}
                       preload="metadata"
-                      src={transition.assetUrl}
+                      src={resolveRuntimeAssetUrl(transition.assetUrl)}
                     />
                   ) : transition.thumbnailUrl || transition.assetUrl ? (
                     <img
                       alt={transition.name}
                       className="tabletop-library-card__image"
-                      src={transition.thumbnailUrl || transition.assetUrl}
+                      decoding="async"
+                      loading="lazy"
+                      onError={(event) => {
+                        if (
+                          !fallbackPreview ||
+                          event.currentTarget.dataset.fallbackApplied === 'true'
+                        ) {
+                          return
+                        }
+
+                        event.currentTarget.dataset.fallbackApplied = 'true'
+                        event.currentTarget.src = resolveRuntimeAssetUrl(fallbackPreview)
+                      }}
+                      src={resolveRuntimeAssetUrl(transition.thumbnailUrl || transition.assetUrl)}
                     />
                   ) : (
                     <div className="tabletop-library-card__placeholder">
@@ -791,15 +1207,32 @@ export function TabletopMapLibrary({
                 <div className="tabletop-library-card__body">
                   <div className="tabletop-library-card__top">
                     <div>
-                      <p className="eyebrow">{getTransitionTypeLabel(transition.type)}</p>
+                      <p className="eyebrow">{getTransitionTypeLabel(mediaType)}</p>
                       <h3>{transition.name}</h3>
                     </div>
-                    {targetMap ? <span className="tag">Destino: {targetMap.name}</span> : null}
+                    <span className="tag">
+                      {targetMap ? `Destino: ${targetMap.name}` : 'Mantem mapa atual'}
+                    </span>
                   </div>
                   <p className="support-copy">{transition.summary}</p>
                 </div>
 
                 <div className="tabletop-library-card__actions">
+                  <label className="tabletop-library-card__folder-select">
+                    <span>Pasta</span>
+                    <select
+                      onChange={(event) =>
+                        onAssignTransitionFolder(transition.id, event.target.value)
+                      }
+                      value={resolveTransitionFolderId(transition, transitionFolders)}
+                    >
+                      {moveFolderOptions.map((folder) => (
+                        <option key={folder.id || 'root'} value={folder.id}>
+                          {folder.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <button
                     className="button"
                     onClick={() => onConfigureTransition(transition.id)}
@@ -819,7 +1252,9 @@ export function TabletopMapLibrary({
                     onClick={() => handleDeleteTransition(transition)}
                     type="button"
                   >
-                    Excluir
+                    {transition.id.startsWith(AUTOMATIC_MUN_TRANSITION_PREFIX)
+                      ? 'Restaurar padrao'
+                      : 'Excluir'}
                   </button>
                 </div>
               </article>

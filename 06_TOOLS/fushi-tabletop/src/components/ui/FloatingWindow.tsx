@@ -21,6 +21,8 @@ interface FloatingWindowProps {
     width: number
     height: number
   }
+  restoreSignal?: number | string
+  minimizeSignal?: number | string
   defaultExpanded?: boolean
   className?: string
 }
@@ -67,6 +69,30 @@ function clampWindowPosition(value: number, viewportSize: number, windowSize: nu
   return Math.min(Math.max(WINDOW_MARGIN, value), maxPosition)
 }
 
+function areWindowSizesEqual(
+  left: { width: number; height: number },
+  right: { width: number; height: number },
+) {
+  return left.width === right.width && left.height === right.height
+}
+
+function areWindowPositionsEqual(
+  left: { x: number; y: number },
+  right: { x: number; y: number },
+) {
+  return left.x === right.x && left.y === right.y
+}
+
+function clampFloatingWindowPosition(
+  position: { x: number; y: number },
+  rect: Pick<DOMRect, 'height' | 'width'>,
+) {
+  return {
+    x: clampWindowPosition(position.x, window.innerWidth, rect.width),
+    y: clampWindowPosition(position.y, window.innerHeight, rect.height),
+  }
+}
+
 export function FloatingWindow({
   title,
   subtitle,
@@ -75,12 +101,15 @@ export function FloatingWindow({
   footer,
   initialPosition,
   initialSize,
+  minimizeSignal,
+  restoreSignal,
   defaultExpanded,
   className,
 }: FloatingWindowProps) {
   const windowRef = useRef<HTMLDivElement | null>(null)
   const dragStateRef = useRef<DragState | null>(null)
   const resizeStateRef = useRef<ResizeState | null>(null)
+  const lastMinimizeSignalRef = useRef(minimizeSignal)
   const [position, setPosition] = useState(() => ({
     x: initialPosition?.x ?? 96,
     y: initialPosition?.y ?? 96,
@@ -106,6 +135,39 @@ export function FloatingWindow({
   )
 
   useEffect(() => {
+    if (restoreSignal === undefined) {
+      return
+    }
+
+    dragStateRef.current = null
+    resizeStateRef.current = null
+
+    const timeoutId = window.setTimeout(() => {
+      setIsMinimized(false)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [restoreSignal])
+
+  useEffect(() => {
+    if (minimizeSignal === undefined) {
+      lastMinimizeSignalRef.current = minimizeSignal
+      return
+    }
+
+    if (lastMinimizeSignalRef.current === minimizeSignal) {
+      return
+    }
+
+    lastMinimizeSignalRef.current = minimizeSignal
+    dragStateRef.current = null
+    resizeStateRef.current = null
+    setIsMinimized(true)
+  }, [minimizeSignal])
+
+  useEffect(() => {
     function handlePointerMove(event: PointerEvent) {
       const dragState = dragStateRef.current
       const resizeState = resizeStateRef.current
@@ -117,16 +179,20 @@ export function FloatingWindow({
           height: resizeState.startHeight + (event.clientY - resizeState.startY),
         })
 
-        setSize((currentSize) => ({
-          width:
-            resizeState.edge === 'right' || resizeState.edge === 'corner'
-              ? nextSize.width
-              : currentSize.width,
-          height:
-            resizeState.edge === 'bottom' || resizeState.edge === 'corner'
-              ? nextSize.height
-              : currentSize.height,
-        }))
+        setSize((currentSize) => {
+          const nextWindowSize = {
+            width:
+              resizeState.edge === 'right' || resizeState.edge === 'corner'
+                ? nextSize.width
+                : currentSize.width,
+            height:
+              resizeState.edge === 'bottom' || resizeState.edge === 'corner'
+                ? nextSize.height
+                : currentSize.height,
+          }
+
+          return areWindowSizesEqual(currentSize, nextWindowSize) ? currentSize : nextWindowSize
+        })
         return
       }
 
@@ -146,10 +212,16 @@ export function FloatingWindow({
         rect.height,
       )
 
-      setPosition({
+      const nextPosition = {
         x: nextX,
         y: nextY,
-      })
+      }
+
+      setPosition((currentPosition) =>
+        areWindowPositionsEqual(currentPosition, nextPosition)
+          ? currentPosition
+          : nextPosition,
+      )
     }
 
     function handlePointerUp(event: PointerEvent) {
@@ -172,21 +244,6 @@ export function FloatingWindow({
   }, [])
 
   useEffect(() => {
-    const element = windowRef.current
-
-    if (!element) {
-      return
-    }
-
-    const rect = element.getBoundingClientRect()
-
-    setPosition((currentPosition) => ({
-      x: clampWindowPosition(currentPosition.x, window.innerWidth, rect.width),
-      y: clampWindowPosition(currentPosition.y, window.innerHeight, rect.height),
-    }))
-  }, [isExpanded, isMinimized, size.height, size.width])
-
-  useEffect(() => {
     function handleResize() {
       const element = windowRef.current
 
@@ -194,14 +251,21 @@ export function FloatingWindow({
         return
       }
 
-      setSize((currentSize) => clampWindowSize(currentSize))
+      setSize((currentSize) => {
+        const nextSize = clampWindowSize(currentSize)
+
+        return areWindowSizesEqual(currentSize, nextSize) ? currentSize : nextSize
+      })
 
       const rect = element.getBoundingClientRect()
 
-      setPosition((currentPosition) => ({
-        x: clampWindowPosition(currentPosition.x, window.innerWidth, rect.width),
-        y: clampWindowPosition(currentPosition.y, window.innerHeight, rect.height),
-      }))
+      setPosition((currentPosition) => {
+        const nextPosition = clampFloatingWindowPosition(currentPosition, rect)
+
+        return areWindowPositionsEqual(currentPosition, nextPosition)
+          ? currentPosition
+          : nextPosition
+      })
     }
 
     window.addEventListener('resize', handleResize)
@@ -328,10 +392,14 @@ export function FloatingWindow({
       </div>
 
       {!isMinimized ? (
-        <>
-          <div className="floating-window__content">{children}</div>
-          {footer ? <div className="floating-window__footer">{footer}</div> : null}
-        </>
+        <div className="floating-window__content">
+          {children}
+        </div>
+      ) : null}
+      {footer && !isMinimized ? (
+        <div className="floating-window__footer">
+          {footer}
+        </div>
       ) : null}
 
       {!isExpanded && !isMinimized ? (

@@ -12,6 +12,11 @@ export interface MasterDataContextValue {
   updateCharacter: (character: CharacterSheet) => CharacterSheet | null
   deleteCharacter: (characterId: string) => void
   createCampaign: (campaign: LocalCampaign) => LocalCampaign | null
+  mergeImportedCampaign: (input: {
+    campaign: LocalCampaign
+    characters: CharacterSheet[]
+    mode: 'new' | 'replace'
+  }) => void
   updateCampaign: (campaign: LocalCampaign) => LocalCampaign | null
   deleteCampaign: (campaignId: string) => void
   setActiveCampaign: (campaignId: string) => void

@@ -20,8 +20,9 @@
 ## Vida
 
 - Vida e compartilhada enquanto as consciencias estao no mesmo corpo.
-- A vida maxima do corpo recebe bonus baseado no Vigor de cada consciencia.
-- Quando uma consciencia se separa, o corpo perde o bonus de Vigor daquela consciencia.
+- Vida maxima nao escala automaticamente por Vigor.
+- Vida vem do corpo/Nivel de Poder + itens + buffs aprovados.
+- Quando uma consciencia se separa, a vida segue o corpo que ela ocupa; nao recalcular ficha antiga por Vigor.
 
 ## FUSHI
 
@@ -40,7 +41,7 @@
 
 - Monstros comuns atacam o corpo.
 - Usuarios conscientes de FUSHI conseguem atingir a identidade, a mente ou consciencias especificas.
-- Isso torna usuarios de FUSHI mais perigosos do que criaturas comuns no mesmo tier.
+- Isso torna usuarios de FUSHI mais perigosos do que criaturas comuns no mesmo Nivel de Poder.
 
 ## Habilidade inicial
 

@@ -62,6 +62,10 @@ function writePhysicalPersistenceMeta(meta: PhysicalPersistenceMeta) {
     })
 }
 
+function isDesktopRuntime() {
+  return typeof window !== 'undefined' && Boolean(window.fushiDesktop)
+}
+
 function getLocalStorageEntryCount() {
   return storageAdapter.countLocalStorageEntries({
     extraKeys: EXTRA_LOCAL_STORAGE_KEYS,
@@ -133,6 +137,20 @@ function createSaveBackup() {
 }
 
 export async function hydratePhysicalPersistence(): Promise<PhysicalPersistenceHydrationResult> {
+  if (isDesktopRuntime()) {
+    writePhysicalPersistenceMeta({
+      hydratedAt: new Date().toISOString(),
+      origin: 'electron',
+      storagePath: window.fushiDesktop?.getAppInfo().dataDir,
+    })
+
+    return {
+      applied: false,
+      exists: true,
+      storagePath: window.fushiDesktop?.getAppInfo().dataDir,
+    }
+  }
+
   try {
     const response = await fetch(PHYSICAL_PERSISTENCE_ENDPOINT, {
       cache: 'no-store',
@@ -208,6 +226,20 @@ export async function savePhysicalPersistence(
     return {
       ok: true,
       signature,
+    }
+  }
+
+  if (isDesktopRuntime()) {
+    writePhysicalPersistenceMeta({
+      lastSavedAt: backup.exportedAt,
+      origin: 'electron',
+      storagePath: window.fushiDesktop?.getAppInfo().dataDir,
+    })
+
+    return {
+      ok: true,
+      signature,
+      storagePath: window.fushiDesktop?.getAppInfo().dataDir,
     }
   }
 

@@ -145,18 +145,20 @@ export const systemData: SystemData = {
       bullets: [
         'Ataque padrao usa atributo relevante + bonus da pericia.',
         'Sem FUSHI consciente no inicio: combate tutorial resolve com corpo, instinto e risco.',
-        'Esquiva expande a defesa com Reflexos; bloqueio reduz o dano sem rolagem.',
+        'Esquiva usa CA base + Agilidade + Reflexos; bloqueio reduz metade da CA base do dano.',
+        'Contra-ataque usa CA base: se o ataque inimigo nao alcancar essa CA, o defensor contra-ataca.',
+        'Cada consciencia escolhe apenas uma reacao no turno: Bloqueio, Esquiva ou Contra-ataque.',
       ],
     },
     {
       id: 'combat-multiataque',
-      title: 'Multiataque do core FUSHI',
+      title: 'Coreografia de luta',
       summary:
-        'O jogador troca qualidade por quantidade: cada ataque extra reduz 1 dado e passa a pegar o menor resultado.',
+        'O jogador troca chance de acerto por dano: cada dado de acerto sacrificado adiciona 1 dado de dano.',
       bullets: [
-        'Forca 3: 1 ataque = 3d20 maior; 2 ataques = 2d20 menor; 3 ataques = 1d20 menor.',
-        'Forca 4: 2 ataques = 3d20 menor; 3 ataques = 2d20 menor; 4 ataques = 1d20 menor.',
-        'A regra ja fica preparada no app pelo modo de rolagem lowest, mesmo sem sistema completo de combate.',
+        'Forca 3 sem coreografia: 3d20 maior e dano base.',
+        'Sacrificar 1 dado: 2d20 maior e +1 dado de dano.',
+        'Sacrificar todos os dados ou mais: 2d20 menor e continua somando dados de dano.',
       ],
     },
     {
@@ -167,7 +169,8 @@ export const systemData: SystemData = {
       bullets: [
         'Determinacao zero significa perda de controle e possibilidade de controle pelo mestre.',
         'Instinto Selvagem entra como habilidade inicial instintiva e perigosa.',
-        'FUSHI compartilhado fica reservado para desbloqueio posterior.',
+        'Determinacao tambem pode ser custo de habilidade; rerrolagem so existe quando item/habilidade/cena permitir.',
+        'FUSHI compartilhado fica reservado para desbloqueio posterior e para dano imbuido aprovado pelo mestre.',
       ],
     },
   ],
@@ -237,6 +240,34 @@ export const systemData: SystemData = {
       category: 'Anomalo',
       futureHooks: ['colocar no mapa', 'pegar manualmente', 'mover para inventario'],
     },
+    {
+      id: 'item-bandagem-emergencia',
+      name: 'Bandagem de Emergencia',
+      summary: '1 uso. Acao em cena: cura 1 HP do corpo ou levanta um corpo em 0 HP para 1 HP. Nao acumula.',
+      category: 'Cura',
+      futureHooks: ['wave 1 lobos planicie', 'tutorial', 'anti-morte'],
+    },
+    {
+      id: 'item-faca-simples-1d6',
+      name: 'Faca Simples 1d6',
+      summary: 'Arma leve corpo a corpo, dano 1d6 corte. Sem bonus de acerto e sem propriedade especial.',
+      category: 'Arma',
+      futureHooks: ['wave 5 lobos planicie', 'build assassino', 'inventario'],
+    },
+    {
+      id: 'item-dente-primeiro-lobo',
+      name: 'Dente do Primeiro Lobo',
+      summary: 'Item marco. Pode marcar Item marco no XP de 1 jogador e vira componente de build furtiva/ritual animal.',
+      category: 'Item marco',
+      futureHooks: ['wave 5 lobos planicie', 'xp item marco', 'build furtiva'],
+    },
+    {
+      id: 'item-nucleo-instavel-lobo',
+      name: 'Nucleo Instavel de Lobo',
+      summary: 'Recompensa da wave 10. Escolha: +1 FUSHI maximo para 1 personagem apos descanso/reflexao, ou Foco FUSHI basico de 1 uso para rerrolar 1 teste de FUSHI/instinto aprovado.',
+      category: 'FUSHI',
+      futureHooks: ['wave 10 lobos planicie', 'fushi maximo', 'foco fushi'],
+    },
   ],
   states: [
     {
@@ -299,7 +330,7 @@ export const systemData: SystemData = {
       id: 'term-dt',
       term: 'DT',
       summary:
-        'Marcador citado em conflitos e interferencias; sua regra detalhada ainda nao foi consolidada.',
+        'Dificuldade do teste. Pela escala atual: 20 e dificil Basico, 25 dificil Avancado, 30 dificil Ascensao e 32+ Cataclisma.',
     },
   ],
 }

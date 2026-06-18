@@ -34,6 +34,12 @@ export const navigationItems: NavigationItem[] = [
     allowedViews: ['gm', 'player'],
   },
   {
+    to: '/multiplayer',
+    label: 'Multiplayer',
+    description: 'Hospedar ou entrar em sessao local via IP, LAN ou tunnel externo.',
+    allowedViews: ['gm', 'player'],
+  },
+  {
     to: '/livro',
     label: 'Livro',
     description: 'Base navegavel de regras, FUSHI e documentacao.',
@@ -42,8 +48,8 @@ export const navigationItems: NavigationItem[] = [
   {
     to: '/configuracoes',
     label: 'Configuracoes',
-    description: 'Tema, view mode e preferencias locais.',
-    allowedViews: ['gm'],
+    description: 'Tema, graficos e preferencias locais desta instalacao.',
+    allowedViews: ['gm', 'player'],
   },
 ]
 
@@ -79,6 +85,13 @@ const routeMeta: Record<string, RouteMeta> = {
     eyebrow: 'Modulo',
     allowedViews: ['gm', 'player'],
   },
+  '/multiplayer': {
+    title: 'Multiplayer V1',
+    description:
+      'Hospedagem local por WebSocket/HTTP para testes com LAN ou tunnel externo.',
+    eyebrow: 'Sessao',
+    allowedViews: ['gm', 'player'],
+  },
   '/livro': {
     title: 'Livro',
     description:
@@ -89,9 +102,9 @@ const routeMeta: Record<string, RouteMeta> = {
   '/configuracoes': {
     title: 'Configuracoes',
     description:
-      'Ajustes locais da plataforma, tema e preferencias que moldam a experiencia do produto.',
+      'Ajustes locais de tema, graficos e preferencias da experiencia.',
     eyebrow: 'Modulo',
-    allowedViews: ['gm'],
+    allowedViews: ['gm', 'player'],
   },
 }
 

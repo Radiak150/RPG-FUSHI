@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { RollConfig, RollMode, RollRecord } from '../../data/types'
 import { createRollRecord, formatRollFormula } from '../../lib/rolls'
 import { Panel } from '../ui/Panel'
+import { DiceIcon } from '../ui/DiceIcon'
 
 interface DiceRollerPanelProps {
   title?: string
@@ -10,7 +11,7 @@ interface DiceRollerPanelProps {
   defaultConfig?: RollConfig
 }
 
-const availableDiceTypes = [4, 6, 8, 10, 12, 20, 100]
+const availableDiceTypes = [2, 4, 6, 8, 10, 12, 16, 20, 30, 100]
 
 const defaultRollConfig: RollConfig = {
   quantidadeDados: 1,
@@ -61,8 +62,11 @@ export function DiceRollerPanel({
           />
         </label>
 
-        <label className="field">
-          <span>Tipo</span>
+        <label className="field roll-panel__die-picker">
+          <span>Dado</span>
+          <span className="roll-panel__die-face">
+            <DiceIcon label={tipoDado === 2 ? 'moeda' : `d${tipoDado}`} size="sm" type={tipoDado} />
+          </span>
           <select
             className="field__input"
             onChange={(event) => setTipoDado(Number(event.target.value))}
@@ -70,7 +74,7 @@ export function DiceRollerPanel({
           >
             {availableDiceTypes.map((diceType) => (
               <option key={diceType} value={diceType}>
-                d{diceType}
+                {diceType === 2 ? '1d2 moeda' : `d${diceType}`}
               </option>
             ))}
           </select>
@@ -93,9 +97,9 @@ export function DiceRollerPanel({
             onChange={(event) => setModo(event.target.value as RollMode)}
             value={modo}
           >
-            <option value="highest">Maior</option>
-            <option value="lowest">Menor</option>
-            <option value="sum">Soma</option>
+            <option value="highest">= Maior dado + bonus</option>
+            <option value="lowest">- Menor dado + bonus</option>
+            <option value="sum">+ Soma dos dados + bonus</option>
           </select>
         </label>
 
@@ -109,10 +113,10 @@ export function DiceRollerPanel({
           <h3>Formula atual</h3>
           <span className="tag">
             {modo === 'highest'
-              ? 'Maior resultado'
+              ? '= Maior + bonus'
               : modo === 'lowest'
-                ? 'Menor resultado'
-                : 'Soma'}
+                ? '- Menor + bonus'
+                : '+ Soma + bonus'}
           </span>
         </div>
         <p className="support-copy">{formatRollFormula(currentConfig)}</p>
@@ -123,7 +127,10 @@ export function DiceRollerPanel({
           records.map((record) => (
             <article key={record.id} className="list-card">
               <div className="list-card__top">
-                <h3>{record.contexto}</h3>
+                <div className="tabletop-session-log__entry-title">
+                  <DiceIcon label={String(record.total)} size="sm" type={record.tipoDado} />
+                  <h3>{record.contexto}</h3>
+                </div>
                 <strong>{record.total}</strong>
               </div>
               <p className="support-copy">{record.resultadoTexto}</p>

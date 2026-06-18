@@ -1,4 +1,5 @@
 import type { TabletopCinematicAsset } from '../../data/types'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 
 interface TabletopCinematicOverlayProps {
   cinematic: TabletopCinematicAsset
@@ -56,7 +57,7 @@ export function TabletopCinematicOverlay({
             <img
               alt={cinematic.name}
               className="tabletop-cinematic-overlay__image"
-              src={cinematic.previewImage}
+              src={resolveRuntimeAssetUrl(cinematic.previewImage)}
             />
           ) : (
             <div className="tabletop-cinematic-overlay__placeholder">

@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react'
 import type { TabletopMap, TabletopTransitionAsset } from '../../data/types'
 import { uploadPhysicalAsset } from '../../lib/physicalAssets'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 
 interface TransitionOverrideConfig {
   assetUrl?: string
   thumbnailUrl?: string
+  keepCurrentMap?: boolean
   toMapId?: string
   type?: 'image' | 'video'
   customName?: string
@@ -26,6 +28,120 @@ function formatAssetLabel(assetUrl: string) {
       : assetUrl
 }
 
+function resolveSelectedMediaType(file: File): 'image' | 'video' {
+  const mimeType = file.type.toLowerCase()
+  const filename = file.name.toLowerCase()
+
+  if (
+    mimeType.startsWith('video/') ||
+    filename.endsWith('.mp4') ||
+    filename.endsWith('.webm')
+  ) {
+    return 'video'
+  }
+
+  return 'image'
+}
+
+function resolveSelectedContentType(file: File) {
+  const mimeType = file.type.toLowerCase()
+  const filename = file.name.toLowerCase()
+
+  if (mimeType) {
+    return mimeType
+  }
+
+  if (filename.endsWith('.mp4')) {
+    return 'video/mp4'
+  }
+
+  if (filename.endsWith('.webm')) {
+    return 'video/webm'
+  }
+
+  return 'application/octet-stream'
+}
+
+function replaceFileExtension(filename: string, extension: string) {
+  const baseName = filename.replace(/\.[^.]+$/, '')
+
+  return `${baseName || 'video'}${extension}`
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number) {
+  return new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, type, quality)
+  })
+}
+
+function captureVideoThumbnail(file: File) {
+  return new Promise<Blob | null>((resolve) => {
+    const video = document.createElement('video')
+    const objectUrl = URL.createObjectURL(file)
+    let settled = false
+    let timeoutId = 0
+
+    function cleanup(result: Blob | null) {
+      if (settled) {
+        return
+      }
+
+      settled = true
+      window.clearTimeout(timeoutId)
+      video.removeAttribute('src')
+      video.load()
+      URL.revokeObjectURL(objectUrl)
+      resolve(result)
+    }
+
+    async function drawFrame() {
+      if (!video.videoWidth || !video.videoHeight) {
+        cleanup(null)
+        return
+      }
+
+      const maxWidth = 960
+      const maxHeight = 540
+      const ratio = Math.min(maxWidth / video.videoWidth, maxHeight / video.videoHeight, 1)
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(video.videoWidth * ratio))
+      canvas.height = Math.max(1, Math.round(video.videoHeight * ratio))
+
+      const context = canvas.getContext('2d')
+
+      if (!context) {
+        cleanup(null)
+        return
+      }
+
+      context.drawImage(video, 0, 0, canvas.width, canvas.height)
+      cleanup(await canvasToBlob(canvas, 'image/webp', 0.82))
+    }
+
+    video.onerror = () => cleanup(null)
+    video.onloadedmetadata = () => {
+      const duration = Number.isFinite(video.duration) ? video.duration : 0
+      const captureTime = duration > 1 ? Math.min(1, duration * 0.15) : 0
+
+      if (Math.abs(video.currentTime - captureTime) < 0.05) {
+        void drawFrame()
+        return
+      }
+
+      video.currentTime = captureTime
+    }
+    video.onseeked = () => {
+      void drawFrame()
+    }
+    video.muted = true
+    video.preload = 'metadata'
+    video.playsInline = true
+    video.src = objectUrl
+    timeoutId = window.setTimeout(() => cleanup(null), 8000)
+    video.load()
+  })
+}
+
 export function TransitionConfigurationModal({
   transition,
   allMaps,
@@ -37,7 +153,10 @@ export function TransitionConfigurationModal({
   const [formData, setFormData] = useState<TransitionOverrideConfig>({
     assetUrl: currentConfig?.assetUrl ?? transition.assetUrl,
     thumbnailUrl: currentConfig?.thumbnailUrl ?? transition.thumbnailUrl,
-    toMapId: currentConfig?.toMapId ?? transition.toMapId ?? '',
+    keepCurrentMap: currentConfig?.keepCurrentMap ?? (!transition.toMapId && !currentConfig?.toMapId),
+    toMapId: currentConfig?.keepCurrentMap
+      ? ''
+      : currentConfig?.toMapId ?? transition.toMapId ?? '',
     type: currentConfig?.type ?? transition.type,
     customName: currentConfig?.customName ?? '',
   })
@@ -55,17 +174,34 @@ export function TransitionConfigurationModal({
     setUploadStatus('Processando arquivo...')
 
     try {
-      const mediaType = file.type.startsWith('video') ? 'video' : 'image'
+      const mediaType = resolveSelectedMediaType(file)
       const uploadedAsset = await uploadPhysicalAsset(file, {
         category: 'interludes',
-        contentType: file.type || 'application/octet-stream',
+        contentType: resolveSelectedContentType(file),
         filename: file.name,
       })
+      let thumbnailUrl = uploadedAsset.url
+
+      if (mediaType === 'video') {
+        setUploadStatus('Gerando thumbnail do video...')
+        const thumbnailBlob = await captureVideoThumbnail(file)
+
+        if (thumbnailBlob) {
+          const uploadedThumbnail = await uploadPhysicalAsset(thumbnailBlob, {
+            category: 'interludes',
+            contentType: 'image/webp',
+            filename: replaceFileExtension(file.name, '-thumb.webp'),
+          })
+          thumbnailUrl = uploadedThumbnail.url
+        } else {
+          thumbnailUrl = ''
+        }
+      }
 
       setFormData((current) => ({
         ...current,
         assetUrl: uploadedAsset.url,
-        thumbnailUrl: mediaType === 'image' ? uploadedAsset.url : current.thumbnailUrl,
+        thumbnailUrl,
         type: mediaType,
       }))
 
@@ -91,6 +227,7 @@ export function TransitionConfigurationModal({
     setFormData({
       assetUrl: transition.assetUrl,
       thumbnailUrl: transition.thumbnailUrl,
+      keepCurrentMap: !transition.toMapId,
       toMapId: transition.toMapId ?? '',
       type: transition.type,
       customName: '',
@@ -179,13 +316,13 @@ export function TransitionConfigurationModal({
                 {formData.type === 'video' ? (
                   <video
                     controls
-                    src={formData.assetUrl}
+                    src={resolveRuntimeAssetUrl(formData.assetUrl)}
                     style={{ maxWidth: '300px', maxHeight: '200px' }}
                   />
                 ) : (
                   <img
                     alt="Preview"
-                    src={formData.assetUrl}
+                    src={resolveRuntimeAssetUrl(formData.assetUrl)}
                     style={{ maxWidth: '300px', maxHeight: '200px' }}
                   />
                 )}
@@ -197,17 +334,18 @@ export function TransitionConfigurationModal({
             <legend>Mapa Destino</legend>
             <div className="form-group">
               <label>
-                <span>Mapa para onde ir apos interludio</span>
+                <span>Destino apos interludio</span>
                 <select
-                  value={formData.toMapId ?? ''}
+                  value={formData.keepCurrentMap ? '__current__' : formData.toMapId ?? ''}
                   onChange={(event) =>
                     setFormData((current) => ({
                       ...current,
-                      toMapId: event.target.value || undefined,
+                      keepCurrentMap: event.target.value === '__current__',
+                      toMapId: event.target.value === '__current__' ? '' : event.target.value,
                     }))
                   }
                 >
-                  <option value="">Sem mapa (manual)</option>
+                  <option value="__current__">Continuar no mapa atual</option>
                   {allMaps.map((map) => (
                     <option key={map.id} value={map.id}>
                       {map.name}

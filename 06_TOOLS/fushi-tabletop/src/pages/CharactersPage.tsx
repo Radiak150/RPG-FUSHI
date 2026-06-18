@@ -38,12 +38,16 @@ export function CharactersPage() {
   const npcCharacters = masterData.characters.items.filter(
     (character) => character.tipo === 'npc',
   )
+  const mobCharacters = masterData.characters.items.filter(
+    (character) => character.tipo === 'mob',
+  )
   const fallbackCharacter =
     masterData.characters.items.find(
       (character) => character.id === selectedCharacterId,
     ) ??
     playerCharacters[0] ??
     npcCharacters[0] ??
+    mobCharacters[0] ??
     null
   const selectedCharacter =
     viewMode === 'player'
@@ -213,26 +217,49 @@ export function CharactersPage() {
       </section>
 
       {viewMode === 'gm' ? (
-        <section className="flow-card">
-          <div className="flow-card__header">
-            <div>
-              <p className="eyebrow">NPCs</p>
-              <h2>Elenco local</h2>
+        <>
+          <section className="flow-card">
+            <div className="flow-card__header">
+              <div>
+                <p className="eyebrow">NPCs</p>
+                <h2>Elenco local</h2>
+              </div>
             </div>
-          </div>
 
-          <div className="collection-grid">
-            {npcCharacters.map((character) => (
-              <CharacterCollectionCard
-                character={character}
-                isActive={selectedCharacter?.id === character.id}
-                key={character.id}
-                onOpenEditor={() => openEditEditor(character)}
-                onSelect={() => setSelectedCharacterId(character.id)}
-              />
-            ))}
-          </div>
-        </section>
+            <div className="collection-grid">
+              {npcCharacters.map((character) => (
+                <CharacterCollectionCard
+                  character={character}
+                  isActive={selectedCharacter?.id === character.id}
+                  key={character.id}
+                  onOpenEditor={() => openEditEditor(character)}
+                  onSelect={() => setSelectedCharacterId(character.id)}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="flow-card">
+            <div className="flow-card__header">
+              <div>
+                <p className="eyebrow">Mobs</p>
+                <h2>Criaturas simples</h2>
+              </div>
+            </div>
+
+            <div className="collection-grid">
+              {mobCharacters.map((character) => (
+                <CharacterCollectionCard
+                  character={character}
+                  isActive={selectedCharacter?.id === character.id}
+                  key={character.id}
+                  onOpenEditor={() => openEditEditor(character)}
+                  onSelect={() => setSelectedCharacterId(character.id)}
+                />
+              ))}
+            </div>
+          </section>
+        </>
       ) : null}
 
       {selectedCharacter ? (

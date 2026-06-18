@@ -1,5 +1,6 @@
 import type { CharacterSheet, RollConfig } from '../../data/types'
 import { useViewMode } from '../../hooks/useViewMode'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 import { ResourceMeter } from '../ui/ResourceMeter'
 import { StatusPill } from '../ui/StatusPill'
 import { CharacterAttackList } from './CharacterAttackList'
@@ -29,6 +30,7 @@ export function CharacterSheetCard({
   onUseRoll,
 }: CharacterSheetCardProps) {
   const { viewMode } = useViewMode()
+  const isMobSheet = character.tipo === 'mob'
 
   return (
     <article className="sheet-card">
@@ -83,7 +85,10 @@ export function CharacterSheetCard({
       <div className="sheet-grid">
         <section className="sheet-section">
           <div className="section-header">
-            <p className="eyebrow">Atributos</p>
+            <p className="eyebrow sheet-section__sigil-heading">
+              <img alt="" src={resolveRuntimeAssetUrl('/assets/ui/fushi-sigil.svg')} />
+              <span>Atributos</span>
+            </p>
             <span className="support-copy">MVP oficial</span>
           </div>
 
@@ -127,16 +132,35 @@ export function CharacterSheetCard({
 
       <div className="sheet-grid">
         <section className="sheet-section">
-          <div className="section-header">
-            <p className="eyebrow">Pericias</p>
-            <span className="support-copy">Atributo define dados</span>
-          </div>
+          {isMobSheet ? (
+            <>
+              <div className="section-header">
+                <p className="eyebrow">Mob</p>
+                <span className="support-copy">Ficha compacta</span>
+              </div>
+              <div className="tag-row">
+                <span className="tag">{character.faccao || factionName}</span>
+                <span className="tag">{character.deslocamento}</span>
+                <span className="tag">{character.status[0] ?? 'ativo'}</span>
+              </div>
+              <p className="support-copy">
+                {character.notas || 'Criatura simples baseada em atributos, recursos e ataques.'}
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="section-header">
+                <p className="eyebrow">Pericias</p>
+                <span className="support-copy">Atributo define dados</span>
+              </div>
 
-          <CharacterSkillList
-            attributeValues={character.atributos}
-            items={character.pericias}
-            onUseRoll={onUseRoll}
-          />
+              <CharacterSkillList
+                attributeValues={character.atributos}
+                items={character.pericias}
+                onUseRoll={onUseRoll}
+              />
+            </>
+          )}
         </section>
 
         <section className="sheet-section">

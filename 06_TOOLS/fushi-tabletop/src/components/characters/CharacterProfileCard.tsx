@@ -1,7 +1,9 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import type {
   AttributeKey,
   CharacterAttack,
+  CharacterFeatureActivationRequest,
+  CharacterFeatureActivationSource,
   CharacterFeatureDetail,
   CharacterInventoryItem,
   CharacterSheet,
@@ -12,7 +14,18 @@ import {
   getCharacterSheetModel,
   prepareCharacterForEditing,
 } from '../../lib/characterSheet'
+import {
+  buildAttackActionFeature,
+  buildInventoryItemActionFeature,
+  featureHasExecutableAutomation,
+  getCharacterActionCommandLabel,
+  getCharacterActionEffectsLabel,
+  getCharacterActionKindLabel,
+  getCharacterActionRequirementChips,
+  getCharacterActionRollLabel,
+} from '../../lib/characterActions'
 import { formatAttributeLabel } from '../../lib/rolls'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 import { LocalImageInput } from '../ui/LocalImageInput'
 
 interface CharacterProfileCardProps {
@@ -22,6 +35,7 @@ interface CharacterProfileCardProps {
   editable?: boolean
   factions?: FactionItem[]
   onChange?: (nextCharacter: CharacterSheet) => void
+  onActivateFeature?: (input: CharacterFeatureActivationRequest) => void
   onPreviewImage?: (src: string, label: string) => void
   onBroadcastImage?: (src: string, label: string) => void
   canBroadcastImage?: boolean
@@ -73,6 +87,7 @@ export function CharacterProfileCard({
   editable = false,
   factions,
   onChange,
+  onActivateFeature,
   onPreviewImage,
   onBroadcastImage,
   canBroadcastImage = false,
@@ -81,10 +96,12 @@ export function CharacterProfileCard({
 }: CharacterProfileCardProps) {
   const [activeTab, setActiveTab] = useState<SheetTab>('combate')
   const model = useMemo(() => getCharacterSheetModel(character), [character])
-  const editableCharacter = useMemo(
+  const preparedCharacter = useMemo(
     () => prepareCharacterForEditing(character),
     [character],
   )
+  const [editableDraft, setEditableDraft] = useState(preparedCharacter)
+  const editableCharacter = editable ? editableDraft : preparedCharacter
   const workingCharacter = editable ? editableCharacter : model
   const workingFeatures = workingCharacter.habilidadesDetalhadas ?? []
   const workingRituals = workingCharacter.rituais ?? []
@@ -98,6 +115,17 @@ export function CharacterProfileCard({
     aparencia: '',
     personalidade: '',
   }
+  const isMobSheet = workingCharacter.tipo === 'mob'
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setEditableDraft(preparedCharacter)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [preparedCharacter])
 
   const attributeEntries = [
     {
@@ -150,10 +178,16 @@ export function CharacterProfileCard({
     partialCharacter: Partial<CharacterSheet>,
     options: { allowReadMode?: boolean } = {},
   ) {
-    emit({
+    const nextCharacter = {
       ...editableCharacter,
       ...partialCharacter,
-    }, options)
+    }
+
+    if (editable) {
+      setEditableDraft(prepareCharacterForEditing(nextCharacter))
+    }
+
+    emit(nextCharacter, options)
   }
 
   function updateAttribute(attribute: AttributeKey, nextValue: number) {
@@ -213,18 +247,119 @@ export function CharacterProfileCard({
     key: 'habilidadesDetalhadas' | 'rituais',
     nextItems: CharacterFeatureDetail[],
   ) {
-    updateCharacter({
+    const nextPartial: Partial<CharacterSheet> = {
       [key]: nextItems,
-    })
+    }
+
+    if (key === 'habilidadesDetalhadas') {
+      nextPartial.habilidades = nextItems
+        .map((item) => item.nome.trim())
+        .filter(Boolean)
+    }
+
+    updateCharacter(nextPartial)
   }
 
   function updateInventory(nextItems: CharacterInventoryItem[]) {
     updateCharacter({
+      inventario: nextItems.map((item) => item.nome.trim()).filter(Boolean),
       inventarioDetalhado: nextItems,
     })
   }
 
+  function renderFeatureActionCard(
+    feature: CharacterFeatureDetail,
+    source: CharacterFeatureActivationSource,
+  ) {
+    const automation = feature.automation
+    const kindLabel = getCharacterActionKindLabel(feature)
+    const commandLabel = getCharacterActionCommandLabel(feature)
+    const rollLabel = getCharacterActionRollLabel(feature)
+    const requirementChips = getCharacterActionRequirementChips(feature)
+    const effectLabel = getCharacterActionEffectsLabel(feature)
+    const canActivate =
+      Boolean(onActivateFeature) && featureHasExecutableAutomation(feature)
+    const tags = [
+      kindLabel,
+      automation?.activation,
+      automation?.target,
+      automation?.range,
+      automation?.duration,
+      automation?.limit,
+      ...(automation?.tags ?? []),
+    ].filter((tag): tag is string => Boolean(tag?.trim()))
+
+    return (
+      <details className="sheet-view__compact-detail sheet-action-card">
+        <summary className="sheet-view__compact-summary">
+          <div className="sheet-view__compact-heading sheet-action-card__heading">
+            <div>
+              <span className="sheet-action-card__kind">{kindLabel}</span>
+              <h3>{feature.nome}</h3>
+            </div>
+            {canActivate ? (
+              <button
+                className="button button--primary sheet-action-card__activate"
+                onClick={(event) => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  onActivateFeature?.({
+                    character: workingCharacter,
+                    feature,
+                    source,
+                  })
+                }}
+                type="button"
+              >
+                {commandLabel}
+              </button>
+            ) : (
+              <span className="tag">Consulta</span>
+            )}
+          </div>
+          <div className="sheet-action-card__summary-row">
+            {requirementChips.map((chip) => (
+              <span
+                className={`sheet-action-card__chip sheet-action-card__chip--${chip.tone}`}
+                key={`${feature.id}-${chip.tone}-${chip.label}`}
+              >
+                {chip.label}
+              </span>
+            ))}
+            {rollLabel ? (
+              <span className="sheet-action-card__chip sheet-action-card__chip--roll">
+                {rollLabel}
+              </span>
+            ) : null}
+            {effectLabel ? (
+              <span className="sheet-action-card__chip sheet-action-card__chip--effect">
+                {effectLabel}
+              </span>
+            ) : null}
+          </div>
+        </summary>
+
+        <div className="sheet-view__compact-body">
+          {tags.length > 0 ? (
+            <div className="tag-row">
+              {tags.map((tag) => (
+                <span className="tag" key={`${feature.id}-${tag}`}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <p className="support-copy">
+            {feature.descricao || 'Sem descricao cadastrada.'}
+          </p>
+        </div>
+      </details>
+    )
+  }
+
   const rootClassName = `sheet-view${editable ? ' sheet-view--editable' : ''}${
+    isMobSheet ? ' sheet-view--mob' : ''
+  }${
     className ? ` ${className}` : ''
   }`
 
@@ -237,12 +372,17 @@ export function CharacterProfileCard({
               <LocalImageInput
                 aspect="square"
                 label="Avatar"
-                onChange={(nextValue) => updateCharacter({ avatarUrl: nextValue })}
-                value={editableCharacter.avatarUrl}
+                onChange={(nextValue) =>
+                  updateCharacter({
+                    avatarUrl: nextValue,
+                    tokenImageUrl: nextValue,
+                  })
+                }
+                value={editableCharacter.avatarUrl || editableCharacter.tokenImageUrl}
               />
-            ) : model.avatarUrl ? (
+            ) : model.avatarUrl || model.tokenImageUrl ? (
               <>
-                {onPreviewImage ? (
+                {model.avatarUrl && onPreviewImage ? (
                   <button
                     className="sheet-view__portrait-button"
                     onClick={() => onPreviewImage(model.avatarUrl!, model.nome)}
@@ -252,17 +392,23 @@ export function CharacterProfileCard({
                     <img
                       alt={`Avatar de ${model.nome}`}
                       className="sheet-view__portrait"
-                      src={model.avatarUrl}
+                      src={resolveRuntimeAssetUrl(model.avatarUrl)}
                     />
                   </button>
-                ) : (
+                ) : model.avatarUrl ? (
                   <img
                     alt={`Avatar de ${model.nome}`}
                     className="sheet-view__portrait"
-                    src={model.avatarUrl}
+                    src={resolveRuntimeAssetUrl(model.avatarUrl)}
                   />
-                )}
-                {canBroadcastImage && onBroadcastImage ? (
+                ) : model.tokenImageUrl ? (
+                  <img
+                    alt={`Token de ${model.nome}`}
+                    className="sheet-view__portrait"
+                    src={resolveRuntimeAssetUrl(model.tokenImageUrl)}
+                  />
+                ) : null}
+                {model.avatarUrl && canBroadcastImage && onBroadcastImage ? (
                   <button
                     className="button sheet-view__image-action"
                     onClick={() => onBroadcastImage(model.avatarUrl!, model.nome)}
@@ -351,16 +497,22 @@ export function CharacterProfileCard({
                   className="sheet-view__input"
                   onChange={(event) =>
                     updateCharacter({
-                      tipo: event.target.value === 'npc' ? 'npc' : 'player',
+                      tipo:
+                        event.target.value === 'npc' || event.target.value === 'mob'
+                          ? event.target.value
+                          : 'player',
                     })
                   }
                   value={editableCharacter.tipo}
                 >
                   <option value="player">Jogador</option>
                   <option value="npc">NPC</option>
+                  <option value="mob">Mob</option>
                 </select>
               ) : (
-                <strong>{model.tipo === 'player' ? 'Jogador' : 'NPC'}</strong>
+                <strong>
+                  {model.tipo === 'player' ? 'Jogador' : model.tipo === 'mob' ? 'Mob' : 'NPC'}
+                </strong>
               )}
             </label>
 
@@ -422,7 +574,10 @@ export function CharacterProfileCard({
         </header>
 
         <section className="sheet-view__attribute-panel">
-          <div className="sheet-view__attribute-core">Atributos</div>
+          <div className="sheet-view__attribute-core">
+            <img alt="" src={resolveRuntimeAssetUrl('/assets/ui/fushi-sigil.svg')} />
+            <span>Atributos</span>
+          </div>
           {attributeEntries.map((attribute, index) => (
             <article
               className={`sheet-view__attribute-orb sheet-view__attribute-orb--${index + 1}`}
@@ -673,53 +828,90 @@ export function CharacterProfileCard({
         </div>
       </section>
 
-      <section className="sheet-view__middle">
-        <div className="sheet-view__section-header">
-          <div>
-            <p className="eyebrow">Pericias</p>
-            <h3>Lista geral com treino</h3>
+      {isMobSheet ? (
+        <section className="sheet-view__middle sheet-view__middle--mob">
+          <div className="sheet-view__section-header">
+            <div>
+              <p className="eyebrow">Mob</p>
+              <h3>Ficha compacta</h3>
+            </div>
           </div>
-        </div>
 
-        <div className="sheet-view__skill-list sheet-view__skill-list--dense">
-          {workingCharacter.pericias.length > 0 ? (
-            workingCharacter.pericias.map((skill, index) => (
-              <article className="sheet-view__skill-row sheet-view__skill-row--catalog" key={skill.id}>
-                <div className="sheet-view__skill-main">
-                  <strong>{skill.nome}</strong>
-                  <span className="sheet-view__skill-attribute">
-                    {formatAttributeLabel(skill.atributoBase)}
-                  </span>
-                </div>
-
-                <div className="sheet-view__skill-values">
-                  <span className="sheet-view__skill-train-label">Treino</span>
-                  {editable ? (
-                    <input
-                      className="sheet-view__skill-train-input"
-                      onChange={(event) =>
-                        updateSkill(index, {
-                          bonusPericia: parseNumberValue(event.target.value),
-                        })
-                      }
-                      type="number"
-                      value={editableCharacter.pericias[index]?.bonusPericia ?? 0}
-                    />
-                  ) : (
-                    <strong className="sheet-view__skill-train-value">
-                      +{skill.bonusPericia}
-                    </strong>
-                  )}
-                </div>
-              </article>
-            ))
-          ) : (
+          <div className="sheet-view__content-list">
             <article className="sheet-view__detail-card">
-              <p className="support-copy">Nenhuma pericia cadastrada.</p>
+              <div className="tag-row">
+                <span className="tag">{workingCharacter.faccao || factionName}</span>
+                <span className="tag">{workingCharacter.localAtual}</span>
+                <span className="tag">{workingCharacter.deslocamento}</span>
+              </div>
+              <p className="support-copy">
+                {workingCharacter.notas || 'Criatura simples: atributos, recursos e ataques principais.'}
+              </p>
             </article>
-          )}
-        </div>
-      </section>
+            <article className="sheet-view__detail-card">
+              <div className="sheet-view__compact-heading">
+                <strong>Ataques ativos</strong>
+                <span className="tag">{workingCharacter.ataques.length}</span>
+              </div>
+              <div className="tag-row">
+                {workingCharacter.ataques.slice(0, 4).map((attack) => (
+                  <span className="tag" key={attack.id}>
+                    {attack.nome}
+                  </span>
+                ))}
+              </div>
+            </article>
+          </div>
+        </section>
+      ) : (
+        <section className="sheet-view__middle">
+          <div className="sheet-view__section-header">
+            <div>
+              <p className="eyebrow">Pericias</p>
+              <h3>Lista geral com treino</h3>
+            </div>
+          </div>
+
+          <div className="sheet-view__skill-list sheet-view__skill-list--dense">
+            {workingCharacter.pericias.length > 0 ? (
+              workingCharacter.pericias.map((skill, index) => (
+                <article className="sheet-view__skill-row sheet-view__skill-row--catalog" key={skill.id}>
+                  <div className="sheet-view__skill-main">
+                    <strong>{skill.nome}</strong>
+                    <span className="sheet-view__skill-attribute">
+                      {formatAttributeLabel(skill.atributoBase)}
+                    </span>
+                  </div>
+
+                  <div className="sheet-view__skill-values">
+                    <span className="sheet-view__skill-train-label">Treino</span>
+                    {editable ? (
+                      <input
+                        className="sheet-view__skill-train-input"
+                        onChange={(event) =>
+                          updateSkill(index, {
+                            bonusPericia: parseNumberValue(event.target.value),
+                          })
+                        }
+                        type="number"
+                        value={editableCharacter.pericias[index]?.bonusPericia ?? 0}
+                      />
+                    ) : (
+                      <strong className="sheet-view__skill-train-value">
+                        +{skill.bonusPericia}
+                      </strong>
+                    )}
+                  </div>
+                </article>
+              ))
+            ) : (
+              <article className="sheet-view__detail-card">
+                <p className="support-copy">Nenhuma pericia cadastrada.</p>
+              </article>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="sheet-view__right">
         <div className="sheet-view__tabs">
@@ -820,27 +1012,10 @@ export function CharacterProfileCard({
                       </button>
                     </div>
                   ) : (
-                    <details className="sheet-view__compact-detail">
-                      <summary className="sheet-view__compact-summary">
-                        <div className="sheet-view__compact-heading">
-                          <h3>{attack.nome}</h3>
-                          <p className="support-copy">
-                            {attack.dano} · {attack.alcance}
-                          </p>
-                        </div>
-                      </summary>
-
-                      <div className="sheet-view__compact-body">
-                        <p className="support-copy">{attack.resumo}</p>
-                        <div className="tag-row">
-                          <span className="tag">
-                            {formatAttributeLabel(attack.atributoBase)}
-                          </span>
-                          <span className="tag">+{attack.bonusPericia}</span>
-                          <span className="tag">{attack.alcance}</span>
-                        </div>
-                      </div>
-                    </details>
+                    renderFeatureActionCard(
+                      buildAttackActionFeature(workingCharacter, attack),
+                      'ataque',
+                    )
                   )}
                 </article>
               ))
@@ -937,19 +1112,7 @@ export function CharacterProfileCard({
                       </button>
                     </div>
                   ) : (
-                    <details className="sheet-view__compact-detail">
-                      <summary className="sheet-view__compact-summary">
-                        <div className="sheet-view__compact-heading">
-                          <h3>{feature.nome}</h3>
-                        </div>
-                      </summary>
-
-                      <div className="sheet-view__compact-body">
-                        <p className="support-copy">
-                          {feature.descricao || 'Sem descricao cadastrada.'}
-                        </p>
-                      </div>
-                    </details>
+                    renderFeatureActionCard(feature, 'habilidade')
                   )}
                 </article>
               ))
@@ -1034,19 +1197,7 @@ export function CharacterProfileCard({
                       </button>
                     </div>
                   ) : (
-                    <details className="sheet-view__compact-detail">
-                      <summary className="sheet-view__compact-summary">
-                        <div className="sheet-view__compact-heading">
-                          <h3>{ritual.nome}</h3>
-                        </div>
-                      </summary>
-
-                      <div className="sheet-view__compact-body">
-                        <p className="support-copy">
-                          {ritual.descricao || 'Sem descricao cadastrada.'}
-                        </p>
-                      </div>
-                    </details>
+                    renderFeatureActionCard(ritual, 'ritual')
                   )}
                 </article>
               ))
@@ -1112,14 +1263,14 @@ export function CharacterProfileCard({
                           <img
                             alt={item.nome}
                             className="sheet-view__inventory-image"
-                            src={item.imagemUrl}
+                            src={resolveRuntimeAssetUrl(item.imagemUrl)}
                           />
                         </button>
                       ) : (
                         <img
                           alt={item.nome}
                           className="sheet-view__inventory-image"
-                          src={item.imagemUrl}
+                          src={resolveRuntimeAssetUrl(item.imagemUrl)}
                         />
                       )
                     ) : (
@@ -1209,30 +1360,10 @@ export function CharacterProfileCard({
                         </button>
                       </>
                     ) : (
-                      <details className="sheet-view__compact-detail">
-                        <summary className="sheet-view__compact-summary">
-                          <div className="sheet-view__compact-heading">
-                            <h3>{item.nome}</h3>
-                          </div>
-                        </summary>
-
-                        <div className="sheet-view__compact-body">
-                          <p className="support-copy">
-                            {item.descricao || 'Sem descricao cadastrada.'}
-                          </p>
-                          <div className="tag-row">
-                            {item.efeitos.length > 0 ? (
-                              item.efeitos.map((effect) => (
-                                <span className="tag" key={effect}>
-                                  {effect}
-                                </span>
-                              ))
-                            ) : (
-                              <span className="tag">Sem efeitos</span>
-                            )}
-                          </div>
-                        </div>
-                      </details>
+                      renderFeatureActionCard(
+                        buildInventoryItemActionFeature(workingCharacter, item),
+                        'item',
+                      )
                     )}
                   </div>
                 </article>

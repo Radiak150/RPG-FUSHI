@@ -9,7 +9,7 @@ export function SidebarNav() {
   return (
     <aside className="sidebar">
       <div className="sidebar__brand">
-        <Link className="sidebar__brand-link" to="/">
+        <Link className="sidebar__brand-link" to="/launcher">
           <p className="eyebrow">FUSHI Tabletop</p>
           <h2>Fluxo principal</h2>
         </Link>

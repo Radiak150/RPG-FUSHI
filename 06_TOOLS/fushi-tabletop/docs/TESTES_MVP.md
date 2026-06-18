@@ -19,6 +19,15 @@
 2. Clicar em "Criar backup da campanha atual".
 3. Confirmar download de `fushi-backup-[campaignId]-[data].json`.
 4. Validar que o arquivo e JSON puro.
+5. Confirmar que o snapshot aparece em "Restaurar backup".
+
+## Backup automatico
+
+1. Abrir uma campanha.
+2. Aguardar o primeiro snapshot automatico.
+3. Confirmar que a lista mantem no maximo 5 snapshots por campanha.
+4. Alterar algo relevante na campanha/mesa.
+5. Confirmar que um novo snapshot aparece depois do intervalo.
 
 ## Substituir campanha
 
@@ -28,6 +37,14 @@
 4. Confirmar alerta explicito.
 5. Confirmar que backup automatico foi baixado.
 6. Confirmar que dados da campanha ativa foram substituidos.
+
+## Restaurar backup
+
+1. Criar ou aguardar snapshot interno.
+2. Clicar em "Restaurar".
+3. Confirmar o alerta.
+4. Confirmar que o estado anterior foi preservado antes da restauracao.
+5. Confirmar que a campanha volta para o estado do snapshot escolhido.
 
 ## Estado publico/privado
 

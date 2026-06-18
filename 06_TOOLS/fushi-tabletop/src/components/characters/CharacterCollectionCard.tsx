@@ -1,5 +1,6 @@
 import type { CharacterSheet } from '../../data/types'
 import { getCharacterSheetModel } from '../../lib/characterSheet'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 
 interface CharacterCollectionCardProps {
   character: CharacterSheet
@@ -34,7 +35,11 @@ export function CharacterCollectionCard({
     >
       <div className="collection-card__media">
         {model.avatarUrl ? (
-          <img alt={model.nome} className="collection-card__image" src={model.avatarUrl} />
+          <img
+            alt={model.nome}
+            className="collection-card__image"
+            src={resolveRuntimeAssetUrl(model.avatarUrl)}
+          />
         ) : (
           <div className="collection-card__placeholder" data-tone={model.tone}>
             {buildInitials(model.nome)}
@@ -43,7 +48,9 @@ export function CharacterCollectionCard({
       </div>
 
       <div className="collection-card__body">
-        <p className="eyebrow">{model.tipo === 'player' ? 'Jogador' : 'NPC'}</p>
+        <p className="eyebrow">
+          {model.tipo === 'player' ? 'Jogador' : model.tipo === 'mob' ? 'Mob' : 'NPC'}
+        </p>
         <h3>{model.nome}</h3>
         <p className="support-copy">
           {model.classe} | {model.origem}

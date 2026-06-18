@@ -1,4 +1,5 @@
 import type {
+  TabletopBoardObject,
   TabletopMap,
   TabletopMediaAsset,
   TabletopTransitionAsset,
@@ -30,17 +31,44 @@ export interface TabletopLibraryHiddenItems {
   npcs: Record<string, true>
 }
 
+export interface TabletopMusicFavoritePreset {
+  id: string
+  name: string
+  trackIds: string[]
+}
+
+export interface PersistedTabletopObjectPreset {
+  id: string
+  libraryKind?: 'animation' | 'object'
+  name: string
+  label: string
+  description: string
+  objectType: TabletopBoardObject['objectType']
+  renderMode?: TabletopBoardObject['renderMode']
+  assetUrl: string
+  previewImage?: string
+  modelUrl?: string
+  modelNodeName?: string
+  color: string
+  size: TabletopBoardObject['size']
+  placementScale?: number
+  sourceFileName?: string
+  modelFormat?: string
+}
+
 export interface PersistedTabletopLibraryState {
   version: 1
   folders: TabletopLibraryFolder[]
   itemFolders: TabletopLibraryItemFolders
   hiddenItems: TabletopLibraryHiddenItems
   customMaps: TabletopMap[]
+  customObjectPresets: PersistedTabletopObjectPreset[]
   customTransitions: TabletopTransitionAsset[]
   customMusicTracks: TabletopMediaAsset[]
   customAmbienceTracks: TabletopMediaAsset[]
   mapOverrides: Record<string, Partial<TabletopMap>>
   favoriteTrackIds: string[]
+  favoritePresets: TabletopMusicFavoritePreset[]
   trackVolumes: Record<string, number>
 }
 
@@ -73,11 +101,13 @@ export const EMPTY_TABLETOP_LIBRARY_STATE: PersistedTabletopLibraryState = {
     npcs: {},
   },
   customMaps: [],
+  customObjectPresets: [],
   customTransitions: [],
   customMusicTracks: [],
   customAmbienceTracks: [],
   mapOverrides: {},
   favoriteTrackIds: [],
+  favoritePresets: [],
   trackVolumes: {},
 }
 
@@ -172,6 +202,28 @@ function normalizeStringArray(value: unknown): string[] {
   return Array.from(new Set(value.filter((item): item is string => typeof item === 'string')))
 }
 
+function normalizeFavoritePreset(value: unknown): TabletopMusicFavoritePreset | null {
+  if (!isRecord(value) || typeof value.id !== 'string' || typeof value.name !== 'string') {
+    return null
+  }
+
+  return {
+    id: value.id,
+    name: value.name.trim() || 'Favoritos',
+    trackIds: normalizeStringArray(value.trackIds),
+  }
+}
+
+function normalizeFavoritePresets(value: unknown): TabletopMusicFavoritePreset[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .map(normalizeFavoritePreset)
+    .filter((preset): preset is TabletopMusicFavoritePreset => preset !== null)
+}
+
 function normalizeNumberRecord(value: unknown): Record<string, number> {
   if (!isRecord(value)) {
     return {}
@@ -185,26 +237,69 @@ function normalizeNumberRecord(value: unknown): Record<string, number> {
   )
 }
 
+function normalizeLibraryAssetReference(value: unknown) {
+  if (typeof value !== 'string') {
+    return value
+  }
+
+  const normalizedValue = value.trim().replace(/\\/g, '/')
+  const assetPathMatch = /^(?:\.\/|\/)?assets\/(.+)$/.exec(normalizedValue)
+
+  return assetPathMatch ? `/assets/${assetPathMatch[1]}` : value
+}
+
+function normalizeAnimatedSurface(value: unknown): TabletopMap['animatedSurface'] {
+  if (!isRecord(value) || typeof value.source !== 'string' || !value.source.trim()) {
+    return undefined
+  }
+
+  const playbackRate =
+    typeof value.playbackRate === 'number' && Number.isFinite(value.playbackRate)
+      ? Math.min(2, Math.max(0.25, value.playbackRate))
+      : 1
+
+  return {
+    enabled: value.enabled !== false,
+    loop: value.loop !== false,
+    minQuality: value.minQuality === 'ultra' ? 'ultra' : 'balanced',
+    playbackRate,
+    poster:
+      typeof value.poster === 'string'
+        ? (normalizeLibraryAssetReference(value.poster) as string)
+        : undefined,
+    source: normalizeLibraryAssetReference(value.source) as string,
+  }
+}
+
 function normalizeMaps(value: unknown): TabletopMap[] {
   if (!Array.isArray(value)) {
     return []
   }
 
-  return value.filter((item): item is TabletopMap => {
-    if (!isRecord(item)) {
-      return false
-    }
+  return value
+    .filter((item): item is TabletopMap => {
+      if (!isRecord(item)) {
+        return false
+      }
 
-    return (
-      typeof item.id === 'string' &&
-      typeof item.name === 'string' &&
-      typeof item.image === 'string' &&
-      typeof item.stageWidth === 'number' &&
-      typeof item.stageHeight === 'number' &&
-      typeof item.gridColumns === 'number' &&
-      typeof item.gridRows === 'number'
-    )
-  })
+      return (
+        typeof item.id === 'string' &&
+        typeof item.name === 'string' &&
+        typeof item.image === 'string' &&
+        typeof item.stageWidth === 'number' &&
+        typeof item.stageHeight === 'number' &&
+        typeof item.gridColumns === 'number' &&
+        typeof item.gridRows === 'number'
+      )
+    })
+    .map((map) => ({
+      ...map,
+      image: normalizeLibraryAssetReference(map.image) as string,
+      imageUrl: normalizeLibraryAssetReference(map.imageUrl) as string | undefined,
+      previewImage: normalizeLibraryAssetReference(map.previewImage) as string | undefined,
+      thumbnailUrl: normalizeLibraryAssetReference(map.thumbnailUrl) as string | undefined,
+      animatedSurface: normalizeAnimatedSurface(map.animatedSurface),
+    }))
 }
 
 function normalizeTransitions(value: unknown): TabletopTransitionAsset[] {
@@ -212,21 +307,29 @@ function normalizeTransitions(value: unknown): TabletopTransitionAsset[] {
     return []
   }
 
-  return value.filter((item): item is TabletopTransitionAsset => {
-    if (!isRecord(item)) {
-      return false
-    }
+  return value
+    .filter((item): item is TabletopTransitionAsset => {
+      if (!isRecord(item)) {
+        return false
+      }
 
-    return (
-      typeof item.id === 'string' &&
-      typeof item.name === 'string' &&
-      typeof item.summary === 'string' &&
-      typeof item.biomeId === 'string' &&
-      (item.type === 'image' || item.type === 'video') &&
-      typeof item.assetUrl === 'string' &&
-      typeof item.description === 'string'
-    )
-  })
+      return (
+        typeof item.id === 'string' &&
+        typeof item.name === 'string' &&
+        typeof item.summary === 'string' &&
+        typeof item.biomeId === 'string' &&
+        (item.type === 'image' || item.type === 'video') &&
+        typeof item.assetUrl === 'string' &&
+        typeof item.description === 'string'
+      )
+    })
+    .map((transition) => ({
+      ...transition,
+      assetUrl: normalizeLibraryAssetReference(transition.assetUrl) as string,
+      thumbnailUrl: normalizeLibraryAssetReference(transition.thumbnailUrl) as
+        | string
+        | undefined,
+    }))
 }
 
 function normalizeMediaAssets(value: unknown): TabletopMediaAsset[] {
@@ -246,6 +349,85 @@ function normalizeMediaAssets(value: unknown): TabletopMediaAsset[] {
       typeof item.source === 'string'
     )
   })
+}
+
+function normalizeObjectType(value: unknown): TabletopBoardObject['objectType'] {
+  return value === 'item' ||
+    value === 'prop' ||
+    value === 'hazard' ||
+    value === 'objective'
+    ? value
+    : 'prop'
+}
+
+function normalizeRenderMode(
+  value: unknown,
+): TabletopBoardObject['renderMode'] | undefined {
+  return value === 'sprite' || value === 'three' ? value : undefined
+}
+
+function normalizeObjectSize(value: unknown): TabletopBoardObject['size'] {
+  return value === 1 || value === 2 || value === 3 ? value : 1
+}
+
+function normalizePlacementScale(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined
+  }
+
+  return Math.min(80, Math.max(0.01, value))
+}
+
+function normalizeObjectPresets(value: unknown): PersistedTabletopObjectPreset[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .map((item): PersistedTabletopObjectPreset | null => {
+      if (
+        !isRecord(item) ||
+        typeof item.id !== 'string' ||
+        typeof item.name !== 'string' ||
+        typeof item.label !== 'string'
+      ) {
+        return null
+      }
+
+      const libraryKind =
+        item.libraryKind === 'animation' || item.libraryKind === 'object'
+          ? item.libraryKind
+          : 'object'
+
+      return {
+        id: item.id,
+        libraryKind,
+        name: item.name,
+        label: item.label,
+        description:
+          typeof item.description === 'string' ? item.description : '',
+        objectType: normalizeObjectType(item.objectType),
+        renderMode: normalizeRenderMode(item.renderMode),
+        assetUrl: typeof item.assetUrl === 'string' ? item.assetUrl : '',
+        previewImage:
+          typeof item.previewImage === 'string' ? item.previewImage : undefined,
+        modelUrl: typeof item.modelUrl === 'string' ? item.modelUrl : undefined,
+        modelNodeName:
+          typeof item.modelNodeName === 'string' ? item.modelNodeName : undefined,
+        color: typeof item.color === 'string' ? item.color : '#e9c97e',
+        size: normalizeObjectSize(item.size),
+        placementScale: normalizePlacementScale(item.placementScale),
+        sourceFileName:
+          typeof item.sourceFileName === 'string'
+            ? item.sourceFileName
+            : undefined,
+        modelFormat:
+          typeof item.modelFormat === 'string' ? item.modelFormat : undefined,
+      }
+    })
+    .filter(
+      (item): item is PersistedTabletopObjectPreset => item !== null,
+    )
 }
 
 function normalizeMapOverrides(value: unknown): Record<string, Partial<TabletopMap>> {
@@ -280,6 +462,12 @@ function normalizeMapOverrides(value: unknown): Record<string, Partial<TabletopM
 
     if (typeof override.thumbnailUrl === 'string') {
       nextOverride.thumbnailUrl = override.thumbnailUrl
+    }
+
+    const animatedSurface = normalizeAnimatedSurface(override.animatedSurface)
+
+    if (animatedSurface) {
+      nextOverride.animatedSurface = animatedSurface
     }
 
     if (typeof override.summary === 'string') {
@@ -373,11 +561,13 @@ export function createTabletopLibraryState(
     itemFolders: normalizeItemFolders(input?.itemFolders),
     hiddenItems: normalizeHiddenItems(input?.hiddenItems),
     customMaps: normalizeMaps(input?.customMaps),
+    customObjectPresets: normalizeObjectPresets(input?.customObjectPresets),
     customTransitions: normalizeTransitions(input?.customTransitions),
     customMusicTracks: normalizeMediaAssets(input?.customMusicTracks),
     customAmbienceTracks: normalizeMediaAssets(input?.customAmbienceTracks),
     mapOverrides: normalizeMapOverrides(input?.mapOverrides),
     favoriteTrackIds: normalizeStringArray(input?.favoriteTrackIds),
+    favoritePresets: normalizeFavoritePresets(input?.favoritePresets),
     trackVolumes: normalizeNumberRecord(input?.trackVolumes),
   }
 }
@@ -407,6 +597,11 @@ export function readPersistedTabletopLibraryState(
 export function writePersistedTabletopLibraryState(
   state: PersistedTabletopLibraryState,
   campaignId?: string,
+  options?: { allowDestructiveReset?: boolean; origin?: string },
 ) {
-  storageAdapter.saveLibraryState(campaignId, createTabletopLibraryState(state))
+  storageAdapter.saveLibraryState(
+    campaignId,
+    createTabletopLibraryState(state),
+    options,
+  )
 }

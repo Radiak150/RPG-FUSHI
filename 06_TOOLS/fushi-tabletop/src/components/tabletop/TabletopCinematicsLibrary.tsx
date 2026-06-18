@@ -1,4 +1,5 @@
 import type { TabletopCinematicAsset } from '../../data/types'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 
 interface TabletopCinematicsLibraryProps {
   activeCinematicId: string
@@ -81,7 +82,9 @@ export function TabletopCinematicsLibrary({
                   <img
                     alt={cinematic.name}
                     className="tabletop-library-card__image"
-                    src={cinematic.previewImage}
+                    decoding="async"
+                    loading="lazy"
+                    src={resolveRuntimeAssetUrl(cinematic.previewImage)}
                   />
                 ) : (
                   <div className="tabletop-library-card__placeholder">

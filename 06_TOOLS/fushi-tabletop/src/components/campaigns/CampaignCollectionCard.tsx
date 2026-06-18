@@ -1,4 +1,5 @@
 import type { LocalCampaign } from '../../data/types'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 
 interface CampaignCollectionCardProps {
   campaign: LocalCampaign
@@ -32,7 +33,7 @@ export function CampaignCollectionCard({
             <img
               alt={campaign.nome}
               className="collection-card__image"
-              src={campaign.coverImageUrl}
+              src={resolveRuntimeAssetUrl(campaign.coverImageUrl)}
             />
           ) : (
             <div className="collection-card__placeholder collection-card__placeholder--cover">

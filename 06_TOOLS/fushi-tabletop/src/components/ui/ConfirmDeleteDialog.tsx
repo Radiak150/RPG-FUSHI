@@ -40,7 +40,7 @@ export function ConfirmDeleteDialog({
         <p className="support-copy">{message}</p>
         <div className="access-card">
           <strong>{entityLabel}</strong>
-          <span>Digite DETELAR para confirmar a exclusao local.</span>
+          <span>Digite DELETAR para confirmar a exclusao local.</span>
         </div>
 
         <label className="field">
@@ -48,7 +48,7 @@ export function ConfirmDeleteDialog({
           <input
             className="field__input"
             onChange={(event) => setConfirmationValue(event.target.value)}
-            placeholder="DETELAR"
+            placeholder="DELETAR"
             type="text"
             value={confirmationValue}
           />

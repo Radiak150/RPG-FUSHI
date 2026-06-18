@@ -15,7 +15,7 @@ export interface ViewModeContextValue {
   authenticateAccessProfile: (
     profileId: FushiAccessProfileId,
     password: string,
-  ) => boolean
+  ) => boolean | Promise<boolean>
   logoutAccessProfile: () => void
   setViewMode: (viewMode: AppViewMode) => void
   setPlayerCharacterId: (characterId: string) => void

@@ -26,7 +26,7 @@ export function CharacterSelector({
           <div className="selector-card__top">
             <div>
               <p className="eyebrow">
-                {character.tipo === 'player' ? 'Jogador' : 'NPC'}
+                {character.tipo === 'player' ? 'Jogador' : character.tipo === 'mob' ? 'Mob' : 'NPC'}
               </p>
               <h3>{character.nome}</h3>
             </div>

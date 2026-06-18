@@ -32,7 +32,30 @@ function tokenIsVisibleForPlayer(token: unknown, playerId: string) {
     return false
   }
 
+  const isControlledByPlayer = tokenCanBeControlledByPlayer(token, playerId)
+  const stealth = isRecord(token.stealth) ? token.stealth : null
+
+  if (stealth?.enabled === true) {
+    return isControlledByPlayer || stealth.ownerPlayerId === playerId
+  }
+
   if (token.visibility === 'public' || token.visibleInPlayerView === true) {
+    return true
+  }
+
+  return isControlledByPlayer
+}
+
+function tokenCanBeControlledByPlayer(token: Record<string, unknown>, playerId: string) {
+  if (token.controladoPorJogadorId === playerId) {
+    return true
+  }
+
+  const persistentControl = isRecord(token.persistentControl)
+    ? token.persistentControl
+    : null
+
+  if (persistentControl?.playerId === playerId) {
     return true
   }
 
@@ -45,6 +68,92 @@ function tokenIsVisibleForPlayer(token: unknown, playerId: string) {
     control?.primaryControllerId === playerId ||
     controlledByPlayerIds.some((id) => id === playerId)
   )
+}
+
+function sanitizeTurnStateForPlayer(
+  turnState: unknown,
+  session: Record<string, unknown>,
+  playerId: string,
+) {
+  if (!isRecord(turnState) || turnState.isActive !== true || !Array.isArray(turnState.participants)) {
+    return null
+  }
+
+  const allTokens = new Map<string, unknown>()
+
+  if (Array.isArray(session.tokens)) {
+    session.tokens.forEach((token) => {
+      if (isRecord(token) && typeof token.id === 'string') {
+        allTokens.set(token.id, token)
+      }
+    })
+  }
+
+  if (Array.isArray(session.scenes)) {
+    session.scenes.forEach((scene) => {
+      if (!isRecord(scene) || !Array.isArray(scene.tokens)) {
+        return
+      }
+
+      scene.tokens.forEach((token) => {
+        if (isRecord(token) && typeof token.id === 'string') {
+          allTokens.set(token.id, token)
+        }
+      })
+    })
+  }
+
+  const visibleParticipants = turnState.participants.filter((participant) => {
+    if (!isRecord(participant) || typeof participant.tokenId !== 'string') {
+      return false
+    }
+
+    const token = allTokens.get(participant.tokenId)
+
+    return token ? tokenIsVisibleForPlayer(token, playerId) : false
+  })
+  const visibleParticipantIds = new Set(
+    visibleParticipants
+      .filter((participant) => isRecord(participant) && typeof participant.id === 'string')
+      .map((participant) => (participant as { id: string }).id),
+  )
+  const usedActions = isRecord(turnState.usedActions)
+    ? Object.fromEntries(
+        Object.entries(turnState.usedActions).filter(([participantId]) =>
+          visibleParticipantIds.has(participantId),
+        ),
+      )
+    : {}
+
+  return {
+    ...cloneValue(turnState),
+    activeParticipantId:
+      typeof turnState.activeParticipantId === 'string' &&
+      visibleParticipantIds.has(turnState.activeParticipantId)
+        ? turnState.activeParticipantId
+        : '',
+    participants: cloneValue(visibleParticipants),
+    usedActions,
+  }
+}
+
+function objectIsVisibleForPlayer(object: unknown) {
+  return isRecord(object) && object.visibility === 'public'
+}
+
+function sanitizeMeasurementForPlayer(session: Record<string, unknown>, currentSceneId: string) {
+  const measurement = isRecord(session.activeMeasurement) ? session.activeMeasurement : null
+
+  if (
+    !measurement ||
+    measurement.sceneId !== currentSceneId ||
+    !isRecord(measurement.start) ||
+    !isRecord(measurement.end)
+  ) {
+    return null
+  }
+
+  return cloneValue(measurement)
 }
 
 function sanitizeSessionForPlayer(session: unknown, playerId: string) {
@@ -63,9 +172,13 @@ function sanitizeSessionForPlayer(session: unknown, playerId: string) {
                 tokenIsVisibleForPlayer(token, playerId),
               )
             : []
+          const objects = Array.isArray(scene.objects)
+            ? scene.objects.filter(objectIsVisibleForPlayer)
+            : []
 
           return {
             ...cloneValue(scene),
+            objects,
             tokens,
           }
         })
@@ -79,12 +192,19 @@ function sanitizeSessionForPlayer(session: unknown, playerId: string) {
     tokens: Array.isArray(session.tokens)
       ? session.tokens.filter((token) => tokenIsVisibleForPlayer(token, playerId))
       : null,
+    gmCameraControlEnabled: session.gmCameraControlEnabled === true,
     isGridVisible: session.isGridVisible === true,
+    zoom: typeof session.zoom === 'number' ? session.zoom : undefined,
+    activeMeasurement: sanitizeMeasurementForPlayer(session, currentSceneId),
     logEntries: Array.isArray(session.logEntries)
       ? session.logEntries.filter(
           (entry) => isRecord(entry) && entry.visibility === 'public',
         )
       : [],
+    audioMixerState: isRecord(session.audioMixerState)
+      ? cloneValue(session.audioMixerState)
+      : { tracks: {}, updatedAt: Date.now() },
+    turnState: sanitizeTurnStateForPlayer(session.turnState, session, playerId),
   }
 }
 
@@ -119,17 +239,261 @@ function sanitizeLibraryForPlayer(libraryState: unknown) {
   return {
     version: libraryState.version,
     customMaps,
+    customAmbienceTracks: Array.isArray(libraryState.customAmbienceTracks)
+      ? cloneValue(libraryState.customAmbienceTracks)
+      : [],
+    customMusicTracks: Array.isArray(libraryState.customMusicTracks)
+      ? cloneValue(libraryState.customMusicTracks)
+      : [],
+    customTransitions: Array.isArray(libraryState.customTransitions)
+      ? cloneValue(libraryState.customTransitions)
+      : [],
     mapOverrides,
+    trackVolumes: isRecord(libraryState.trackVolumes)
+      ? cloneValue(libraryState.trackVolumes)
+      : {},
   }
 }
 
-function sanitizeWorldForPlayer(mundiState: unknown) {
+export interface PublicMundiLocation {
+  biomaId: string
+  biomaNome: string
+  id: string
+  image?: string
+  nome: string
+  presenceCount?: number
+  presenceNames?: string[]
+  posicao: {
+    x: number
+    y: number
+  }
+}
+
+export interface PublicMundiState {
+  clock: unknown
+  currentLocationIds: string[]
+  publicBase: {
+    anchorLocationId: string
+    bases: Array<{
+      biomaId: string
+      buffBioma: string
+      buffMundo: string
+      id: string
+      locationId: string
+      nome: string
+      resumo: string
+      selectedUpgradeId: string
+      upgrades: Array<{
+        categoria: string
+        dependsOnIds: string[]
+        efeitoMesa: string
+        id: string
+        nome: string
+        resumo: string
+        status: string
+        x: number
+        y: number
+      }>
+    }>
+    releasedToPlayers: boolean
+    selectedBaseId: string
+    upgrades: Array<{
+      categoria: string
+      dependsOnIds: string[]
+      efeitoMesa: string
+      id: string
+      nome: string
+      resumo: string
+      status: string
+      x: number
+      y: number
+    }>
+  }
+  publicLocations: PublicMundiLocation[]
+  publicMap: {
+    discoveredLocationIds: string[]
+    releasedToPlayers: boolean
+  }
+  selectedPartyId: string
+}
+
+function sanitizeNumber(value: unknown, fallback = 50) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+export function buildPublicMundiState(
+  mundiState: unknown,
+  playerId = '',
+): PublicMundiState | null {
   if (!isRecord(mundiState)) {
     return null
   }
 
+  const publicMap = isRecord(mundiState.publicMap) ? mundiState.publicMap : {}
+  const releasedToPlayers = publicMap.releasedToPlayers === true
+  const playerBase = isRecord(mundiState.playerBase) ? mundiState.playerBase : {}
+  const baseReleasedToPlayers = playerBase.releasedToPlayers === true
+  const baseUpgrades = Array.isArray(playerBase.upgrades)
+    ? playerBase.upgrades.filter(isRecord)
+    : []
+  const baseStates = Array.isArray(playerBase.bases)
+    ? playerBase.bases.filter(isRecord)
+    : []
+  const discoveredLocationIds = Array.isArray(publicMap.discoveredLocationIds)
+    ? publicMap.discoveredLocationIds.filter((id): id is string => typeof id === 'string')
+    : []
+  const biomes = Array.isArray(mundiState.biomes)
+    ? mundiState.biomes.filter(isRecord)
+    : []
+  const biomeNameById = new Map(
+    biomes.map((biome) => [
+      typeof biome.id === 'string' ? biome.id : '',
+      typeof biome.nome === 'string' ? biome.nome : '',
+    ]),
+  )
+  const locations = Array.isArray(mundiState.locations)
+    ? mundiState.locations.filter(isRecord)
+    : []
+  const parties = isRecord(mundiState.parties)
+    ? Object.values(mundiState.parties).filter(isRecord)
+    : []
+  const npcStates = Array.isArray(mundiState.npcStates)
+    ? mundiState.npcStates.filter(isRecord)
+    : []
+  const characterNameById = new Map<string, string>()
+  if (Array.isArray(mundiState.characters)) {
+    mundiState.characters.filter(isRecord).forEach((character) => {
+      if (typeof character.id === 'string' && typeof character.nome === 'string') {
+        characterNameById.set(character.id, character.nome)
+      }
+    })
+  }
+  const playerLocationIds = playerId
+    ? parties
+        .filter((party) => {
+          const members = Array.isArray(party.memberPlayerIds) ? party.memberPlayerIds : []
+
+          return members.includes(playerId)
+        })
+        .map((party) => (typeof party.localAtualId === 'string' ? party.localAtualId : ''))
+        .filter(Boolean)
+    : []
+  const visibleLocationIds = new Set([...discoveredLocationIds, ...playerLocationIds])
+  const publicLocations = releasedToPlayers
+    ? locations
+        .filter((location) => {
+          const locationId = typeof location.id === 'string' ? location.id : ''
+
+          return Boolean(locationId) && visibleLocationIds.has(locationId)
+        })
+        .map((location) => {
+          const posicao = isRecord(location.posicao) ? location.posicao : {}
+          const biomaId = typeof location.biomaId === 'string' ? location.biomaId : ''
+          const locationId = typeof location.id === 'string' ? location.id : ''
+          const presenceNames = [
+            ...parties
+              .filter((party) => party.localAtualId === locationId)
+              .map((party) => (typeof party.nome === 'string' ? party.nome : 'Grupo')),
+            ...npcStates
+              .filter(
+                (npc) =>
+                  npc.localAtualId === locationId &&
+                  npc.presencaNoMapa !== 'inativo' &&
+                  npc.presencaNoMapa !== 'selado',
+              )
+              .map((npc) =>
+                typeof npc.characterId === 'string'
+                  ? characterNameById.get(npc.characterId) ?? npc.characterId
+                  : 'NPC',
+              ),
+          ]
+
+          return {
+            biomaId,
+            biomaNome: biomeNameById.get(biomaId) ?? '',
+            id: locationId,
+            image:
+              typeof location.previewImageUrl === 'string'
+                ? location.previewImageUrl
+                : undefined,
+            nome: typeof location.nome === 'string' ? location.nome : '',
+            presenceCount: presenceNames.length,
+            presenceNames: presenceNames.slice(0, 4),
+            posicao: {
+              x: sanitizeNumber(posicao.x),
+              y: sanitizeNumber(posicao.y),
+            },
+          }
+        })
+    : []
+
   return {
     clock: cloneValue(mundiState.clock ?? null),
+    currentLocationIds: Array.from(new Set(playerLocationIds)),
+    publicBase: {
+      anchorLocationId:
+        typeof playerBase.anchorLocationId === 'string'
+          ? playerBase.anchorLocationId
+          : 'caverna_primeiro_corpo',
+      bases: baseReleasedToPlayers
+        ? baseStates.map((base) => ({
+            biomaId: typeof base.biomaId === 'string' ? base.biomaId : '',
+            buffBioma: typeof base.buffBioma === 'string' ? base.buffBioma : '',
+            buffMundo: typeof base.buffMundo === 'string' ? base.buffMundo : '',
+            id: typeof base.id === 'string' ? base.id : '',
+            locationId: typeof base.locationId === 'string' ? base.locationId : '',
+            nome: typeof base.nome === 'string' ? base.nome : '',
+            resumo: typeof base.resumo === 'string' ? base.resumo : '',
+            selectedUpgradeId:
+              typeof base.selectedUpgradeId === 'string' ? base.selectedUpgradeId : '',
+            upgrades: Array.isArray(base.upgrades)
+              ? base.upgrades
+                  .filter(isRecord)
+                  .filter((upgrade) => upgrade.status === 'ativo')
+                  .map((upgrade) => ({
+                    bonus: typeof upgrade.bonus === 'string' ? upgrade.bonus : '',
+                    categoria: typeof upgrade.categoria === 'string' ? upgrade.categoria : '',
+                    dependsOnIds: Array.isArray(upgrade.dependsOnIds)
+                      ? upgrade.dependsOnIds.filter((id): id is string => typeof id === 'string')
+                      : [],
+                    efeitoMesa: typeof upgrade.efeitoMesa === 'string' ? upgrade.efeitoMesa : '',
+                    id: typeof upgrade.id === 'string' ? upgrade.id : '',
+                    nome: typeof upgrade.nome === 'string' ? upgrade.nome : '',
+                    resumo: typeof upgrade.resumo === 'string' ? upgrade.resumo : '',
+                    status: 'ativo',
+                    x: sanitizeNumber(upgrade.x),
+                    y: sanitizeNumber(upgrade.y),
+                  }))
+              : [],
+          }))
+        : [],
+      releasedToPlayers: baseReleasedToPlayers,
+      selectedBaseId:
+        typeof playerBase.selectedBaseId === 'string' ? playerBase.selectedBaseId : '',
+      upgrades: baseReleasedToPlayers
+        ? baseUpgrades
+            .filter((upgrade) => upgrade.status === 'ativo')
+            .map((upgrade) => ({
+              bonus: typeof upgrade.bonus === 'string' ? upgrade.bonus : '',
+              categoria: typeof upgrade.categoria === 'string' ? upgrade.categoria : '',
+              dependsOnIds: Array.isArray(upgrade.dependsOnIds)
+                ? upgrade.dependsOnIds.filter((id): id is string => typeof id === 'string')
+                : [],
+              efeitoMesa: typeof upgrade.efeitoMesa === 'string' ? upgrade.efeitoMesa : '',
+              id: typeof upgrade.id === 'string' ? upgrade.id : '',
+              nome: typeof upgrade.nome === 'string' ? upgrade.nome : '',
+              resumo: typeof upgrade.resumo === 'string' ? upgrade.resumo : '',
+              status: 'ativo',
+              x: sanitizeNumber(upgrade.x),
+              y: sanitizeNumber(upgrade.y),
+            }))
+        : [],
+    },
+    publicLocations,
+    publicMap: {
+      discoveredLocationIds,
+      releasedToPlayers,
+    },
     selectedPartyId:
       typeof mundiState.selectedPartyId === 'string' ? mundiState.selectedPartyId : '',
   }
@@ -178,7 +542,7 @@ export function sanitizeStateForPlayer(
     playerCurrentMapId,
     tabletopSession,
     libraryState: sanitizeLibraryForPlayer(state.libraryState),
-    world: sanitizeWorldForPlayer(state.mundiState),
+    world: buildPublicMundiState(state.mundiState, playerId),
     playerAccess: sanitizeAccessForPlayer(state.playerAccess, playerId),
   }
 }

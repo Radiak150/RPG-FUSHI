@@ -1,8 +1,12 @@
-import type { LocalCampaign } from '../data/types'
+import type { CharacterSheet, LocalCampaign } from '../data/types'
 import {
   storageAdapter,
   type CampaignStorageExport,
 } from './storage/storageAdapter'
+import {
+  readWorldSimulationEvents,
+  writeWorldSimulationEvents,
+} from './worldSimulation'
 
 export const FUSHI_CAMPAIGN_EXPORT_VERSION = 1
 
@@ -23,6 +27,8 @@ export interface FushiCampaignImportSummary {
   mapCount: number
   locationCount: number
   groupCount: number
+  characterCount: number
+  assetCount: number
 }
 
 export interface FushiCampaignImportValidation {
@@ -104,6 +110,21 @@ function countMundiGroups(value: unknown) {
   return isRecord(value) && isRecord(value.parties) ? Object.keys(value.parties).length : 0
 }
 
+function getExportedCharacters(value: unknown): CharacterSheet[] {
+  if (!isRecord(value) || !Array.isArray(value.characters)) {
+    return []
+  }
+
+  return value.characters
+    .filter(
+      (character): character is CharacterSheet =>
+        isRecord(character) &&
+        typeof character.id === 'string' &&
+        typeof character.nome === 'string',
+    )
+    .map((character) => cloneValue(character))
+}
+
 function replaceCampaignIdDeep<T>(value: T, previousCampaignId: string, nextCampaignId: string): T {
   if (typeof value === 'string') {
     return (value === previousCampaignId ? nextCampaignId : value) as T
@@ -130,13 +151,18 @@ function replaceCampaignIdDeep<T>(value: T, previousCampaignId: string, nextCamp
 export function createCampaignExportFile(
   campaign: LocalCampaign,
 ): FushiCampaignExportFile {
+  const storage = storageAdapter.exportCampaign(campaign.id)
+
   return {
     appId: 'fushi-tabletop',
     exportType: 'campaign',
     version: FUSHI_CAMPAIGN_EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
     campaign: cloneValue(campaign),
-    storage: storageAdapter.exportCampaign(campaign.id),
+    storage: {
+      ...storage,
+      simulationEvents: readWorldSimulationEvents(campaign.id),
+    },
   }
 }
 
@@ -209,8 +235,16 @@ export function validateCampaignExportFile(
       mapCount: countLibraryMaps(file.storage.libraryState),
       locationCount: countMundiLocations(file.storage.mundiState),
       groupCount: countMundiGroups(file.storage.mundiState),
+      characterCount: getExportedCharacters(file.storage.masterWorkspace).length,
+      assetCount: Array.isArray((file as FushiCampaignExportFile & { assets?: unknown[] }).assets)
+        ? ((file as FushiCampaignExportFile & { assets: unknown[] }).assets.length)
+        : 0,
     },
   }
+}
+
+export function getCampaignExportCharacters(file: FushiCampaignExportFile) {
+  return getExportedCharacters(file.storage.masterWorkspace)
 }
 
 export function buildImportedCampaignMetadata(
@@ -265,6 +299,13 @@ export function saveImportedCampaignStorage(
     storageAdapter.savePhysicalPersistence(
       targetCampaignId,
       normalize(file.storage.physicalPersistence),
+    )
+  }
+
+  if (Array.isArray(file.storage.simulationEvents)) {
+    writeWorldSimulationEvents(
+      targetCampaignId,
+      normalize(file.storage.simulationEvents),
     )
   }
 }
