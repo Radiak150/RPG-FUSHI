@@ -11,6 +11,9 @@ dist-electron/
 06_TOOLS/fushi-tabletop/release-codex/
 .cache/
 .vite/
+06_TOOLS/fushi-tabletop/.codex-dev-*.json
+06_TOOLS/fushi-tabletop/COMO-*.txt
+06_TOOLS/fushi-tabletop/INICIAR-TUNEL-*.cmd
 
 # env/secrets
 .env
