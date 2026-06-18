@@ -1,8 +1,20 @@
 # RPG FUSHI
 
-Base organizacional do projeto criativo `RPG FUSHI`.
+Base organizacional do projeto criativo `RPG FUSHI` e do app `RPG FUSHI Tabletop`.
 
-Este repositório existe para manter consistência entre lore, sistema, dados estruturados, preparação de sessão e ferramentas futuras de suporte ao mestre. O objetivo atual não é construir um aplicativo, e sim criar memória de projeto, organização e espaço para expansão.
+Este repositório existe para manter consistência entre app, sistema, dados estruturados, preparação de sessão e ferramentas futuras de suporte ao mestre.
+
+O app principal fica em:
+
+`06_TOOLS/fushi-tabletop`
+
+## Estado De Versionamento
+
+- `main`: baseline público e versionável do projeto.
+- Branches `alpha*` e `feature/*`: trabalho em andamento antes de virar base.
+- Conteúdo privado de campanha, lore sensível, builds locais, releases empacotados, caches e backups não entram no Git.
+- A planilha operacional atual fica em `06_TOOLS/fushi-tabletop/docs/planejamento/FUSHI_App_Readiness_Alpha84.xlsx`.
+- Antes de promover mudanças importantes do app, validar o build real Windows em `06_TOOLS/fushi-tabletop/release/win-unpacked`.
 
 ## Premissa consolidada
 

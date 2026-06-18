@@ -5,6 +5,8 @@ node_modules/
 dist/
 build/
 out/
+release/
+dist-electron/
 .release/
 .cache/
 .vite/
@@ -64,6 +66,7 @@ Thumbs.db
 *.iml
 
 # test/cache
+.codex-dev/
 coverage/
 playwright-report/
 test-results/
