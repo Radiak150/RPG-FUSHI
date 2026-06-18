@@ -8,6 +8,7 @@ out/
 release/
 dist-electron/
 .release/
+06_TOOLS/fushi-tabletop/release-codex/
 .cache/
 .vite/
 
@@ -56,6 +57,9 @@ out.txt
 /fushi-campaigns/
 /fushi-assets/
 /fushi-backups/
+/MUN_REWORK/
+/VFX_ASSETS_INBOX/
+/06_TOOLS/fushi-tabletop/MSC_AUDIO_LIBRARY/
 
 # OS/editor
 .DS_Store
