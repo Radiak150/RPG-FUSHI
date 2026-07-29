@@ -149,6 +149,24 @@ function writeSeedData() {
               vidaAtual: 10,
               vidaMaxima: 10,
             },
+            combatProfile:
+              playerNumber === 1
+                ? {
+                    build: {
+                      archetype: 'tank',
+                      items: [
+                        {
+                          catalogItemId: 'canonical-gm-build-item',
+                          name: 'Build canonica do Mestre',
+                          potency: 2,
+                          rarity: 'comum',
+                          rarityLabel: 'Comum',
+                        },
+                      ],
+                      totals: { life: 7, damage: -3 },
+                    },
+                  }
+                : undefined,
             tipo: 'player',
             tokenImageUrl: canonicalAvatarUrl,
             tokenSize: 'medium',
@@ -241,6 +259,23 @@ function writeSeedData() {
       initialSceneId: 'scene-1',
       isGridVisible: true,
       logEntries: [],
+      publicCombatMarks: [
+        {
+          cancelableBySource: true,
+          color: '#7c5ce7',
+          createdAt: new Date().toISOString(),
+          description: 'O proximo ataque do Heroi 1 causa o dobro de dano.',
+          icon: 'science',
+          id: 'combat-effect-cancel-smoke',
+          kind: 'mark',
+          label: 'Analise Cirurgica',
+          sourceCharacterId: 'hero-1',
+          sourceFeatureId: 'analysis-smoke',
+          sourceTokenId: 'token-1',
+          targetCharacterId: 'hero-4',
+          targetTokenId: 'token-4',
+        },
+      ],
       scenes: [
         {
           id: 'scene-1',
@@ -294,7 +329,80 @@ function writeSeedData() {
           },
         },
       },
-      version: 15,
+      trainingState: {
+        arcId: 'vila-circuito-centro-v1',
+        finalTrial: {
+          contributorIds: ['player1'],
+          isActive: false,
+          isCompleted: false,
+          isUnlocked: false,
+          pressure: 0,
+          progress: 0,
+          stationIds: [],
+        },
+        gmNotes: 'nao pode chegar ao jogador',
+        isActive: true,
+        isCompleted: false,
+        locationId: 'campo_treino_vila',
+        mapId: 'map-1',
+        participants: tokens.slice(0, 5).map((token, index) => ({
+          activeStationId: 'escalada',
+          characterId: token.characterId,
+          color: token.color,
+          id: `player${index + 1}`,
+          label: `J${index + 1}`,
+          name: `Heroi ${index + 1}`,
+          playerId: `player${index + 1}`,
+          stations: {
+            escalada: {
+              boldSuccesses: 0,
+              dt: 12,
+              progress: index === 0 ? 2 : 0,
+              setbacks: 0,
+              status: index === 0 ? 'active' : 'pending',
+            },
+          },
+          tokenId: token.id,
+        })),
+        startedAt: Date.now(),
+        updatedAt: Date.now(),
+        version: 1,
+      },
+      eventState: {
+        events: {
+          'initial-training': {
+            activatedAt: Date.now() - 2000,
+            isActive: true,
+            restoreMapId: 'mapa-privado-smoke',
+            updatedAt: Date.now(),
+          },
+          'build-rarity-draw': {
+            activatedAt: Date.now() - 1000,
+            isActive: true,
+            updatedAt: Date.now(),
+          },
+          'skill-assignment': {
+            activatedAt: Date.now() - 500,
+            isActive: true,
+            updatedAt: Date.now(),
+          },
+        },
+        rarityDraw: {
+          characterId: 'hero-1',
+          characterName: 'Heroi 1',
+          drawId: 'rarity-multiplayer-smoke',
+          itemId: 'item-smoke',
+          itemName: 'Item Smoke',
+          lastRoll: 10,
+          phase: 'rolling',
+          rarity: 'mitico',
+          revealAt: Date.now() + 2800,
+          startedAt: Date.now(),
+        },
+        updatedAt: Date.now(),
+        version: 1,
+      },
+      version: 16,
     },
     name: 'session',
     scope: 'campaign',
@@ -411,9 +519,14 @@ function writeSeedData() {
 
 function waitForMessage(socket, predicate, timeoutMs = 5000) {
   return new Promise((resolve, reject) => {
+    const waitingFrom = new Error('waitForMessage chamado aqui')
     const timeoutId = setTimeout(() => {
       socket.removeEventListener('message', handleMessage)
-      reject(new Error('Timeout aguardando mensagem multiplayer.'))
+      reject(
+        new Error(
+          `Timeout aguardando mensagem multiplayer.\n${waitingFrom.stack ?? ''}`,
+        ),
+      )
     }, timeoutMs)
 
     function handleMessage(event) {
@@ -432,8 +545,16 @@ function waitForMessage(socket, predicate, timeoutMs = 5000) {
   })
 }
 
-async function connectAndAuthenticate(port, profileId, password, server) {
-  const socket = new WebSocket(`ws://127.0.0.1:${port}/session?code=${sessionCode}`)
+async function connectAndAuthenticate(
+  port,
+  profileId,
+  password,
+  server,
+  clientInstanceId = `smoke-instance-${profileId}`,
+) {
+  const socket = new WebSocket(
+    `ws://127.0.0.1:${port}/session?code=${sessionCode}&clientInstanceId=${encodeURIComponent(clientInstanceId)}`,
+  )
 
   await new Promise((resolve, reject) => {
     socket.addEventListener('open', resolve, { once: true })
@@ -473,11 +594,18 @@ async function connectAndAuthenticate(port, profileId, password, server) {
     throw new Error(`Estado publico nao veio no perfil autenticado ${profileId}.`)
   }
 
-  return { publicStateMessage, socket }
+  return { clientInstanceId, publicStateMessage, socket }
 }
 
-async function connectPendingAdmission(port, profileId, password) {
-  const socket = new WebSocket(`ws://127.0.0.1:${port}/session?code=${sessionCode}`)
+async function connectPendingAdmission(
+  port,
+  profileId,
+  password,
+  clientInstanceId = `smoke-pending-${profileId}-${Date.now()}`,
+) {
+  const socket = new WebSocket(
+    `ws://127.0.0.1:${port}/session?code=${sessionCode}&clientInstanceId=${encodeURIComponent(clientInstanceId)}`,
+  )
 
   await new Promise((resolve, reject) => {
     socket.addEventListener('open', resolve, { once: true })
@@ -506,13 +634,73 @@ async function connectPendingAdmission(port, profileId, password) {
     throw new Error('Pedido pendente nao informou clientId para controle do mestre.')
   }
 
-  return { clientId, socket }
+  return { clientId, clientInstanceId, socket }
 }
 
-async function postRemoteAction(port, playerId, message, actionId) {
+async function reconnectAcceptedInstance(
+  port,
+  profileId,
+  password,
+  clientInstanceId,
+) {
+  const socket = new WebSocket(
+    `ws://127.0.0.1:${port}/session?code=${sessionCode}&clientInstanceId=${encodeURIComponent(clientInstanceId)}`,
+  )
+
+  await new Promise((resolve, reject) => {
+    socket.addEventListener('open', resolve, { once: true })
+    socket.addEventListener('error', reject, { once: true })
+  })
+  const sessionInfoPromise = waitForMessage(socket, (message) => message.type === 'session-info')
+  socket.send(JSON.stringify({ type: 'request-state' }))
+  await sessionInfoPromise
+
+  const authOkPromise = waitForMessage(socket, (message) => message.type === 'auth-ok')
+  const acceptedPromise = waitForMessage(
+    socket,
+    (message) =>
+      message.type === 'admission-status' && message.payload?.status === 'accepted',
+  )
+  const publicStatePromise = waitForMessage(
+    socket,
+    (message) =>
+      message.type === 'public-state' && message.payload?.playerId === profileId,
+  )
+  socket.send(JSON.stringify({
+    password,
+    profileId,
+    type: 'authenticate',
+  }))
+  await authOkPromise
+  await acceptedPromise
+  const publicStateMessage = await publicStatePromise
+
+  return { publicStateMessage, socket }
+}
+
+function closeSocket(socket) {
+  return new Promise((resolve) => {
+    if (socket.readyState === WebSocket.CLOSED) {
+      resolve()
+      return
+    }
+
+    socket.addEventListener('close', resolve, { once: true })
+    socket.close()
+  })
+}
+
+async function postRemoteAction(
+  port,
+  playerId,
+  message,
+  actionId,
+  clientInstanceId = `smoke-instance-${playerId}`,
+) {
   const response = await fetch(`http://127.0.0.1:${port}/action`, {
     body: JSON.stringify({
       actionId,
+      clientInstanceId,
       code: sessionCode,
       message: {
         ...message,
@@ -552,8 +740,8 @@ async function run() {
   }
 
   if (
-    health.protocolVersion !== 2 ||
-    health.serverVersion !== 'multiplayer-v2' ||
+    health.protocolVersion !== 3 ||
+    health.serverVersion !== 'multiplayer-v3' ||
     typeof health.serverInstanceId !== 'string' ||
     !health.serverInstanceId ||
     !Number.isSafeInteger(health.stateVersion)
@@ -570,12 +758,14 @@ async function run() {
     throw new Error('Servidor multiplayer nao serviu asset da biblioteca.')
   }
 
-  const { publicStateMessage, socket } = await connectAndAuthenticate(
+  const playerOneConnection = await connectAndAuthenticate(
     status.port,
     'player1',
     '1234',
     server,
   )
+  const { clientInstanceId: playerOneInstanceId, publicStateMessage } = playerOneConnection
+  let socket = playerOneConnection.socket
   const extraSockets = []
 
   for (const playerNumber of [2, 3, 4, 5]) {
@@ -592,6 +782,30 @@ async function run() {
     throw new Error('Servidor multiplayer nao manteve os 5 jogadores conectados.')
   }
 
+  await closeSocket(socket)
+  const resumedConnection = await reconnectAcceptedInstance(
+    status.port,
+    'player1',
+    '1234',
+    playerOneInstanceId,
+  )
+  socket = resumedConnection.socket
+
+  const acceptedPlayerAfterResume = server
+    .getStatus()
+    .clients.find(
+      (client) =>
+        client.playerId === 'player1' &&
+        client.clientInstanceId === playerOneInstanceId,
+    )
+
+  if (
+    acceptedPlayerAfterResume?.admissionStatus !== 'accepted' ||
+    server.getAuthenticatedClientCount() !== 5
+  ) {
+    throw new Error('Reentrada em socket novo da mesma instancia voltou para pending ou duplicou o jogador.')
+  }
+
   if (publicStateMessage.payload?.playerId !== 'player1') {
     throw new Error('Estado publico nao veio no perfil autenticado.')
   }
@@ -600,7 +814,7 @@ async function run() {
   const initialStateVersion = publicStateMessage.payload?.stateVersion
 
   if (
-    publicStateMessage.payload?.protocolVersion !== 2 ||
+    publicStateMessage.payload?.protocolVersion !== 3 ||
     initialServerInstanceId !== health.serverInstanceId ||
     !Number.isSafeInteger(initialStateVersion) ||
     initialStateVersion < 1
@@ -671,6 +885,308 @@ async function run() {
     throw new Error('Turno publico revelou participante oculto/furtivo para jogador errado.')
   }
 
+  const initialTrainingState =
+    publicStateMessage.payload?.tabletopSession?.trainingState
+  const publicTrainingText = JSON.stringify(initialTrainingState)
+  const publicTrainingParticipantIds =
+    initialTrainingState?.participants?.map?.((participant) => participant.id) ?? []
+
+  if (
+    initialTrainingState?.isActive !== true ||
+    initialTrainingState?.participants?.find?.((participant) => participant.id === 'player1')
+      ?.stations?.escalada?.progress !== 2 ||
+    publicTrainingParticipantIds.length !== 5 ||
+    !publicTrainingParticipantIds.includes('player2') ||
+    !publicTrainingParticipantIds.includes('player3') ||
+    publicTrainingText.includes('gmNotes') ||
+    publicTrainingText.includes('"dt"')
+  ) {
+    throw new Error('Treinamento publico perdeu progresso ou vazou controle do Mestre.')
+  }
+
+  const initialEventState = publicStateMessage.payload?.tabletopSession?.eventState
+  const publicEventText = JSON.stringify(initialEventState)
+
+  if (
+    initialEventState?.events?.['initial-training']?.isActive !== true ||
+    initialEventState?.events?.['build-rarity-draw']?.isActive !== true ||
+    initialEventState?.events?.['skill-assignment']?.isActive !== true ||
+    initialEventState?.rarityDraw?.drawId !== 'rarity-multiplayer-smoke' ||
+    initialEventState?.rarityDraw?.rarity !== 'mitico' ||
+    publicEventText.includes('lastRoll') ||
+    publicEventText.includes('restoreMapId') ||
+    publicEventText.includes('mapa-privado-smoke')
+  ) {
+    throw new Error('EVE publico perdeu apresentacao ou vazou estado privado do Mestre.')
+  }
+
+  const initialCombatEffect =
+    publicStateMessage.payload?.tabletopSession?.publicCombatMarks?.find?.(
+      (effect) => effect.id === 'combat-effect-cancel-smoke',
+    )
+
+  if (
+    initialCombatEffect?.sourceTokenId !== 'token-1' ||
+    initialCombatEffect?.targetTokenId !== 'token-4' ||
+    initialCombatEffect?.cancelableBySource !== true ||
+    initialCombatEffect?.description !==
+      'O proximo ataque do Heroi 1 causa o dobro de dano.' ||
+    Object.hasOwn(initialCombatEffect ?? {}, 'sourceCharacterId') ||
+    Object.hasOwn(initialCombatEffect ?? {}, 'sourceFeatureId') ||
+    Object.hasOwn(initialCombatEffect ?? {}, 'targetCharacterId')
+  ) {
+    throw new Error(
+      'Efeito de combate publico perdeu contexto seguro ou vazou IDs internos.',
+    )
+  }
+
+  const cancelledEffectStatePromise = waitForMessage(
+    socket,
+    (message) =>
+      message.type === 'public-state' &&
+      !message.payload?.tabletopSession?.publicCombatMarks?.some?.(
+        (effect) => effect.id === 'combat-effect-cancel-smoke',
+      ),
+  )
+  const cancelledEffectAckPromise = waitForMessage(
+    socket,
+    (message) =>
+      message.type === 'action-ack' &&
+      message.payload?.actionId === 'smoke-action-cancel-effect-ws' &&
+      message.payload?.applied === true,
+  )
+  socket.send(JSON.stringify({
+    effectId: 'combat-effect-cancel-smoke',
+    remoteActionId: 'smoke-action-cancel-effect-ws',
+    type: 'cancel-combat-effect',
+  }))
+  await cancelledEffectAckPromise
+  await cancelledEffectStatePromise
+
+  const cancelledEffectSession = loadJson(app, {
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+  })
+
+  if (
+    cancelledEffectSession.publicCombatMarks?.some(
+      (effect) => effect.id === 'combat-effect-cancel-smoke',
+    )
+  ) {
+    throw new Error('Cancelamento remoto confirmou ACK sem remover o efeito canonico.')
+  }
+
+  const { payload: replayedEffect, response: replayedEffectResponse } =
+    await postRemoteAction(
+      status.port,
+      'player1',
+      {
+        effectId: 'combat-effect-cancel-smoke',
+        type: 'cancel-combat-effect',
+      },
+      'smoke-action-cancel-effect-ws',
+    )
+
+  if (
+    !replayedEffectResponse.ok ||
+    replayedEffect.ok !== true ||
+    replayedEffect.applied !== true ||
+    replayedEffect.actionId !== 'smoke-action-cancel-effect-ws'
+  ) {
+    throw new Error(
+      'Replay do cancelamento de efeito nao preservou ACK idempotente.',
+    )
+  }
+
+  const combatReceiptPlayerOnePromise = waitForMessage(
+    socket,
+    (message) =>
+      message.type === 'public-state' &&
+      message.payload?.tabletopSession?.publicCombatReceipt?.id ===
+        'combat-receipt-multiplayer-smoke',
+  ).catch((error) => {
+    throw new Error(`J1 nao recebeu recibo de combate: ${error.message}`)
+  })
+  const combatReceiptPlayerTwoPromise = waitForMessage(
+    extraSockets[0],
+    (message) =>
+      message.type === 'public-state' &&
+      message.payload?.tabletopSession?.publicCombatReceipt?.id ===
+        'combat-receipt-multiplayer-smoke',
+  ).catch((error) => {
+    throw new Error(`J2 nao recebeu recibo de combate: ${error.message}`)
+  })
+  const combatReceiptUninvolvedPromise = waitForMessage(
+    extraSockets[1],
+    (message) =>
+      message.type === 'public-state' &&
+      message.payload?.tabletopSession?.publicCombatImpacts?.some?.(
+        (impact) => impact.id === 'combat-impact-multiplayer-smoke',
+      ) &&
+      message.payload?.tabletopSession?.publicCombatReceipt === null,
+  ).catch((error) => {
+    throw new Error(`J3 nao recebeu impacto sem recibo privado: ${error.message}`)
+  })
+  const sessionWithCombatReceipt = loadJson(app, {
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+  })
+  sessionWithCombatReceipt.publicCombatImpacts = [
+    ...(sessionWithCombatReceipt.publicCombatImpacts ?? []),
+    {
+      amount: 3,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 5000,
+      id: 'combat-impact-multiplayer-smoke',
+      kind: 'damage',
+      sceneId: 'scene-1',
+      tokenId: 'token-1',
+    },
+  ]
+  sessionWithCombatReceipt.publicCombatReceipt = {
+    attackerName: 'Heroi 1',
+    createdAt: Date.now(),
+    damageApplied: 3,
+    healingApplied: 0,
+    id: 'combat-receipt-multiplayer-smoke',
+    outcome: 'hit',
+    resourceChangesByPlayerId: {
+      player1: [
+        {
+          after: 3,
+          before: 5,
+          label: 'FUSHI',
+        },
+      ],
+      player2: [
+        {
+          after: 7,
+          before: 10,
+          label: 'Vida',
+        },
+      ],
+    },
+    sceneId: 'scene-1',
+    summary: 'Heroi 1 causou 3 de dano em Heroi 2.',
+    targetName: 'Heroi 2',
+    visibleToPlayerIds: ['player1', 'player2'],
+  }
+  saveJson(app, {
+    campaignId,
+    data: sessionWithCombatReceipt,
+    name: 'session',
+    scope: 'campaign',
+  })
+  server.handleStorageChanged({
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+    type: 'json',
+  })
+  const combatReceiptPlayerOne =
+    (await combatReceiptPlayerOnePromise).payload?.tabletopSession?.publicCombatReceipt
+  const combatReceiptPlayerTwo =
+    (await combatReceiptPlayerTwoPromise).payload?.tabletopSession?.publicCombatReceipt
+  await combatReceiptUninvolvedPromise
+
+  if (
+    combatReceiptPlayerOne?.resourceChangesByPlayerId?.player1?.[0]?.label !== 'FUSHI' ||
+    combatReceiptPlayerOne?.resourceChangesByPlayerId?.player2 !== undefined ||
+    combatReceiptPlayerOne?.visibleToPlayerIds?.length !== 1 ||
+    combatReceiptPlayerOne.visibleToPlayerIds[0] !== 'player1'
+  ) {
+    throw new Error('Recibo de combate do J1 vazou recursos do alvo.')
+  }
+
+  if (
+    combatReceiptPlayerTwo?.resourceChangesByPlayerId?.player2?.[0]?.label !== 'Vida' ||
+    combatReceiptPlayerTwo?.resourceChangesByPlayerId?.player1 !== undefined ||
+    combatReceiptPlayerTwo?.visibleToPlayerIds?.length !== 1 ||
+    combatReceiptPlayerTwo.visibleToPlayerIds[0] !== 'player2'
+  ) {
+    throw new Error('Recibo de combate do J2 vazou recursos do atacante.')
+  }
+
+  const publicCombatPreviewPromise = waitForMessage(
+    socket,
+    (message) =>
+      message.type === 'public-state' &&
+      message.payload?.tabletopSession?.publicCombatPreview?.id === 'combat-preview-smoke',
+  )
+  const sessionWithPublicCombatPreview = loadJson(app, {
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+  })
+  sessionWithPublicCombatPreview.publicCombatPreview = {
+    color: '#8e6cff',
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 5000,
+    id: 'combat-preview-smoke',
+    label: 'Barulho Torturante | raio 5 m',
+    origin: { column: 1, row: 1 },
+    radiusMeters: 5,
+    sceneId: 'scene-1',
+    shape: 'radius',
+    sourceTokenId: 'token-1',
+  }
+  saveJson(app, {
+    campaignId,
+    data: sessionWithPublicCombatPreview,
+    name: 'session',
+    scope: 'campaign',
+  })
+  server.handleStorageChanged({
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+    type: 'json',
+  })
+  const publicCombatPreviewMessage = await publicCombatPreviewPromise
+  const publicCombatPreview = publicCombatPreviewMessage.payload?.tabletopSession?.publicCombatPreview
+
+  if (
+    publicCombatPreview?.color !== '#8e6cff' ||
+    publicCombatPreview?.shape !== 'radius' ||
+    publicCombatPreview?.sourceTokenId !== 'token-1' ||
+    publicCombatPreview?.sceneId !== 'scene-1'
+  ) {
+    throw new Error('Preview de area de combate nao chegou ao Jogador com os dados publicos esperados.')
+  }
+
+  const expiredCombatPreviewPromise = waitForMessage(
+    socket,
+    (message) =>
+      message.type === 'public-state' &&
+      !message.payload?.tabletopSession?.publicCombatPreview,
+  )
+  const sessionWithExpiredCombatPreview = loadJson(app, {
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+  })
+  sessionWithExpiredCombatPreview.publicCombatPreview = {
+    ...sessionWithExpiredCombatPreview.publicCombatPreview,
+    createdAt: Date.now() - 5000,
+    expiresAt: Date.now() - 1000,
+    id: 'combat-preview-expired-smoke',
+  }
+  saveJson(app, {
+    campaignId,
+    data: sessionWithExpiredCombatPreview,
+    name: 'session',
+    scope: 'campaign',
+  })
+  server.handleStorageChanged({
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+    type: 'json',
+  })
+  await expiredCombatPreviewPromise
+
   if (!publicStateMessage.payload?.libraryState?.customMaps?.some?.((map) => map.id === 'map-1')) {
     throw new Error('Mapa ativo preparado nao foi enviado ao jogador.')
   }
@@ -726,12 +1242,19 @@ async function run() {
   }
 
   const httpStateResponse = await fetch(
-    `http://127.0.0.1:${status.port}/state?code=${sessionCode}&playerId=player1`,
+    `http://127.0.0.1:${status.port}/state?code=${sessionCode}&playerId=player1&clientInstanceId=${encodeURIComponent(playerOneInstanceId)}`,
   )
   const httpState = await httpStateResponse.json()
 
   if (!httpStateResponse.ok || httpState.publicState?.playerId !== 'player1') {
     throw new Error('Fallback HTTP de estado publico falhou.')
+  }
+
+  const foreignInstanceStateResponse = await fetch(
+    `http://127.0.0.1:${status.port}/state?code=${sessionCode}&playerId=player1&clientInstanceId=smoke-foreign-instance`,
+  )
+  if (foreignInstanceStateResponse.status !== 403) {
+    throw new Error('HTTP aceitou instancia que o Mestre nunca liberou.')
   }
 
   if (
@@ -823,10 +1346,8 @@ async function run() {
       message.payload?.tabletopSession?.logEntries?.some?.(
         (entry) =>
           entry.id === 'roll-combat-smoke' &&
-          entry.combat?.kind === 'attack' &&
-          entry.combat?.attackName === 'Mordida Smoke' &&
-          entry.combat?.attackerTokenId === 'token-1' &&
-          entry.combat?.rollTotal === 17,
+          entry.roll?.total === 17 &&
+          entry.combat === undefined,
       ),
   )
   const combatLogAckPromise = waitForMessage(
@@ -1001,7 +1522,7 @@ async function run() {
   }
 
   const burstStateResponse = await fetch(
-    `http://127.0.0.1:${status.port}/state?code=${sessionCode}&playerId=player1`,
+    `http://127.0.0.1:${status.port}/state?code=${sessionCode}&playerId=player1&clientInstanceId=${encodeURIComponent(playerOneInstanceId)}`,
   )
   const burstState = await burstStateResponse.json()
   const burstCount =
@@ -1184,6 +1705,108 @@ async function run() {
   })
   await transitionPlaybackStatePromise
 
+  const gmSkillStatePromise = waitForMessage(
+    socket,
+    (message) =>
+      message.type === 'public-state' &&
+      message.payload?.characters?.some?.(
+        (character) =>
+          character.id === 'hero-1' &&
+          character.recursos?.vidaAtual === 17 &&
+          character.recursos?.vidaMaxima === 17 &&
+          character.combatProfile?.build?.totals?.life === 7 &&
+          character.habilidadesDetalhadas?.some?.(
+            (skill) => skill.id === 'gm-granted-skill-smoke',
+          ),
+      ),
+  )
+  const workspaceWithGrantedSkill = loadJson(app, {
+    name: 'workspace',
+    scope: 'app',
+  })
+  workspaceWithGrantedSkill.characters[0] = {
+    ...workspaceWithGrantedSkill.characters[0],
+    habilidades: ['Habilidade concedida pelo Mestre'],
+    habilidadesDetalhadas: [
+      {
+        custo: '1 FUSHI',
+        descricao: 'Concessao canonica para validar Mestre para Jogador.',
+        id: 'gm-granted-skill-smoke',
+        nome: 'Habilidade concedida pelo Mestre',
+      },
+    ],
+    recursos: {
+      ...workspaceWithGrantedSkill.characters[0].recursos,
+      vidaAtual: 17,
+      vidaMaxima: 17,
+    },
+  }
+  saveJson(app, {
+    data: workspaceWithGrantedSkill,
+    name: 'workspace',
+    scope: 'app',
+  })
+  server.handleStorageChanged({
+    name: 'workspace',
+    scope: 'app',
+    type: 'json',
+  })
+  await gmSkillStatePromise
+
+  const liveEventStatePromise = waitForMessage(
+    socket,
+    (message) =>
+      message.type === 'public-state' &&
+      message.payload?.tabletopSession?.eventState?.rarityDraw?.drawId ===
+        'rarity-after-reconnect-smoke' &&
+      message.payload?.tabletopSession?.eventState?.rarityDraw?.rarity === 'lendario',
+  )
+  const sessionWithLiveEvent = loadJson(app, {
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+  })
+  const liveEventStartedAt = Date.now()
+  sessionWithLiveEvent.eventState = {
+    ...sessionWithLiveEvent.eventState,
+    rarityDraw: {
+      characterId: 'hero-1',
+      characterName: 'Heroi 1',
+      drawId: 'rarity-after-reconnect-smoke',
+      itemId: 'item-after-reconnect-smoke',
+      itemName: 'Item apos reconexao',
+      lastRoll: 9,
+      phase: 'rolling',
+      presentationExpiresAt: liveEventStartedAt + 8000,
+      rarity: 'lendario',
+      revealAt: liveEventStartedAt + 120,
+      startedAt: liveEventStartedAt,
+    },
+    rarityHistory: [
+      {
+        drawId: 'private-history-smoke',
+        rarity: 'mitico',
+      },
+    ],
+    updatedAt: liveEventStartedAt,
+  }
+  saveJson(app, {
+    campaignId,
+    data: sessionWithLiveEvent,
+    name: 'session',
+    scope: 'campaign',
+  })
+  server.handleStorageChanged({
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+    type: 'json',
+  })
+  const liveEventState = await liveEventStatePromise
+  if (JSON.stringify(liveEventState.payload).includes('private-history-smoke')) {
+    throw new Error('EVE publico vazou o backlog privado do Mestre apos reconexao.')
+  }
+
   const characterStatePromise = waitForMessage(
     socket,
     (message) =>
@@ -1192,7 +1815,12 @@ async function run() {
         (character) =>
           character.id === 'hero-1' &&
           character.recursos?.vidaAtual === 7 &&
-          character.atributos?.forca === 4,
+          character.recursos?.vidaMaxima === 17 &&
+          character.combatProfile?.build?.totals?.life === 7 &&
+          character.atributos?.forca === 4 &&
+          character.habilidadesDetalhadas?.some?.(
+            (skill) => skill.id === 'gm-granted-skill-smoke',
+          ),
       ),
   )
   const characterAckPromise = waitForMessage(
@@ -1211,6 +1839,15 @@ async function run() {
         'https://temporary-smoke.trycloudflare.com/assets/campaign/smoke-campaign/images/hero-1.webp',
       id: 'hero-1',
       nome: 'Heroi',
+      combatProfile: {
+        build: {
+          archetype: 'assassino',
+          items: [{ catalogItemId: 'forged-player-build-item' }],
+          totals: { damage: 999 },
+        },
+      },
+      habilidades: [],
+      habilidadesDetalhadas: [],
       recursos: {
         vidaAtual: 7,
         vidaMaxima: 10,
@@ -1219,6 +1856,62 @@ async function run() {
         'https://temporary-smoke.trycloudflare.com/assets/library/campaign/default/images/hero-1.webp',
       tipo: 'player',
     },
+    characterId: 'hero-1',
+      characterPatch: {
+        atributos: {
+          forca: 4,
+        },
+        ataques: [
+          {
+            atributoBase: 'forca',
+            bonusPericia: 3,
+            dano: '1d6 + 2',
+            id: 'player-attack-smoke',
+            nome: 'Golpe de teste',
+            resumo: 'Ataque adicionado pela ficha da mesa.',
+          },
+        ],
+        habilidades: [
+          'Habilidade concedida pelo Mestre',
+          'Habilidade adicionada na mesa',
+        ],
+        habilidadesDetalhadas: [
+          {
+            descricao: 'Concessao canonica para validar Mestre para Jogador.',
+            id: 'gm-granted-skill-smoke',
+            nome: 'Habilidade concedida pelo Mestre',
+          },
+          {
+            descricao: 'Habilidade adicionada pela ficha do jogador.',
+            id: 'player-skill-smoke',
+            nome: 'Habilidade adicionada na mesa',
+          },
+        ],
+        inventario: ['Item adicionado na mesa'],
+        inventarioDetalhado: [
+          {
+            descricao: 'Item adicionado pela ficha do jogador.',
+            efeitos: ['+1 teste de smoke'],
+            id: 'player-item-smoke',
+            nome: 'Item adicionado na mesa',
+            porte: 'medio',
+            quantidade: 1,
+          },
+        ],
+        inventarioPerfil: {
+          mochila: 'mochila',
+        },
+        rituais: [
+          {
+            descricao: 'Ritual adicionado pela ficha do jogador.',
+            id: 'player-ritual-smoke',
+            nome: 'Ritual de teste',
+          },
+        ],
+        recursos: {
+          vidaAtual: 7,
+        },
+      },
     remoteActionId: 'smoke-action-character-ws',
     type: 'update-character',
   }))
@@ -1261,9 +1954,34 @@ async function run() {
 
   if (
     savedWorkspace.characters[0].recursos?.vidaAtual !== 7 ||
+    savedWorkspace.characters[0].recursos?.vidaMaxima !== 17 ||
     savedWorkspace.characters[0].atributos?.forca !== 4
   ) {
     throw new Error('Atualizacao remota completa de ficha nao persistiu.')
+  }
+
+  if (
+    savedWorkspace.characters[0].habilidades?.[0] !==
+      'Habilidade concedida pelo Mestre' ||
+    savedWorkspace.characters[0].habilidadesDetalhadas?.[0]?.id !==
+      'gm-granted-skill-smoke' ||
+    savedWorkspace.characters[0].habilidadesDetalhadas?.some?.(
+      (skill) => skill.id === 'player-skill-smoke',
+    ) !== true ||
+    savedWorkspace.characters[0].rituais?.some?.(
+      (ritual) => ritual.id === 'player-ritual-smoke',
+    ) !== true ||
+    savedWorkspace.characters[0].ataques?.some?.(
+      (attack) => attack.id === 'player-attack-smoke',
+    ) !== true ||
+    savedWorkspace.characters[0].inventarioDetalhado?.some?.(
+      (item) => item.id === 'player-item-smoke',
+    ) !== true ||
+    savedWorkspace.characters[0].inventarioPerfil?.mochila !== 'mochila'
+  ) {
+    throw new Error(
+      'Ficha da mesa nao preservou ou adicionou ataque, skill, ritual, item e perfil de inventario canonicos.',
+    )
   }
 
   const expectedCanonicalAvatar =
@@ -1275,6 +1993,191 @@ async function run() {
   ) {
     throw new Error('Atualizacao remota substituiu avatar canonico por URL temporaria.')
   }
+
+  const savedBuild = savedWorkspace.characters[0].combatProfile?.build
+  if (
+    savedBuild?.archetype !== 'tank' ||
+    savedBuild?.items?.[0]?.catalogItemId !== 'canonical-gm-build-item' ||
+    savedBuild?.totals?.life !== 7 ||
+    savedBuild?.totals?.damage !== -3 ||
+    JSON.stringify(savedBuild).includes('forged-player-build-item') ||
+    JSON.stringify(savedBuild).includes('999')
+  ) {
+    throw new Error('Jogador conseguiu sobrescrever a Build Absorvida canonica do Mestre.')
+  }
+
+  const turnRequestResult = await postRemoteAction(
+    status.port,
+    'player1',
+    {
+      request: {
+        characterId: 'hero-1',
+        featureId: 'player-skill-smoke',
+        kind: 'feature',
+        label: 'Habilidade adicionada na mesa',
+        timing: 'padrao',
+        tokenId: 'token-1',
+      },
+      type: 'request-turn-action',
+    },
+    'smoke-action-turn-request',
+  )
+
+  if (
+    !turnRequestResult.response.ok ||
+    turnRequestResult.payload.ok !== true ||
+    turnRequestResult.payload.applied !== true
+  ) {
+    throw new Error('Pedido de acao Jogador > Mestre nao foi aceito com ACK real.')
+  }
+
+  const turnRequestSession = loadJson(app, {
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+  })
+  const savedTurnRequest = turnRequestSession.logEntries.find(
+    (entry) => entry.turnRequest?.id === 'turn-request-smoke-action-turn-request',
+  )
+
+  if (
+    savedTurnRequest?.visibility !== 'gm' ||
+    savedTurnRequest.turnRequest?.status !== 'pending' ||
+    savedTurnRequest.turnRequest?.playerId !== 'player1' ||
+    savedTurnRequest.turnRequest?.featureId !== 'player-skill-smoke'
+  ) {
+    throw new Error('Pedido de acao nao foi persistido como pendente e reservado ao Mestre.')
+  }
+
+  const publicAfterTurnRequestResponse = await fetch(
+    `http://127.0.0.1:${status.port}/state?code=${sessionCode}&playerId=player1&clientInstanceId=${encodeURIComponent(playerOneInstanceId)}`,
+  )
+  const publicAfterTurnRequest = await publicAfterTurnRequestResponse.json()
+
+  if (
+    JSON.stringify(publicAfterTurnRequest.publicState?.tabletopSession?.logEntries ?? []).includes(
+      'smoke-action-turn-request',
+    )
+  ) {
+    throw new Error('Pedido de acao reservado ao Mestre vazou no estado publico do jogador.')
+  }
+
+  const invalidTurnRequest = await postRemoteAction(
+    status.port,
+    'player1',
+    {
+      request: {
+        characterId: 'hero-1',
+        featureId: 'player-skill-smoke',
+        kind: 'feature',
+        label: 'Tentativa em ficha alheia',
+        timing: 'padrao',
+        tokenId: 'token-2',
+      },
+      type: 'request-turn-action',
+    },
+    'smoke-action-turn-request-invalid-token',
+  )
+
+  if (
+    !invalidTurnRequest.response.ok ||
+    invalidTurnRequest.payload.ok !== false ||
+    invalidTurnRequest.payload.applied !== false
+  ) {
+    throw new Error('Pedido de acao em token de outro jogador nao foi rejeitado.')
+  }
+
+  const lockResult = await postRemoteAction(
+    status.port,
+    'player1',
+    {
+      characterId: 'hero-1',
+      mode: 'full',
+      type: 'set-character-edit-lock',
+    },
+    'smoke-action-player-lock',
+  )
+
+  if (
+    !lockResult.response.ok ||
+    lockResult.payload.ok !== true ||
+    lockResult.payload.applied !== true
+  ) {
+    throw new Error('Jogador nao conseguiu adquirir a trava exclusiva de edicao.')
+  }
+
+  const lockedSession = loadJson(app, {
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+  })
+  if (lockedSession.characterEditLocks?.['hero-1']?.ownerId !== 'player1') {
+    throw new Error('Trava de edicao do jogador nao foi persistida no estado canonico.')
+  }
+
+  lockedSession.characterEditLocks['hero-1'] = {
+    acquiredAt: Date.now(),
+    characterId: 'hero-1',
+    expiresAt: Date.now() + 60000,
+    mode: 'full',
+    ownerId: 'gm',
+    ownerLabel: 'Mestre',
+  }
+  saveJson(app, {
+    campaignId,
+    data: lockedSession,
+    name: 'session',
+    scope: 'campaign',
+  })
+  server.handleStorageChanged({
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+    type: 'json',
+  })
+
+  const rejectedByEditLock = await postRemoteAction(
+    status.port,
+    'player1',
+    {
+      characterId: 'hero-1',
+      characterPatch: {
+        atributos: {
+          forca: 5,
+        },
+      },
+      type: 'update-character',
+    },
+    'smoke-action-update-while-gm-editing',
+  )
+
+  if (
+    !rejectedByEditLock.response.ok ||
+    rejectedByEditLock.payload.ok !== false ||
+    rejectedByEditLock.payload.applied !== false ||
+    !String(rejectedByEditLock.payload.error ?? '').includes('Ficha ocupada')
+  ) {
+    throw new Error('Servidor aceitou atualizacao de jogador durante edicao do Mestre.')
+  }
+
+  const unlockedSession = loadJson(app, {
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+  })
+  delete unlockedSession.characterEditLocks['hero-1']
+  saveJson(app, {
+    campaignId,
+    data: unlockedSession,
+    name: 'session',
+    scope: 'campaign',
+  })
+  server.handleStorageChanged({
+    campaignId,
+    name: 'session',
+    scope: 'campaign',
+    type: 'json',
+  })
 
   const pendingReject = await connectPendingAdmission(status.port, 'player1', '1234')
   const rejectedAdmissionPromise = waitForMessage(
@@ -1318,6 +2221,31 @@ async function run() {
   }
 
   await kickedAdmissionPromise
+  await closeSocket(playerFiveSocket)
+
+  const kickedResume = await connectPendingAdmission(
+    status.port,
+    'player5',
+    '5555',
+    'smoke-instance-player5',
+  )
+  const kickedResumeStatus = server
+    .getStatus()
+    .clients.find((client) => client.id === kickedResume.clientId)
+  if (kickedResumeStatus?.admissionStatus !== 'pending') {
+    throw new Error('Jogador expulso reutilizou autorizacao revogada da mesma instancia.')
+  }
+  const kickedResumeRejectedPromise = waitForMessage(
+    kickedResume.socket,
+    (message) =>
+      message.type === 'admission-status' && message.payload?.status === 'rejected',
+  )
+  server.updatePlayerAdmission({
+    action: 'reject',
+    clientId: kickedResume.clientId,
+  })
+  await kickedResumeRejectedPromise
+  kickedResume.socket.close()
 
   socket.close()
   extraSockets.forEach((extraSocket) => {
@@ -1325,7 +2253,7 @@ async function run() {
   })
   server.stop()
   fs.rmSync(tempRoot, { force: true, recursive: true })
-  console.log('Smoke multiplayer OK: 5 jogadores, asset remoto, auth com aceite/recusa/expulsao do mestre, estado publico, MSC global, ACK real/idempotente, movimento de jogador bloqueado, rejeicao sem falso positivo, fila/cooldown de dados, regua, log remoto, playback de interludio, ficha remota, turnos e furtividade.')
+  console.log('Smoke multiplayer OK: 5 jogadores, socket novo da mesma instancia sem novo aceite, instancia nova pendente, expulsao revogada, HTTP vinculado a instancia, dados/ACK/fila/cooldown, EVE publico apos reconexao, recibo de combate privado por jogador, ficha Mestre > Jogador e patch Jogador > Mestre sem apagar skill/build canonicas, movimento de jogador bloqueado, regua, interludio, turnos e furtividade.')
 }
 
 run().catch((error) => {

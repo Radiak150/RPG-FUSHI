@@ -1,0 +1,197 @@
+{
+  "id": "vila-circuito-centro-v1",
+  "version": 2,
+  "locationId": "campo_treino_vila",
+  "mapId": "planicie_campo_treino_vila_topdown",
+  "title": "O Circuito do Centro",
+  "subtitle": "Seis treinamentos. Cinco identidades. Uma descoberta.",
+  "mentorPublicName": "O Mestre",
+  "stationGoal": 3,
+  "boldRule": "Ousadia: role com -1d20, cancele qualquer ajuda e ganhe +2 Marcas em caso de sucesso.",
+  "intro": [
+    "Cada protagonista completa 3 Marcas em cada treinamento.",
+    "Apoio aliado concede +1d20 quando a regra da estacao permitir.",
+    "Contratempos sao acumulados por protagonista durante todo o circuito; trocar de estacao nao limpa o total."
+  ],
+  "setbackMilestones": [
+    {
+      "min": 0,
+      "max": 1,
+      "label": "Sem penalidade",
+      "effect": "Com 0 ou 1 Contratempo, nada acontece."
+    },
+    {
+      "min": 2,
+      "max": 5,
+      "label": "Falha marcada",
+      "effect": "O proximo ataque causa 1d4 a menos de dano."
+    },
+    {
+      "min": 6,
+      "label": "Memoria paralisante",
+      "effect": "O Mestre escolhe 1 turno em que o protagonista fica paralisado lembrando das falhas; o proximo ataque tambem causa 1d4 a menos de dano."
+    }
+  ],
+  "stations": [
+    {
+      "id": "escalada",
+      "code": "01",
+      "name": "Escalada - Escolhas para subir",
+      "shortName": "Escalada",
+      "lesson": "Escolha e apoio",
+      "objective": "Alcance o alto e complete 3 Marcas escolhendo como subir.",
+      "publicSteps": [
+        "Firmeza: use FOR + Atletismo, VIG ou AGI.",
+        "Ler a parede: analise o caminho com INT ou PRES.",
+        "Rota curta: Ousadia concede +2 Marcas, mas aplica -1d20 e cancela ajuda.",
+        "Apoio aliado concede +1d20."
+      ],
+      "failure": "Falha concede +1 Contratempo total ao protagonista.",
+      "masterCue": "Todos os Marcos usam DT 10. O jogador escolhe a abordagem antes do teste. Apoio e Ousadia nao acumulam.",
+      "approaches": [
+        { "id": "firmeza", "label": "Firmeza", "test": "FOR + Atletismo, VIG ou AGI", "dt": 10, "progress": 1, "risk": "normal", "success": "+1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "ler-parede", "label": "Ler a parede", "test": "INT ou PRES", "dt": 10, "progress": 1, "risk": "normal", "success": "+1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "rota-curta", "label": "Arriscar rota curta", "test": "Teste coerente com -1d20; sem ajuda", "dt": 10, "progress": 2, "risk": "ousadia", "success": "+2 Marcas", "failure": "+1 Contratempo total" }
+      ]
+    },
+    {
+      "id": "bonecos",
+      "code": "02",
+      "name": "Guardas - Alta, Baixa e Avanco",
+      "shortName": "Guardas",
+      "lesson": "Leitura de postura",
+      "objective": "Responda a 3 posturas anunciadas por Renji e complete 3 Marcas.",
+      "publicSteps": [
+        "Renji conta ate 3 e anuncia Alta, Baixa ou Avanco.",
+        "Alta vence Avanco; Avanco vence Baixa; Baixa vence Alta. Posturas iguais se anulam.",
+        "Sua postura vence: +1d20. Sua postura perde: -1d20. Igual: sem modificador.",
+        "AGI + Iniciativa, FOR + Luta, INT + Tatica ou PRES + Percepcao.",
+        "Ousadia aplica -1d20 adicional e concede +2 Marcas no sucesso."
+      ],
+      "failure": "Falha concede +1 Contratempo total ao protagonista.",
+      "masterCue": "Todos os testes usam DT 10. Use a matriz ciclica: Alta > Avanco > Baixa > Alta. Fale a postura de Renji apenas na contagem final.",
+      "approaches": [
+        { "id": "iniciativa", "label": "Atacar antes", "test": "AGI + Iniciativa", "dt": 10, "progress": 1, "risk": "postura", "success": "+1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "luta", "label": "Forca e tecnica", "test": "FOR + Luta", "dt": 10, "progress": 1, "risk": "postura", "success": "+1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "tatica", "label": "Posicionar", "test": "INT + Tatica", "dt": 10, "progress": 1, "risk": "postura", "success": "+1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "percepcao", "label": "Ler Renji", "test": "PRES + Percepcao", "dt": 10, "progress": 1, "risk": "postura", "success": "+1 Marca", "failure": "+1 Contratempo total" }
+      ]
+    },
+    {
+      "id": "obstaculos",
+      "code": "03",
+      "name": "Obstaculos - Tres trechos",
+      "shortName": "Obstaculos",
+      "lesson": "Adaptacao",
+      "objective": "Atravesse Cordas, Troncos e Equilibrio usando 3 atributos principais diferentes.",
+      "publicSteps": [
+        "Os trechos sao Cordas, Troncos e Equilibrio; cada um aceita Corpo, Equilibrio ou Planejamento.",
+        "Use FOR, AGI, INT, VIG ou PRES, mas nunca repita o atributo dentro da mesma volta de 3 trechos.",
+        "Mesmo quando falhar, o atributo usado fica bloqueado ate terminar os 3 trechos.",
+        "Depois dos 3 trechos, os atributos resetam.",
+        "Ousadia aplica -1d20 e concede +2 Marcas no sucesso."
+      ],
+      "failure": "Falha concede +1 Contratempo total; siga ao proximo trecho com outro atributo.",
+      "masterCue": "Todos os testes usam DT 10. Anote os atributos usados na volta atual. Sucesso ou falha consome o atributo ate fechar Cordas, Troncos e Equilibrio.",
+      "approaches": [
+        { "id": "corpo", "label": "Corpo", "test": "Um atributo principal ainda nao usado", "dt": 10, "progress": 1, "risk": "nao repetir", "success": "+1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "equilibrio", "label": "Equilibrio", "test": "Um atributo principal ainda nao usado", "dt": 10, "progress": 1, "risk": "nao repetir", "success": "+1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "planejamento", "label": "Planejamento", "test": "Um atributo principal ainda nao usado", "dt": 10, "progress": 1, "risk": "nao repetir", "success": "+1 Marca", "failure": "+1 Contratempo total" }
+      ]
+    },
+    {
+      "id": "pontaria",
+      "code": "04",
+      "name": "Alvos - Escolha antes de atirar",
+      "shortName": "Alvos",
+      "lesson": "Precisao declarada",
+      "objective": "Escolha a zona do alvo antes da rolagem e complete 3 Marcas.",
+      "publicSteps": [
+        "Centro: resultado de 15 a 20; dificil e vale Ousadia +2.",
+        "Proximo do centro: resultado de 5 a 15; medio.",
+        "Fora do alvo: resultado de 5 a 20; facil.",
+        "A zona deve ser declarada antes. Acertar outra zona concede +1 Contratempo em vez de Marca.",
+        "Ousadia aplica -1d20 e concede +2 Marcas no sucesso."
+      ],
+      "failure": "Errar a zona declarada concede +1 Contratempo total.",
+      "masterCue": "Respeite literalmente a zona declarada antes do dado; um acerto em outra zona nao conta como sucesso.",
+      "approaches": [
+        { "id": "centro", "label": "Centro", "test": "Resultado 15 a 20", "dt": 10, "progress": 2, "risk": "dificil / ousadia", "success": "+2 Marcas", "failure": "+1 Contratempo total" },
+        { "id": "proximo-centro", "label": "Proximo do centro", "test": "Resultado 5 a 15", "dt": 10, "progress": 1, "risk": "medio", "success": "+1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "fora-alvo", "label": "Fora do alvo", "test": "Resultado 5 a 20", "dt": 10, "progress": 1, "risk": "facil", "success": "+1 Marca", "failure": "+1 Contratempo total" }
+      ]
+    },
+    {
+      "id": "ringue",
+      "code": "05",
+      "name": "Ringue - Rinha come",
+      "shortName": "Ringue",
+      "lesson": "Golpe limpo",
+      "objective": "Retire o marcador das costas do oponente 3 vezes para completar 3 Marcas.",
+      "publicSteps": [
+        "Participantes: Kairos, Connor, Davi, Grim, Kael e Renji; formem 3 duplas.",
+        "Renji coloca um marcador de papel nas costas de cada combatente.",
+        "Um Golpe Limpo acontece ao retirar o marcador do outro.",
+        "Vale usar o campo e manobras, mas armas letais sao proibidas.",
+        "Ousadia aplica -1d20 e concede +2 Marcas no sucesso."
+      ],
+      "failure": "Falha concede +1 Contratempo total ao protagonista.",
+      "masterCue": "Nao conte dano. Conte apenas marcadores retirados com uma acao limpa e narrativamente valida.",
+      "approaches": [
+        { "id": "golpe-limpo", "label": "Golpe limpo", "test": "Teste coerente contra o oponente", "dt": 10, "progress": 1, "risk": "1x1", "success": "+1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "golpe-ousado", "label": "Golpe ousado", "test": "Teste coerente com -1d20", "dt": 10, "progress": 2, "risk": "ousadia", "success": "+2 Marcas", "failure": "+1 Contratempo total" }
+      ]
+    },
+    {
+      "id": "lama",
+      "code": "06",
+      "name": "Lama - Cavalinho e maca",
+      "shortName": "Lama",
+      "lesson": "Trabalho em dupla",
+      "objective": "Atravesse 5 pontos de lama funda carregando o parceiro e equilibrando a maca.",
+      "publicSteps": [
+        "Forme duplas. Um protagonista carrega o outro de cavalinho; quem esta em cima equilibra a maca na cabeca.",
+        "Existem 5 pontos de lama funda e ambos fazem um teste em cada ponto.",
+        "Cavalinho menor: FOR + Atletismo para sair; AGI + Acrobacia para ajudar o maior.",
+        "Cavalinho maior: AGI + Acrobacia para segurar a maca; INT + Tatica para ajudar o menor.",
+        "Ousadia aplica -1d20 e concede +2 Marcas no sucesso."
+      ],
+      "failure": "Falha concede +1 Contratempo total ao protagonista que falhou.",
+      "masterCue": "Em cada um dos 5 pontos, peca os dois testes. Ajuda e acao do parceiro, nao uma terceira rolagem.",
+      "approaches": [
+        { "id": "cavalinho-menor", "label": "Cavalinho menor", "test": "FOR + Atletismo", "dt": 10, "progress": 1, "risk": "lama funda", "success": "+1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "ajudar-maior", "label": "Ajudar cavalinho maior", "test": "AGI + Acrobacia", "dt": 10, "progress": 1, "risk": "apoio", "success": "+1d20 ao parceiro ou +1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "cavalinho-maior", "label": "Cavalinho maior", "test": "AGI + Acrobacia", "dt": 10, "progress": 1, "risk": "equilibrar maca", "success": "+1 Marca", "failure": "+1 Contratempo total" },
+        { "id": "ajudar-menor", "label": "Ajudar cavalinho menor", "test": "INT + Tatica", "dt": 10, "progress": 1, "risk": "apoio", "success": "+1d20 ao parceiro ou +1 Marca", "failure": "+1 Contratempo total" }
+      ]
+    }
+  ],
+  "finalTrial": {
+    "id": "maestria-fushi",
+    "name": "Prova Final - Maestria do FUSHI",
+    "subtitle": "A habilidade desperta antes da prova; dominar a sensacao conclui o treino.",
+    "objective": "Cada protagonista atravessa Sensacao do Corpo, Estabilizacao e Euforia do Fluxo.",
+    "goal": 3,
+    "maxPressure": 99,
+    "minContributors": 5,
+    "minStations": 0,
+    "publicRules": [
+      "As habilidades individuais sao atribuidas antes da Prova Final.",
+      "Sensacao do Corpo: PRES + Vontade. Repita ate passar; cada falha custa 2 FUSHI.",
+      "Estabilizacao: role 1dN, em que N e o FUSHI perdido, e recupere o resultado.",
+      "Euforia do Fluxo: escolha MEDO, FELICIDADE, TRISTEZA, NOJO ou RAIVA.",
+      "O bonus emocional usa Acao Bonus e pode ser usado uma unica vez."
+    ],
+    "emotions": [
+      { "id": "medo", "label": "MEDO", "effect": "+1d10 de CA" },
+      { "id": "felicidade", "label": "FELICIDADE", "effect": "+1d10 para Varar CA de um alvo" },
+      { "id": "tristeza", "label": "TRISTEZA", "effect": "+1d10 para Mitigar dano" },
+      { "id": "nojo", "label": "NOJO", "effect": "+1d10 de bonus em qualquer Pericia" },
+      { "id": "raiva", "label": "RAIVA", "effect": "+1d10 de Dano" }
+    ],
+    "masterCue": "Sensacao do Corpo usa PRES + Vontade, DT 10. Descreva a sensacao para cada protagonista. A primeira ativacao da habilidade inicia sua prova individual.",
+    "successText": "As cinco identidades atravessaram o fluxo sem apagar quem eram.",
+    "rewardTitle": "Maestria Desbloqueada",
+    "rewardText": "As habilidades atribuidas antes da prova permanecem na ficha canonica."
+  }
+}

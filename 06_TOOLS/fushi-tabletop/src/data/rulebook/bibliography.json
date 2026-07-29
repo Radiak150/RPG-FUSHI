@@ -1,0 +1,102 @@
+[
+  {
+    "title": "FUSHI Mechanics Balance Agent",
+    "type": "canon",
+    "path": "docs/fushi-system/FUSHI_MECHANICS_BALANCE_AGENT.md",
+    "note": "Fonte mecânica central para rolagens, Coreografia, defesas, recursos, progressão, Níveis de Poder, Rituais e condições."
+  },
+  {
+    "title": "FUSHI Reincarnation Protocol V1",
+    "type": "canon",
+    "path": "docs/fushi-system/FUSHI_REINCARNATION_PROTOCOL_V1.md",
+    "note": "Base do protocolo secreto de pulsos, posse, resgate e dano crítico de alma."
+  },
+  {
+    "title": "FUSHI Damage Balance Audit V1",
+    "type": "canon",
+    "path": "docs/fushi-system/FUSHI_DAMAGE_BALANCE_AUDIT_V1.md",
+    "note": "Referência numérica de Vida, CA, dano e escala Cataclisma."
+  },
+  {
+    "title": "FUSHI DT Audit - 2026-05-27",
+    "type": "canon",
+    "path": "docs/fushi-system/FUSHI_DT_AUDIT_2026-05-27.md",
+    "note": "Escala oficial de DT 10 a 40+."
+  },
+  {
+    "title": "FUSHI Items and Base V1",
+    "type": "canon",
+    "path": "docs/fushi-system/FUSHI_ITEMS_AND_BASE_V1.md",
+    "note": "Direção de builds, troca de eixos, itens e BASE; catálogo ainda em construção."
+  },
+  {
+    "title": "FUSHI Mobs and Waves V1",
+    "type": "canon",
+    "path": "docs/fushi-system/FUSHI_MOBS_AND_WAVES_V1.md",
+    "note": "Pontos de ameaça e estrutura da Clareira; somente mobs persistidos/aprovados são considerados campanha real."
+  },
+  {
+    "title": "FUSHI Level Ledger Template",
+    "type": "canon",
+    "path": "docs/fushi-system/FUSHI_LEVEL_LEDGER_TEMPLATE.md",
+    "note": "Faixas e fontes secretas de progressão por identidade."
+  },
+  {
+    "title": "FUSHI Core System",
+    "type": "canon",
+    "path": "docs/fushi-system/fushi-core-system.md",
+    "note": "Corpo compartilhado, recursos e diferença entre criatura comum e usuário consciente de FUSHI."
+  },
+  {
+    "title": "Premissa: FUSHI",
+    "type": "campaign",
+    "path": "01_LORE/premissa/fushi.md",
+    "note": "Natureza fundamental do FUSHI, identidade, esporos, transformação e custo."
+  },
+  {
+    "title": "Premissa: Protagonistas",
+    "type": "campaign",
+    "path": "01_LORE/premissa/protagonistas.md",
+    "note": "Natureza do organismo coletivo, fragmentação, vontade e conexão entre consciências."
+  },
+  {
+    "title": "Premissa: Regras da Existência",
+    "type": "campaign",
+    "path": "01_LORE/premissa/regras-da-existencia.md",
+    "note": "Morte, continuidade, corpo, vozes e Transposição de Consciência."
+  },
+  {
+    "title": "Workspace FUSHI ativo",
+    "type": "campaign",
+    "path": "%APPDATA%/FUSHI/workspace.json",
+    "note": "Fonte viva das fichas usadas no Compêndio do Mestre. O PDF registra um snapshot datado."
+  },
+  {
+    "title": "Ordem Paranormal RPG",
+    "type": "design-reference",
+    "note": "Referência declarada pelo projeto para a tradição de Atributos, Perícias e leitura de testes; nenhum texto externo foi reproduzido."
+  },
+  {
+    "title": "Dungeons & Dragons - Player's Handbook e Dungeon Master's Guide",
+    "type": "design-reference",
+    "note": "Referência comparativa de organização editorial, exemplos e consulta rápida; nenhum texto externo foi reproduzido."
+  },
+  {
+    "title": "Manrope - Google Fonts",
+    "type": "design-reference",
+    "path": "https://github.com/google/fonts/tree/main/ofl/manrope",
+    "note": "Fonte do corpo de texto, distribuída sob SIL Open Font License 1.1 e embutida para leitura offline."
+  },
+  {
+    "title": "Cinzel - Google Fonts",
+    "type": "design-reference",
+    "path": "https://github.com/google/fonts/tree/main/ofl/cinzel",
+    "note": "Fonte dos títulos e divisões, distribuída sob SIL Open Font License 1.1 e embutida para leitura offline."
+  },
+  {
+    "title": "Orbitron - Google Fonts",
+    "type": "design-reference",
+    "path": "https://github.com/google/fonts/tree/main/ofl/orbitron",
+    "note": "Fonte de rótulos e palavras-chave mecânicas, distribuída sob SIL Open Font License 1.1 e embutida para leitura offline."
+  }
+]

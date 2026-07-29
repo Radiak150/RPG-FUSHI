@@ -154,6 +154,14 @@ async function evaluate(send, expression) {
   return result.result?.value
 }
 
+async function enableCdp(connection) {
+  await connection.send('Runtime.enable')
+  await connection.send('Log.enable')
+  await connection.send('Network.enable')
+  await connection.send('Page.enable')
+  await connection.send('Input.setIgnoreInputEvents', { ignore: false })
+}
+
 async function getVisibleButtonCenter(send, predicateSource) {
   return evaluate(
     send,
@@ -694,6 +702,224 @@ async function skipTransitionAndAssertBoard(send, cycleLabel) {
   )
 }
 
+async function exerciseBoardRenderRecovery(send, reconnectAfterRendererReload) {
+  const dispatchControlA = async () => {
+    await send('Input.dispatchKeyEvent', {
+      code: 'ControlLeft',
+      key: 'Control',
+      modifiers: 2,
+      type: 'keyDown',
+      windowsVirtualKeyCode: 17,
+    })
+    await send('Input.dispatchKeyEvent', {
+      code: 'KeyA',
+      key: 'a',
+      modifiers: 2,
+      type: 'keyDown',
+      windowsVirtualKeyCode: 65,
+    })
+    await send('Input.dispatchKeyEvent', {
+      code: 'KeyA',
+      key: 'a',
+      modifiers: 2,
+      type: 'keyUp',
+      windowsVirtualKeyCode: 65,
+    })
+    await send('Input.dispatchKeyEvent', {
+      code: 'ControlLeft',
+      key: 'Control',
+      modifiers: 0,
+      type: 'keyUp',
+      windowsVirtualKeyCode: 17,
+    })
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 1_200))
+  const before = await evaluate(
+    send,
+    `(() => {
+      const board = document.querySelector('.tabletop-board')
+      const image = document.querySelector(
+        '.tabletop-board__image[data-map-image-status="ready"]',
+      )
+      const tokenLabels = Array.from(
+        document.querySelectorAll('.tabletop-board .tabletop-token'),
+      )
+        .map((token) => token.getAttribute('aria-label') ?? '')
+        .sort()
+      return {
+        epoch: Number(board?.getAttribute('data-board-render-epoch') ?? 0),
+        mapAlt: image?.getAttribute('alt') ?? '',
+        tokenLabels,
+      }
+    })()`,
+  )
+
+  await dispatchControlA()
+
+  const after = await waitFor(
+    send,
+    `() => {
+      const board = document.querySelector('.tabletop-board')
+      const image = document.querySelector(
+        '.tabletop-board__image[data-map-image-status="ready"]',
+      )
+      const epoch = Number(board?.getAttribute('data-board-render-epoch') ?? 0)
+      return {
+        ready:
+          epoch > ${Number(before?.epoch ?? 0)} &&
+          image instanceof HTMLImageElement &&
+          image.complete &&
+          image.naturalWidth > 0 &&
+          image.naturalHeight > 0,
+         epoch,
+         mapAlt: image?.getAttribute('alt') ?? '',
+         tokenLabels: Array.from(
+           document.querySelectorAll('.tabletop-board .tabletop-token'),
+         )
+           .map((token) => token.getAttribute('aria-label') ?? '')
+           .sort(),
+       }
+     }`,
+    'recuperacao visual Ctrl+A',
+    20_000,
+  )
+
+  assert(after.mapAlt === before.mapAlt, 'Ctrl+A trocou o mapa ativo.')
+  assert(
+    JSON.stringify(after.tokenLabels) === JSON.stringify(before.tokenLabels),
+    `Ctrl+A alterou os tokens da cena: antes=${JSON.stringify(before.tokenLabels)} depois=${JSON.stringify(after.tokenLabels)}`,
+  )
+
+  const forcedWhite = await evaluate(
+    send,
+    `(() => {
+      document.getElementById('smoke-force-white-board')?.remove()
+      document.getElementById('smoke-force-white-layer')?.remove()
+      const style = document.createElement('style')
+      style.id = 'smoke-force-white-board'
+      style.textContent = [
+        '.tabletop-board__viewport, .tabletop-board__wrapper, .tabletop-board__stage { background: #fff !important; }',
+        '.tabletop-board__stage > * { visibility: hidden !important; }',
+      ].join('\\n')
+      document.head.appendChild(style)
+      const layer = document.createElement('div')
+      layer.id = 'smoke-force-white-layer'
+      layer.setAttribute('aria-hidden', 'true')
+      layer.style.cssText = [
+        'position: fixed',
+        'inset: 0',
+        'z-index: 2147483647',
+        'background: #fff',
+        'pointer-events: none',
+      ].join(';')
+      document.body.appendChild(layer)
+      return Boolean(
+        document.getElementById('smoke-force-white-board') &&
+          document.getElementById('smoke-force-white-layer'),
+      )
+    })()`,
+  )
+  assert(forcedWhite, 'Nao foi possivel simular a superficie branca.')
+  const forcedProbe = await evaluate(
+    send,
+    `(async () => {
+      const stage = document.querySelector('.tabletop-board__stage')
+      const rect = stage?.getBoundingClientRect()
+      const inspector = window.fushiDesktop?.inspectRenderedRegion
+      if (!(rect instanceof DOMRect) || typeof inspector !== 'function') {
+        return { available: false }
+      }
+      return {
+        available: true,
+        rect: {
+          height: rect.height,
+          width: rect.width,
+          x: rect.x,
+          y: rect.y,
+        },
+        probe: await inspector({
+          height: rect.height,
+          width: rect.width,
+          x: rect.x,
+          y: rect.y,
+        }),
+      }
+    })()`,
+  )
+  console.log(`[mun-interludes] forced-white probe=${JSON.stringify(forcedProbe)}`)
+
+  const waitForHardAfter = () =>
+    waitFor(
+      send,
+      `() => {
+      const forcedStyle = document.getElementById('smoke-force-white-board')
+      const forcedLayer = document.getElementById('smoke-force-white-layer')
+      const image = document.querySelector(
+        '.tabletop-board__image[data-map-image-status="ready"]',
+      )
+      const tokenLabels = Array.from(
+        document.querySelectorAll('.tabletop-board .tabletop-token'),
+      )
+        .map((token) => token.getAttribute('aria-label') ?? '')
+        .sort()
+      return {
+        ready:
+          !forcedStyle &&
+          !forcedLayer &&
+          image instanceof HTMLImageElement &&
+          image.complete &&
+          image.naturalWidth > 0 &&
+          image.naturalHeight > 0,
+        mapAlt: image?.getAttribute('alt') ?? '',
+        tokenLabels,
+        bodyText: (document.body.innerText || '').slice(0, 360),
+        hash: location.hash,
+        imageStates: Array.from(
+          document.querySelectorAll('.tabletop-board__image'),
+        ).map((item) => ({
+          alt: item.getAttribute('alt') ?? '',
+          complete: item instanceof HTMLImageElement ? item.complete : false,
+          height: item instanceof HTMLImageElement ? item.naturalHeight : 0,
+          status: item.getAttribute('data-map-image-status') ?? '',
+          src: item.getAttribute('src') ?? '',
+          width: item instanceof HTMLImageElement ? item.naturalWidth : 0,
+        })),
+        readiness: Boolean(document.querySelector('.tabletop-readiness')),
+        url: location.href,
+      }
+      }`,
+      'recuperacao forte de superficie branca',
+      35_000,
+    )
+
+  let hardAfter
+  try {
+    await dispatchControlA()
+    hardAfter = await waitForHardAfter()
+  } catch (error) {
+    const message = String(error?.message ?? error)
+
+    if (!/navigated|closed|target|websocket|socket/i.test(message)) {
+      throw error
+    }
+
+    await reconnectAfterRendererReload()
+    hardAfter = await waitForHardAfter()
+  }
+
+  assert(
+    hardAfter.mapAlt === before.mapAlt,
+    'Recuperacao forte trocou o mapa ativo.',
+  )
+  assert(
+    JSON.stringify(hardAfter.tokenLabels) === JSON.stringify(before.tokenLabels),
+    `Recuperacao forte alterou os tokens: antes=${JSON.stringify(before.tokenLabels)} depois=${JSON.stringify(hardAfter.tokenLabels)}`,
+  )
+
+  return { after, before, hardAfter }
+}
+
 async function openM5InterludeFromLibrary(send) {
   const opened = await evaluate(
     send,
@@ -729,25 +955,30 @@ async function openM5InterludeFromLibrary(send) {
             isVisible(item) &&
             item.querySelector('strong')?.textContent?.trim() === text,
         )
+      const findLibraryTab = () => {
+        const library = Array.from(document.querySelectorAll('.tabletop-library'))
+          .find(isVisible)
+        return library
+          ? Array.from(library.querySelectorAll('button')).find(
+              (button) =>
+                isVisible(button) && button.textContent?.trim() === 'INTERLUDIOS',
+            )
+          : null
+      }
       const openLibrary = async () => {
         for (let attempt = 0; attempt < 4; attempt += 1) {
-          const existingTab = findVisibleButton(
-            (button) => button.textContent?.trim() === 'INTERLUDIOS',
-          )
+          const existingTab = await poll(findLibraryTab, 1_500)
           if (existingTab) return existingTab
 
           const toolsButton = findVisibleButton(
-            (button) =>
-              ['Abrir atalhos', 'Abrir ferramentas'].includes(
-                button.getAttribute('aria-label') ?? '',
-              ),
+            (button) => button.getAttribute('aria-label') === 'Abrir ferramentas',
           )
           if (toolsButton) {
             toolsButton.click()
             await wait(220)
           }
 
-          const mapsButton = await poll(
+          let mapsButton = await poll(
             () =>
               findVisibleButton(
                 (button) =>
@@ -756,22 +987,46 @@ async function openM5InterludeFromLibrary(send) {
               ),
             2_000,
           )
-          if (mapsButton) {
+          if (mapsButton?.classList.contains('tabletop-hud__button--active')) {
+            const delayedTab = await poll(findLibraryTab, 1_500)
+            if (delayedTab) return delayedTab
+
             mapsButton.click()
-            const tab = await poll(
+            await wait(320)
+            mapsButton = await poll(
               () =>
                 findVisibleButton(
-                  (button) => button.textContent?.trim() === 'INTERLUDIOS',
+                  (button) =>
+                    button.getAttribute('aria-label') === 'Mapas' ||
+                    button.title === 'Mapas',
                 ),
-              3_000,
+              2_000,
             )
+          }
+          if (mapsButton) {
+            mapsButton.click()
+            const tab = await poll(findLibraryTab, 3_000)
             if (tab) return tab
           }
         }
         return null
       }
 
-      const transitionTab = await openLibrary()
+      let transitionTab = null
+      let munFolder = null
+
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        transitionTab = await openLibrary()
+        if (!(transitionTab instanceof HTMLElement)) continue
+        transitionTab.click()
+        munFolder = await poll(() => {
+          const library = Array.from(document.querySelectorAll('.tabletop-library'))
+            .find(isVisible)
+          return library ? findFolder('MUN') : null
+        }, 3_500)
+        if (munFolder instanceof HTMLElement) break
+      }
+
       if (!(transitionTab instanceof HTMLElement)) {
         return {
           step: 'tab',
@@ -782,13 +1037,33 @@ async function openM5InterludeFromLibrary(send) {
               text: button.textContent?.trim(),
               title: button.title,
             }))
-            .slice(0, 30),
+          .slice(0, 30),
         }
       }
-      transitionTab.click()
-
-      const munFolder = await poll(() => findFolder('MUN'))
-      if (!(munFolder instanceof HTMLElement)) return { step: 'mun-folder' }
+      if (!(munFolder instanceof HTMLElement)) {
+        const library = Array.from(document.querySelectorAll('.tabletop-library')).find(isVisible)
+        return {
+          step: 'mun-folder',
+          folderCards: Array.from(document.querySelectorAll('.tabletop-library-folder-card'))
+            .filter(isVisible)
+            .map((item) => item.textContent?.trim())
+            .slice(0, 30),
+          bodyText: document.body.innerText.slice(0, 2_500),
+          visibleButtons: Array.from(document.querySelectorAll('button'))
+            .filter(isVisible)
+            .map((button) => ({
+              ariaLabel: button.getAttribute('aria-label'),
+              text: button.textContent?.trim(),
+              title: button.title,
+            }))
+            .slice(0, 50),
+          libraryText: library?.textContent?.trim().slice(0, 1_500) ?? '',
+          transitionCards: Array.from(document.querySelectorAll('.tabletop-library-card'))
+            .filter(isVisible)
+            .map((item) => item.textContent?.trim())
+            .slice(0, 12),
+        }
+      }
       munFolder.click()
 
       const planicieFolder = await poll(() =>
@@ -796,7 +1071,16 @@ async function openM5InterludeFromLibrary(send) {
           (item) => isVisible(item) && /Plan/i.test(item.textContent ?? ''),
         ),
       )
-      if (!(planicieFolder instanceof HTMLElement)) return { step: 'biome-folder' }
+      if (!(planicieFolder instanceof HTMLElement)) {
+        return {
+          step: 'biome-folder',
+          bodyText: document.body.innerText.slice(0, 2_500),
+          folderCards: Array.from(document.querySelectorAll('.tabletop-library-folder-card'))
+            .filter(isVisible)
+            .map((item) => item.textContent?.trim())
+            .slice(0, 30),
+        }
+      }
       planicieFolder.click()
 
       const card = await poll(() =>
@@ -825,6 +1109,17 @@ async function exerciseFolderOrganization(send) {
     send,
     `(async () => {
       const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+      const isVisible = (element) => {
+        if (!(element instanceof HTMLElement)) return false
+        const rect = element.getBoundingClientRect()
+        const style = getComputedStyle(element)
+        return (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          style.display !== 'none' &&
+          style.visibility !== 'hidden'
+        )
+      }
       const setValue = (element, value) => {
         const descriptor = Object.getOwnPropertyDescriptor(
           Object.getPrototypeOf(element),
@@ -853,25 +1148,30 @@ async function exerciseFolderOrganization(send) {
         return true
       }
       const ensureTransitionsRoot = async () => {
-        for (let attempt = 0; attempt < 8; attempt += 1) {
+        for (let attempt = 0; attempt < 30; attempt += 1) {
           const transitionTab = Array.from(
             document.querySelectorAll('.tabletop-library-tabs__button'),
-          ).find((item) => item.textContent?.trim() === 'INTERLUDIOS')
-          if (!(transitionTab instanceof HTMLElement)) return false
+          ).find((item) => isVisible(item) && item.textContent?.trim() === 'INTERLUDIOS')
+          if (!(transitionTab instanceof HTMLElement)) {
+            await wait(200)
+            continue
+          }
           if (!transitionTab.classList.contains('tabletop-library-tabs__button--active')) {
             transitionTab.click()
             await wait(160)
           }
           const rootButton = Array.from(
             document.querySelectorAll('.tabletop-library-breadcrumb__item'),
-          ).find((item) => item.textContent?.trim() === 'Todas')
+          ).find((item) => isVisible(item) && item.textContent?.trim() === 'Todas')
           if (rootButton instanceof HTMLElement) {
             rootButton.click()
             await wait(160)
           }
           if (
             transitionTab.classList.contains('tabletop-library-tabs__button--active') &&
-            document.querySelector('input[placeholder="Nome da pasta"]')
+            Array.from(document.querySelectorAll('input[placeholder="Nome da pasta"]')).some(
+              isVisible,
+            )
           ) {
             return true
           }
@@ -881,6 +1181,7 @@ async function exerciseFolderOrganization(send) {
 
       const toolsButton = Array.from(document.querySelectorAll('button')).find(
         (button) =>
+          isVisible(button) &&
           ['Abrir atalhos', 'Abrir ferramentas'].includes(
             button.getAttribute('aria-label') ?? '',
           ),
@@ -891,8 +1192,9 @@ async function exerciseFolderOrganization(send) {
       }
       const mapsButton = Array.from(document.querySelectorAll('button')).find(
         (button) =>
+          isVisible(button) &&
           button.getAttribute('aria-label') === 'Mapas' ||
-          button.title === 'Mapas',
+          (isVisible(button) && button.title === 'Mapas'),
       )
       if (!(mapsButton instanceof HTMLElement)) return { step: 'maps-tool' }
       mapsButton.click()
@@ -1302,14 +1604,58 @@ async function main() {
     throw new Error('No debuggable Electron page found')
   }
 
-  const { issueEvents, networkFailures, send, socket } = await connectCdp(
-    page.webSocketDebuggerUrl,
-  )
-  await send('Runtime.enable')
-  await send('Log.enable')
-  await send('Network.enable')
-  await send('Page.enable')
-  await send('Input.setIgnoreInputEvents', { ignore: false })
+  let activeConnection = await connectCdp(page.webSocketDebuggerUrl)
+  const connections = [activeConnection]
+  const send = (method, params = {}) => activeConnection.send(method, params)
+  await enableCdp(activeConnection)
+
+  const reconnectAfterRendererReload = async () => {
+    let lastError
+
+    for (let attempt = 0; attempt < 60; attempt += 1) {
+      try {
+        const nextTargets = await fetchJson(
+          `http://127.0.0.1:${port}/json`,
+          1,
+        )
+        const nextPage =
+          nextTargets.find((target) => target.type === 'page') ?? nextTargets[0]
+
+        if (!nextPage?.webSocketDebuggerUrl) {
+          throw new Error('Renderer reiniciado sem pagina CDP disponivel.')
+        }
+
+        const nextConnection = await connectCdp(nextPage.webSocketDebuggerUrl)
+        await enableCdp(nextConnection)
+        const state = await evaluate(
+          nextConnection.send,
+          `({
+            readyState: document.readyState,
+            hasTabletop: Boolean(document.querySelector('.tabletop-board')),
+            hash: location.hash,
+          })`,
+        )
+
+        if (state?.readyState !== 'complete' || !state.hasTabletop) {
+          nextConnection.socket.close()
+          throw new Error(
+            `Renderer ainda nao restaurou a mesa: ${JSON.stringify(state)}`,
+          )
+        }
+
+        const previousConnection = activeConnection
+        activeConnection = nextConnection
+        connections.push(nextConnection)
+        previousConnection.socket.close()
+        return
+      } catch (error) {
+        lastError = error
+        await delay(500)
+      }
+    }
+
+    throw lastError ?? new Error('Nao foi possivel reconectar ao renderer.')
+  }
 
   try {
     await openGmTable(send, evaluate, delay)
@@ -1332,6 +1678,10 @@ async function main() {
       `Interludio renderizou preto ou vazio: ${JSON.stringify(renderedImageProbe)}`,
     )
     cycles[0].board = await skipTransitionAndAssertBoard(send, 'MUN')
+    const boardRenderRecovery = await exerciseBoardRenderRecovery(
+      send,
+      reconnectAfterRendererReload,
+    )
 
     for (let cycle = 1; cycle <= 4; cycle += 1) {
       await openM5InterludeFromLibrary(send)
@@ -1374,6 +1724,10 @@ async function main() {
       })()`,
     )
 
+    const issueEvents = connections.flatMap((connection) => connection.issueEvents)
+    const networkFailures = connections.flatMap(
+      (connection) => connection.networkFailures,
+    )
     const genericMissingResourceErrors = issueEvents.filter(
       (event) =>
         event.method === 'Log.entryAdded' &&
@@ -1417,6 +1771,7 @@ async function main() {
           cycles,
           finalState,
           baseRelease,
+          boardRenderRecovery,
           folderOrganization,
           genericMissingResourceErrors: genericMissingResourceErrors.length,
           issueEvents: actionableIssueEvents,
@@ -1436,7 +1791,9 @@ async function main() {
       ),
     )
   } finally {
-    socket.close()
+    for (const connection of connections) {
+      connection.socket.close()
+    }
   }
 }
 

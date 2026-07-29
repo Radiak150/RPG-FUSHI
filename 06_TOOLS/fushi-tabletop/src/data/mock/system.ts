@@ -145,7 +145,7 @@ export const systemData: SystemData = {
       bullets: [
         'Ataque padrao usa atributo relevante + bonus da pericia.',
         'Sem FUSHI consciente no inicio: combate tutorial resolve com corpo, instinto e risco.',
-        'Esquiva usa CA base + Agilidade + Reflexos; bloqueio reduz metade da CA base do dano.',
+        'Esquiva fixa usa CA atual + Agilidade + Reflexos; bloqueio reduz dano por Fortitude, com teto 15.',
         'Contra-ataque usa CA base: se o ataque inimigo nao alcancar essa CA, o defensor contra-ataca.',
         'Cada consciencia escolhe apenas uma reacao no turno: Bloqueio, Esquiva ou Contra-ataque.',
       ],

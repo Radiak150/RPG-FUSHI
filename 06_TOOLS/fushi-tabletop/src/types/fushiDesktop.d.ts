@@ -113,6 +113,16 @@ export interface FushiOllamaChatResult {
   text?: string
 }
 
+export interface FushiRenderedRegionInspection {
+  blank: boolean
+  error?: string
+  meanBrightness?: number
+  nearWhiteRatio?: number
+  ok: boolean
+  sampleCount?: number
+  variance?: number
+}
+
 export interface FushiDesktopApi {
   getAppInfo(): {
     dataDir: string
@@ -172,6 +182,13 @@ export interface FushiDesktopApi {
     config?: Partial<FushiAiProviderConfig>
     messages: FushiAiChatMessage[]
   }): Promise<FushiOllamaChatResult>
+  inspectRenderedRegion(rect: {
+    height: number
+    width: number
+    x: number
+    y: number
+  }): Promise<FushiRenderedRegionInspection>
+  reloadRenderer(): Promise<{ error?: string; ok: boolean }>
   assetExists(url: string): boolean
   saveBackups(campaignId: string, data: unknown): boolean
   saveAsset(campaignId: string | undefined, asset: {

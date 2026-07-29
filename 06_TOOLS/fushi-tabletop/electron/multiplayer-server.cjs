@@ -10,8 +10,8 @@ const {
   sendStoredAssetHttpResponse,
 } = require('./storage.cjs')
 
-const SERVER_VERSION = 'multiplayer-v2'
-const PROTOCOL_VERSION = 2
+const SERVER_VERSION = 'multiplayer-v3'
+const PROTOCOL_VERSION = 3
 const SERVER_ROOT =
   process.env.FUSHI_SERVER_ROOT || path.resolve('C:/RPG FUSHI/SERVIDOR-FUSHI')
 const PLAYER_IDS = new Set(['player1', 'player2', 'player3', 'player4', 'player5'])
@@ -78,7 +78,10 @@ const REMOTE_DICE_ROLL_MAX_BURST = 7
 const REMOTE_ACTION_REPLAY_TTL_MS = 5 * 60 * 1000
 const REMOTE_ACTION_TYPES = new Set([
   'add-log-entry',
+  'cancel-combat-effect',
   'move-token',
+  'request-turn-action',
+  'set-character-edit-lock',
   'update-character',
   'update-measurement',
 ])
@@ -283,6 +286,71 @@ function sanitizeMeasurementForPlayer(session, currentSceneId) {
   return cloneValue(measurement)
 }
 
+function sanitizeCombatPreviewForPlayer(session, currentSceneId) {
+  const preview = isRecord(session?.publicCombatPreview) ? session.publicCombatPreview : null
+
+  if (
+    !preview ||
+    preview.sceneId !== currentSceneId ||
+    !isValidMeasurementCell(preview.origin) ||
+    (preview.shape !== 'adjacent' && preview.shape !== 'map' && preview.shape !== 'radius') ||
+    typeof preview.expiresAt !== 'number' ||
+    preview.expiresAt <= Date.now()
+  ) {
+    return null
+  }
+
+  return cloneValue(preview)
+}
+
+function sanitizeCombatReceiptForPlayer(session, playerId) {
+  const receipt = isRecord(session?.publicCombatReceipt)
+    ? session.publicCombatReceipt
+    : null
+
+  if (
+    !receipt ||
+    !Array.isArray(receipt.visibleToPlayerIds) ||
+    !receipt.visibleToPlayerIds.includes(playerId)
+  ) {
+    return null
+  }
+
+  return {
+    attackerName:
+      typeof receipt.attackerName === 'string' ? receipt.attackerName : '',
+    createdAt:
+      typeof receipt.createdAt === 'number' ? receipt.createdAt : Date.now(),
+    damageApplied:
+      typeof receipt.damageApplied === 'number'
+        ? Math.max(0, Math.round(receipt.damageApplied))
+        : 0,
+    healingApplied:
+      typeof receipt.healingApplied === 'number'
+        ? Math.max(0, Math.round(receipt.healingApplied))
+        : 0,
+    id: typeof receipt.id === 'string' ? receipt.id : '',
+    outcome:
+      receipt.outcome === 'block' ||
+      receipt.outcome === 'dodge' ||
+      receipt.outcome === 'hit' ||
+      receipt.outcome === 'miss'
+        ? receipt.outcome
+        : 'miss',
+    resourceChangesByPlayerId: {
+      [playerId]:
+        isRecord(receipt.resourceChangesByPlayerId) &&
+        Array.isArray(receipt.resourceChangesByPlayerId[playerId])
+          ? cloneValue(receipt.resourceChangesByPlayerId[playerId])
+          : [],
+    },
+    sceneId: typeof receipt.sceneId === 'string' ? receipt.sceneId : '',
+    summary: typeof receipt.summary === 'string' ? receipt.summary : '',
+    targetName: typeof receipt.targetName === 'string' ? receipt.targetName : '',
+    visibleToPlayerIds: [playerId],
+  }
+}
+
 function sanitizeTurnStateForPlayer(turnState, session, playerId) {
   if (!isRecord(turnState) || turnState.isActive !== true || !Array.isArray(turnState.participants)) {
     return null
@@ -346,6 +414,227 @@ function sanitizeTurnStateForPlayer(turnState, session, playerId) {
   }
 }
 
+function sanitizeTrainingStateForPlayer(trainingState, session, playerId) {
+  if (!isRecord(trainingState)) {
+    return null
+  }
+
+  const allTokens = new Map()
+  if (Array.isArray(session?.scenes)) {
+    session.scenes.forEach((scene) => {
+      if (!isRecord(scene) || !Array.isArray(scene.tokens)) {
+        return
+      }
+
+      scene.tokens.forEach((token) => {
+        if (isRecord(token) && typeof token.id === 'string') {
+          allTokens.set(token.id, token)
+        }
+      })
+    })
+  }
+
+  const participants = Array.isArray(trainingState.participants)
+    ? trainingState.participants
+        .filter((participant) => {
+          if (!isRecord(participant) || typeof participant.tokenId !== 'string') {
+            return false
+          }
+
+          const token = allTokens.get(participant.tokenId)
+          const participantPlayerId =
+            typeof participant.playerId === 'string' ? participant.playerId : ''
+
+          return token
+            ? tokenIsVisibleForPlayer(token, playerId) ||
+                (participantPlayerId &&
+                  tokenCanBeControlledByPlayer(token, participantPlayerId))
+            : false
+        })
+        .map((participant) => {
+          const stations = isRecord(participant.stations)
+            ? Object.fromEntries(
+                Object.entries(participant.stations)
+                  .filter(([, progress]) => isRecord(progress))
+                  .map(([stationId, progress]) => [
+                    stationId,
+                    {
+                      boldSuccesses:
+                        typeof progress.boldSuccesses === 'number'
+                          ? progress.boldSuccesses
+                          : 0,
+                      completedAt:
+                        typeof progress.completedAt === 'number'
+                          ? progress.completedAt
+                          : undefined,
+                      progress: typeof progress.progress === 'number' ? progress.progress : 0,
+                      setbacks: typeof progress.setbacks === 'number' ? progress.setbacks : 0,
+                      status:
+                        progress.status === 'completed' ||
+                        progress.status === 'active' ||
+                        progress.status === 'pending'
+                          ? progress.status
+                          : 'pending',
+                    },
+                  ]),
+              )
+            : {}
+
+          return {
+            activeStationId:
+              typeof participant.activeStationId === 'string'
+                ? participant.activeStationId
+                : '',
+            characterId:
+              typeof participant.characterId === 'string' ? participant.characterId : '',
+            color: typeof participant.color === 'string' ? participant.color : '#92c0b6',
+            id: typeof participant.id === 'string' ? participant.id : '',
+            label: typeof participant.label === 'string' ? participant.label : '',
+            name: typeof participant.name === 'string' ? participant.name : '',
+            playerId: typeof participant.playerId === 'string' ? participant.playerId : '',
+            finalMastery: isRecord(participant.finalMastery)
+              ? {
+                  emotion:
+                    typeof participant.finalMastery.emotion === 'string'
+                      ? participant.finalMastery.emotion
+                      : undefined,
+                  fushiLost:
+                    typeof participant.finalMastery.fushiLost === 'number'
+                      ? participant.finalMastery.fushiLost
+                      : 0,
+                  fushiRecovered:
+                    typeof participant.finalMastery.fushiRecovered === 'number'
+                      ? participant.finalMastery.fushiRecovered
+                      : 0,
+                  stage:
+                    typeof participant.finalMastery.stage === 'number'
+                      ? participant.finalMastery.stage
+                      : 0,
+                }
+              : { fushiLost: 0, fushiRecovered: 0, stage: 0 },
+            stations,
+            tokenId: participant.tokenId,
+          }
+        })
+    : []
+  const finalTrial = isRecord(trainingState.finalTrial)
+    ? {
+        contributorIds: Array.isArray(trainingState.finalTrial.contributorIds)
+          ? trainingState.finalTrial.contributorIds.filter((id) => typeof id === 'string')
+          : [],
+        isActive: trainingState.finalTrial.isActive === true,
+        isCompleted: trainingState.finalTrial.isCompleted === true,
+        isUnlocked: trainingState.finalTrial.isUnlocked === true,
+        pressure:
+          typeof trainingState.finalTrial.pressure === 'number'
+            ? trainingState.finalTrial.pressure
+            : 0,
+        progress:
+          typeof trainingState.finalTrial.progress === 'number'
+            ? trainingState.finalTrial.progress
+            : 0,
+        stationIds: Array.isArray(trainingState.finalTrial.stationIds)
+          ? trainingState.finalTrial.stationIds.filter((id) => typeof id === 'string')
+          : [],
+      }
+    : null
+
+  return {
+    arcId: typeof trainingState.arcId === 'string' ? trainingState.arcId : '',
+    completedAt:
+      typeof trainingState.completedAt === 'number' ? trainingState.completedAt : undefined,
+    finalTrial,
+    isActive: trainingState.isActive === true,
+    isCompleted: trainingState.isCompleted === true,
+    locationId:
+      typeof trainingState.locationId === 'string' ? trainingState.locationId : '',
+    mapId: typeof trainingState.mapId === 'string' ? trainingState.mapId : '',
+    participants,
+    startedAt:
+      typeof trainingState.startedAt === 'number' ? trainingState.startedAt : Date.now(),
+    updatedAt:
+      typeof trainingState.updatedAt === 'number' ? trainingState.updatedAt : Date.now(),
+    version: 2,
+  }
+}
+
+function sanitizeEventStateForPlayer(eventState, trainingState) {
+  const source = isRecord(eventState) ? eventState : {}
+  const sourceEvents = isRecord(source.events) ? source.events : {}
+  const sourceTraining = isRecord(sourceEvents['initial-training'])
+    ? sourceEvents['initial-training']
+    : {}
+  const sourceRarity = isRecord(sourceEvents['build-rarity-draw'])
+    ? sourceEvents['build-rarity-draw']
+    : {}
+  const sourceSkillAssignment = isRecord(sourceEvents['skill-assignment'])
+    ? sourceEvents['skill-assignment']
+    : {}
+  const trainingActive = isRecord(eventState)
+    ? sourceTraining.isActive === true
+    : isRecord(trainingState) && trainingState.isActive === true
+  const rarityActive = sourceRarity.isActive === true
+  const rarityDrawSource = rarityActive && isRecord(source.rarityDraw)
+    ? source.rarityDraw
+    : {}
+  const rarity =
+    rarityDrawSource.rarity === 'comum' ||
+    rarityDrawSource.rarity === 'raro' ||
+    rarityDrawSource.rarity === 'epico' ||
+    rarityDrawSource.rarity === 'lendario' ||
+    rarityDrawSource.rarity === 'mitico'
+      ? rarityDrawSource.rarity
+      : undefined
+  const rarityPhase = rarityDrawSource.phase === 'rolling' && rarity
+    ? 'rolling'
+    : 'idle'
+  const presentationExpiresAt =
+    typeof rarityDrawSource.presentationExpiresAt === 'number'
+      ? rarityDrawSource.presentationExpiresAt
+      : undefined
+
+  return {
+    events: {
+      'initial-training': {
+        isActive: trainingActive,
+        updatedAt:
+          typeof sourceTraining.updatedAt === 'number' ? sourceTraining.updatedAt : Date.now(),
+      },
+      'build-rarity-draw': {
+        isActive: rarityActive,
+        updatedAt:
+          typeof sourceRarity.updatedAt === 'number' ? sourceRarity.updatedAt : Date.now(),
+      },
+      'skill-assignment': {
+        isActive: sourceSkillAssignment.isActive === true,
+        updatedAt:
+          typeof sourceSkillAssignment.updatedAt === 'number'
+            ? sourceSkillAssignment.updatedAt
+            : Date.now(),
+      },
+    },
+    rarityDraw: {
+      characterId:
+        typeof rarityDrawSource.characterId === 'string' ? rarityDrawSource.characterId : '',
+      characterName:
+        typeof rarityDrawSource.characterName === 'string' ? rarityDrawSource.characterName : '',
+      drawId: typeof rarityDrawSource.drawId === 'string' ? rarityDrawSource.drawId : '',
+      itemId: typeof rarityDrawSource.itemId === 'string' ? rarityDrawSource.itemId : '',
+      itemName: typeof rarityDrawSource.itemName === 'string' ? rarityDrawSource.itemName : '',
+      phase: rarityPhase,
+      presentationExpiresAt,
+      rarity,
+      revealAt:
+        typeof rarityDrawSource.revealAt === 'number' ? rarityDrawSource.revealAt : undefined,
+      startedAt:
+        typeof rarityDrawSource.startedAt === 'number' ? rarityDrawSource.startedAt : undefined,
+    },
+    rarityHistory: [],
+    updatedAt: typeof source.updatedAt === 'number' ? source.updatedAt : Date.now(),
+    version: 1,
+  }
+}
+
 function sanitizeSessionForPlayer(session, playerId) {
   if (!isRecord(session)) {
     return null
@@ -368,6 +657,30 @@ function sanitizeSessionForPlayer(session, playerId) {
         })
     : []
   const currentScene = scenes[0] ?? null
+  const characterEditLocks = isRecord(session.characterEditLocks)
+    ? Object.fromEntries(
+        Object.entries(session.characterEditLocks).filter(
+          ([, lock]) =>
+            isRecord(lock) &&
+            typeof lock.expiresAt === 'number' &&
+            lock.expiresAt > Date.now() &&
+            (lock.ownerId === playerId || lock.ownerId === 'gm'),
+        ),
+      )
+    : {}
+  const visibleTokenIds = new Set()
+
+  scenes.forEach((scene) => {
+    if (!isRecord(scene) || !Array.isArray(scene.tokens)) {
+      return
+    }
+
+    scene.tokens.forEach((token) => {
+      if (isRecord(token) && typeof token.id === 'string') {
+        visibleTokenIds.add(token.id)
+      }
+    })
+  })
 
   return {
     currentSceneId,
@@ -375,7 +688,14 @@ function sanitizeSessionForPlayer(session, playerId) {
       typeof session.initialSceneId === 'string' ? session.initialSceneId : '',
     isGridVisible: session.isGridVisible === true,
     logEntries: Array.isArray(session.logEntries)
-      ? session.logEntries.filter((entry) => isRecord(entry) && entry.visibility === 'public')
+      ? session.logEntries
+          .filter((entry) => isRecord(entry) && entry.visibility === 'public')
+          .map((entry) => {
+            const safeEntry = cloneValue(entry)
+            delete safeEntry.combat
+            delete safeEntry.turnRequest
+            return safeEntry
+          })
       : [],
     audioMixerState: isRecord(session.audioMixerState)
       ? cloneValue(session.audioMixerState)
@@ -390,7 +710,63 @@ function sanitizeSessionForPlayer(session, playerId) {
     gmCameraControlEnabled: session.gmCameraControlEnabled === true,
     zoom: typeof session.zoom === 'number' ? session.zoom : undefined,
     activeMeasurement: sanitizeMeasurementForPlayer(session, currentSceneId),
+    publicCombatPreview: sanitizeCombatPreviewForPlayer(session, currentSceneId),
+    publicCombatImpacts: Array.isArray(session.publicCombatImpacts)
+      ? session.publicCombatImpacts.filter(
+          (impact) =>
+            isRecord(impact) &&
+            typeof impact.tokenId === 'string' &&
+            visibleTokenIds.has(impact.tokenId),
+        )
+      : [],
+    publicCombatMarks: Array.isArray(session.publicCombatMarks)
+      ? session.publicCombatMarks
+          .filter(
+            (mark) =>
+              isRecord(mark) &&
+              typeof mark.sourceTokenId === 'string' &&
+              typeof mark.targetTokenId === 'string' &&
+              visibleTokenIds.has(mark.targetTokenId),
+          )
+          .map((mark) => ({
+            cancelableBySource: mark.cancelableBySource === true,
+            color: typeof mark.color === 'string' ? mark.color : '#a88cff',
+            createdAt: mark.createdAt,
+            description:
+              typeof mark.description === 'string' ? mark.description : undefined,
+            durationRounds:
+              typeof mark.durationRounds === 'number'
+                ? mark.durationRounds
+                : undefined,
+            icon: typeof mark.icon === 'string' ? mark.icon : undefined,
+            id: mark.id,
+            kind: typeof mark.kind === 'string' ? mark.kind : undefined,
+            label: mark.label,
+            lastProcessedRound:
+              typeof mark.lastProcessedRound === 'number'
+                ? mark.lastProcessedRound
+                : undefined,
+            notes: typeof mark.notes === 'string' ? mark.notes : undefined,
+            sourceTokenId: visibleTokenIds.has(mark.sourceTokenId)
+              ? mark.sourceTokenId
+              : `hidden-effect-source:${mark.id}`,
+            stacks: typeof mark.stacks === 'number' ? mark.stacks : undefined,
+            statusId: typeof mark.statusId === 'string' ? mark.statusId : undefined,
+            targetTokenId: mark.targetTokenId,
+          }))
+      : [],
+    publicCombatReceipt: sanitizeCombatReceiptForPlayer(session, playerId),
+    playerDeathStates: isRecord(session.playerDeathStates)
+      ? Object.fromEntries(
+          Object.entries(session.playerDeathStates).filter(([tokenId]) =>
+            visibleTokenIds.has(tokenId),
+          ),
+        )
+      : {},
+    characterEditLocks,
     turnState: sanitizeTurnStateForPlayer(session.turnState, session, playerId),
+    trainingState: sanitizeTrainingStateForPlayer(session.trainingState, session, playerId),
+    eventState: sanitizeEventStateForPlayer(session.eventState, session.trainingState),
     version: session.version ?? 1,
   }
 }
@@ -996,6 +1372,24 @@ function sanitizeCombatLogPayload(value, playerId, session) {
     combat.sourceFeatureId = value.sourceFeatureId.trim().slice(0, 120)
   }
 
+  if (typeof value.targetTokenId === 'string' && value.targetTokenId.trim()) {
+    const targetTokenId = value.targetTokenId.trim()
+    const targetToken =
+      isRecord(currentScene) && Array.isArray(currentScene.tokens)
+        ? currentScene.tokens.find(
+            (token) =>
+              isRecord(token) &&
+              token.id === targetTokenId &&
+              token.id !== attackerTokenId &&
+              tokenIsVisibleForPlayer(token, playerId),
+          )
+        : null
+
+    if (targetToken) {
+      combat.targetTokenId = targetTokenId
+    }
+  }
+
   return combat
 }
 
@@ -1099,11 +1493,105 @@ function sanitizePlayerCharacterUpdate(value, existingCharacter) {
     }
   }
 
+  if (isRecord(existingCharacter.combatProfile)) {
+    nextCharacter.combatProfile = {
+      ...(isRecord(nextCharacter.combatProfile) ? nextCharacter.combatProfile : {}),
+      build: cloneValue(existingCharacter.combatProfile.build),
+    }
+  }
+
+  ;[
+    'permissions',
+    'sharedBody',
+  ].forEach((field) => {
+    if (existingCharacter[field] !== undefined) {
+      nextCharacter[field] = cloneValue(existingCharacter[field])
+    } else {
+      delete nextCharacter[field]
+    }
+  })
+
   if (Array.isArray(value.pericias)) {
     nextCharacter.pericias = cloneValue(value.pericias)
   }
 
   return nextCharacter
+}
+
+const PLAYER_CHARACTER_MUTABLE_FIELDS = new Set([
+  'nome',
+  'jogador',
+  'classe',
+  'origem',
+  'faccao',
+  'localAtual',
+  'notas',
+  'tier',
+  'combatRole',
+  'defesa',
+  'nivel',
+  'deslocamento',
+  'bloqueio',
+  'esquiva',
+  'protecao',
+  'resistencia',
+  'proficiencias',
+  'habilidades',
+  'habilidadesDetalhadas',
+  'rituais',
+  'inventario',
+  'inventarioDetalhado',
+  'inventarioPerfil',
+  'descricao',
+  'pericias',
+  'ataques',
+  'atributos',
+  'recursos',
+  'rolagemBase',
+  'tone',
+])
+
+function sanitizePlayerCharacterPatch(value, existingCharacter) {
+  if (!isRecord(value) || !isRecord(existingCharacter)) {
+    return null
+  }
+
+  const nextCharacter = cloneValue(existingCharacter)
+  const changedFields = []
+
+  Object.entries(value).forEach(([field, incomingValue]) => {
+    if (!PLAYER_CHARACTER_MUTABLE_FIELDS.has(field)) {
+      return
+    }
+
+    if (
+      (field === 'recursos' || field === 'atributos' || field === 'descricao') &&
+      isRecord(incomingValue) &&
+      isRecord(existingCharacter[field])
+    ) {
+      nextCharacter[field] = {
+        ...cloneValue(existingCharacter[field]),
+        ...cloneValue(incomingValue),
+      }
+    } else {
+      nextCharacter[field] = cloneValue(incomingValue)
+    }
+
+    changedFields.push(field)
+  })
+
+  return changedFields.length > 0
+    ? { changedFields, character: nextCharacter }
+    : { changedFields: [], character: nextCharacter }
+}
+
+function normalizeClientInstanceId(value) {
+  if (typeof value !== 'string') {
+    return ''
+  }
+
+  const normalized = value.trim().slice(0, 160)
+  return /^[a-zA-Z0-9._:-]+$/.test(normalized) ? normalized : ''
 }
 
 function buildPublicPlayerState(app, campaignId, playerId, sessionCode) {
@@ -1337,6 +1825,7 @@ class FushiMultiplayerServer {
     this.port = options.port
     this.serverInstanceId = crypto.randomUUID()
     this.stateVersion = 1
+    this.admissionGrants = new Map()
     this.remoteActionReplayCache = new Map()
     this.recentRemoteDiceRolls = []
     this.remoteDiceRollCooldownUntilByPlayer = new Map()
@@ -1369,6 +1858,79 @@ class FushiMultiplayerServer {
     return Array.from(this.clients.values()).some(
       (client) => client.playerId === playerId && this.isClientAccepted(client),
     )
+  }
+
+  getAdmissionGrantKey(playerId, clientInstanceId) {
+    const normalizedClientInstanceId = normalizeClientInstanceId(clientInstanceId)
+
+    return PLAYER_IDS.has(playerId) && normalizedClientInstanceId
+      ? `${playerId}:${normalizedClientInstanceId}`
+      : ''
+  }
+
+  hasAdmissionGrant(playerId, clientInstanceId) {
+    const key = this.getAdmissionGrantKey(playerId, clientInstanceId)
+    return Boolean(key && this.admissionGrants.has(key))
+  }
+
+  grantAdmission(client) {
+    const key = this.getAdmissionGrantKey(client?.playerId, client?.clientInstanceId)
+
+    if (!key) {
+      return false
+    }
+
+    this.admissionGrants.forEach((grant, grantKey) => {
+      if (grant?.playerId === client.playerId && grantKey !== key) {
+        this.admissionGrants.delete(grantKey)
+      }
+    })
+    this.admissionGrants.set(key, {
+      acceptedAt: new Date().toISOString(),
+      clientInstanceId: client.clientInstanceId,
+      playerId: client.playerId,
+    })
+
+    this.clients.forEach((candidate) => {
+      if (
+        candidate.id !== client.id &&
+        candidate.playerId === client.playerId &&
+        candidate.clientInstanceId !== client.clientInstanceId
+      ) {
+        candidate.admissionStatus = 'kicked'
+        this.sendAdmissionStatus(candidate, {
+          message: 'Este jogador entrou por outra instancia do app.',
+          status: 'kicked',
+        })
+        setTimeout(() => {
+          if (!candidate.socket.destroyed) {
+            candidate.socket.destroy()
+          }
+        }, 60)
+      }
+    })
+    return true
+  }
+
+  revokeAdmissionGrant(playerId, clientInstanceId) {
+    const key = this.getAdmissionGrantKey(playerId, clientInstanceId)
+    return key ? this.admissionGrants.delete(key) : false
+  }
+
+  findAcceptedClient(playerId, clientInstanceId) {
+    const normalizedClientInstanceId = normalizeClientInstanceId(clientInstanceId)
+
+    if (!PLAYER_IDS.has(playerId) || !normalizedClientInstanceId) {
+      return null
+    }
+
+    return Array.from(this.clients.values()).find(
+      (client) =>
+        client.playerId === playerId &&
+        client.clientInstanceId === normalizedClientInstanceId &&
+        this.isClientAccepted(client) &&
+        this.hasAdmissionGrant(playerId, normalizedClientInstanceId),
+    ) ?? null
   }
 
   getRemoteActionId(message) {
@@ -1474,6 +2036,7 @@ class FushiMultiplayerServer {
       client.socket.destroy()
     })
     this.clients.clear()
+    this.admissionGrants.clear()
 
     if (this.broadcastTimer) {
       clearTimeout(this.broadcastTimer)
@@ -1501,6 +2064,7 @@ class FushiMultiplayerServer {
       campaignId: this.campaignId,
       clients: Array.from(this.clients.values()).map((client) => ({
         admissionStatus: this.getClientAdmissionStatus(client),
+        clientInstanceId: client.clientInstanceId || '',
         connectedAt: client.connectedAt,
         id: client.id,
         latencyMs: Number.isFinite(client.latencyMs) ? client.latencyMs : null,
@@ -1647,6 +2211,9 @@ class FushiMultiplayerServer {
   handleStateHttpRequest(url, request, response) {
     const code = (url.searchParams.get('code') || '').trim().toUpperCase()
     const playerId = url.searchParams.get('playerId') || ''
+    const clientInstanceId = normalizeClientInstanceId(
+      url.searchParams.get('clientInstanceId') || '',
+    )
 
     if (code !== this.sessionCode) {
       writeOnlineLog('http:state-rejected-code', {
@@ -1665,8 +2232,9 @@ class FushiMultiplayerServer {
       return
     }
 
-    if (!this.isPlayerAccepted(playerId)) {
+    if (!this.findAcceptedClient(playerId, clientInstanceId)) {
       writeOnlineLog('http:state-rejected-admission', {
+        clientInstanceId,
         playerId,
         remoteAddress: request.socket?.remoteAddress,
       })
@@ -1699,6 +2267,7 @@ class FushiMultiplayerServer {
 
     const code = typeof body.code === 'string' ? body.code.trim().toUpperCase() : ''
     const playerId = typeof body.playerId === 'string' ? body.playerId : ''
+    const clientInstanceId = normalizeClientInstanceId(body.clientInstanceId)
     const message = isRecord(body.message) ? body.message : null
     if (code !== this.sessionCode) {
       writeOnlineLog('http:action-rejected-code', {
@@ -1726,8 +2295,9 @@ class FushiMultiplayerServer {
       return
     }
 
-    if (!this.isPlayerAccepted(playerId)) {
+    if (!this.findAcceptedClient(playerId, clientInstanceId)) {
       writeOnlineLog('http:action-rejected-admission', {
+        clientInstanceId,
         messageType: message.type,
         playerId,
         remoteAddress: request.socket?.remoteAddress,
@@ -1742,6 +2312,7 @@ class FushiMultiplayerServer {
 
     const client = {
       admissionStatus: 'accepted',
+      clientInstanceId,
       connectedAt: new Date().toISOString(),
       id: `http-${crypto.randomUUID()}`,
       lastActionErrorMessage: '',
@@ -1795,6 +2366,9 @@ class FushiMultiplayerServer {
   handleUpgrade(request, socket) {
     const url = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`)
     const sessionCode = url.searchParams.get('code') || ''
+    const clientInstanceId = normalizeClientInstanceId(
+      url.searchParams.get('clientInstanceId') || '',
+    )
 
     if (url.pathname !== '/session') {
       writeOnlineLog('ws:upgrade-rejected-path', {
@@ -1812,6 +2386,15 @@ class FushiMultiplayerServer {
         remoteAddress: socket.remoteAddress,
       })
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+      socket.destroy()
+      return
+    }
+
+    if (!clientInstanceId) {
+      writeOnlineLog('ws:upgrade-rejected-client-instance', {
+        remoteAddress: socket.remoteAddress,
+      })
+      socket.write('HTTP/1.1 400 Bad Request\r\n\r\n')
       socket.destroy()
       return
     }
@@ -1843,6 +2426,7 @@ class FushiMultiplayerServer {
     )
 
     const client = {
+      clientInstanceId,
       connectedAt: new Date().toISOString(),
       id: clientId,
       latencyMs: null,
@@ -1861,6 +2445,7 @@ class FushiMultiplayerServer {
     this.clients.set(clientId, client)
     writeOnlineLog('client:connected', {
       clientId,
+      clientInstanceId,
       clients: this.clients.size,
       remoteAddress: socket.remoteAddress,
       sessionCode: this.sessionCode,
@@ -1947,6 +2532,20 @@ class FushiMultiplayerServer {
       return { applied: true, handled: true }
     }
 
+    if (message.type === 'end-client-session') {
+      if (PLAYER_IDS.has(client.playerId)) {
+        this.revokeAdmissionGrant(client.playerId, client.clientInstanceId)
+        writeOnlineLog('auth:client-session-ended', {
+          clientId: client.id,
+          clientInstanceId: client.clientInstanceId,
+          playerId: client.playerId,
+        })
+      }
+      client.admissionStatus = 'kicked'
+      client.socket.destroy()
+      return { applied: true, handled: true }
+    }
+
     if (message.type === 'request-state') {
       this.sendPublicState(client)
       return { applied: true, handled: true }
@@ -2003,6 +2602,27 @@ class FushiMultiplayerServer {
 
     if (message.type === 'add-log-entry') {
       const applied = this.handleAddLogEntry(client, message)
+      this.rememberRemoteActionReplay(client, message, applied)
+      this.sendActionAck(client, message, applied)
+      return { applied, handled: true }
+    }
+
+    if (message.type === 'cancel-combat-effect') {
+      const applied = this.handleCancelCombatEffect(client, message)
+      this.rememberRemoteActionReplay(client, message, applied)
+      this.sendActionAck(client, message, applied)
+      return { applied, handled: true }
+    }
+
+    if (message.type === 'request-turn-action') {
+      const applied = this.handleRequestTurnAction(client, message)
+      this.rememberRemoteActionReplay(client, message, applied)
+      this.sendActionAck(client, message, applied)
+      return { applied, handled: true }
+    }
+
+    if (message.type === 'set-character-edit-lock') {
+      const applied = this.handleSetCharacterEditLock(client, message)
       this.rememberRemoteActionReplay(client, message, applied)
       this.sendActionAck(client, message, applied)
       return { applied, handled: true }
@@ -2073,12 +2693,42 @@ class FushiMultiplayerServer {
       return
     }
 
+    if (
+      (client.admissionStatus === 'accepted' && client.playerId === profile.id) ||
+      this.hasAdmissionGrant(profile.id, client.clientInstanceId)
+    ) {
+      client.admissionAcceptedAt = new Date().toISOString()
+      client.admissionStatus = 'accepted'
+      client.playerId = profile.id
+      client.profileLabel = profile.label
+      writeOnlineLog('auth:resume-accepted', {
+        clientId: client.id,
+        clientInstanceId: client.clientInstanceId,
+        label: profile.label,
+        playerId: profile.id,
+      })
+      sendWs(client.socket, {
+        payload: {
+          profile,
+        },
+        type: 'auth-ok',
+      })
+      this.sendAdmissionStatus(client, {
+        message: 'Entrada ja liberada pelo mestre nesta sessao.',
+        status: 'accepted',
+      })
+      this.sendPublicState(client)
+      this.broadcastPlayers()
+      return
+    }
+
     client.admissionRequestedAt = new Date().toISOString()
     client.admissionStatus = 'pending'
     client.playerId = profile.id
     client.profileLabel = profile.label
     writeOnlineLog('auth:pending-master-approval', {
       clientId: client.id,
+      clientInstanceId: client.clientInstanceId,
       label: profile.label,
       playerId: profile.id,
     })
@@ -2405,6 +3055,304 @@ class FushiMultiplayerServer {
     return true
   }
 
+  handleRequestTurnAction(client, message) {
+    if (!PLAYER_IDS.has(client.playerId)) {
+      client.lastActionErrorMessage = 'Autentique um jogador antes de pedir uma acao.'
+      sendWs(client.socket, {
+        message: client.lastActionErrorMessage,
+        type: 'error',
+      })
+      return false
+    }
+
+    const request = isRecord(message.request) ? message.request : null
+    const kind = request?.kind === 'feature' || request?.kind === 'maneuver'
+      ? request.kind
+      : ''
+    const timing =
+      request?.timing === 'fala' ||
+      request?.timing === 'padrao' ||
+      request?.timing === 'bonus' ||
+      request?.timing === 'movimento' ||
+      request?.timing === 'reacao'
+        ? request.timing
+        : ''
+    const tokenId =
+      typeof request?.tokenId === 'string' ? request.tokenId.trim().slice(0, 120) : ''
+    const characterId =
+      typeof request?.characterId === 'string'
+        ? request.characterId.trim().slice(0, 120)
+        : ''
+    const label =
+      typeof request?.label === 'string' ? request.label.trim().slice(0, 160) : ''
+    const featureId =
+      typeof request?.featureId === 'string' ? request.featureId.trim().slice(0, 160) : ''
+    const maneuverId =
+      typeof request?.maneuverId === 'string'
+        ? request.maneuverId.trim().slice(0, 160)
+        : ''
+
+    if (
+      !request ||
+      !kind ||
+      !timing ||
+      !tokenId ||
+      !characterId ||
+      !label ||
+      (kind === 'feature' && !featureId) ||
+      (kind === 'maneuver' && !maneuverId)
+    ) {
+      client.lastActionErrorMessage = 'Pedido de acao incompleto.'
+      sendWs(client.socket, {
+        message: client.lastActionErrorMessage,
+        type: 'error',
+      })
+      return false
+    }
+
+    const session = loadJson(this.app, {
+      campaignId: this.campaignId,
+      name: 'session',
+      scope: 'campaign',
+    })
+    const activeScene = getActiveScene(session)
+    const token = Array.isArray(activeScene?.tokens)
+      ? activeScene.tokens.find((candidate) => candidate?.id === tokenId)
+      : null
+
+    if (!token || !tokenCanBeControlledByPlayer(token, client.playerId)) {
+      client.lastActionErrorMessage =
+        'Este personagem nao esta vinculado a este jogador.'
+      sendWs(client.socket, {
+        message: client.lastActionErrorMessage,
+        type: 'error',
+      })
+      return false
+    }
+
+    const actionId =
+      typeof message.remoteActionId === 'string' && message.remoteActionId
+        ? `turn-request-${message.remoteActionId}`
+        : `turn-request-${Date.now()}-${Math.round(Math.random() * 100000)}`
+    const entry = {
+      author: getPlayerShortLabel(client.playerId),
+      createdAt: new Date().toISOString(),
+      id: actionId,
+      text: `${getPlayerShortLabel(client.playerId)} pediu: ${label}.`,
+      type: 'system',
+      turnRequest: {
+        characterId,
+        featureId: featureId || undefined,
+        id: actionId,
+        kind,
+        label,
+        maneuverId: maneuverId || undefined,
+        playerId: client.playerId,
+        status: 'pending',
+        timing,
+        tokenId,
+        updatedAt: Date.now(),
+      },
+      visibility: 'gm',
+    }
+    const currentLogEntries = Array.isArray(session?.logEntries) ? session.logEntries : []
+    const nextSession = {
+      ...session,
+      logEntries: [...currentLogEntries, entry].slice(-120),
+    }
+
+    saveJson(this.app, {
+      campaignId: this.campaignId,
+      data: nextSession,
+      name: 'session',
+      scope: 'campaign',
+    })
+    this.onStorageChanged?.({
+      campaignId: this.campaignId,
+      name: 'session',
+      scope: 'campaign',
+      type: 'json',
+    })
+    writeOnlineLog('turn:action-requested', {
+      characterId,
+      clientId: client.id,
+      kind,
+      label,
+      playerId: client.playerId,
+      tokenId,
+    })
+    this.broadcastPublicState({ immediate: true })
+    return true
+  }
+
+  handleCancelCombatEffect(client, message) {
+    if (!PLAYER_IDS.has(client.playerId)) {
+      client.lastActionErrorMessage =
+        'Autentique um jogador antes de cancelar um efeito.'
+      return false
+    }
+
+    const effectId =
+      typeof message.effectId === 'string'
+        ? message.effectId.trim().slice(0, 180)
+        : ''
+    const session = loadJson(this.app, {
+      campaignId: this.campaignId,
+      name: 'session',
+      scope: 'campaign',
+    })
+    const marks = Array.isArray(session?.publicCombatMarks)
+      ? session.publicCombatMarks
+      : []
+    const mark = marks.find(
+      (candidate) => isRecord(candidate) && candidate.id === effectId,
+    )
+    const activeScene = getActiveScene(session)
+    const sourceToken =
+      mark && Array.isArray(activeScene?.tokens)
+        ? activeScene.tokens.find(
+            (candidate) =>
+              isRecord(candidate) && candidate.id === mark.sourceTokenId,
+          )
+        : null
+    const sourceMayCancel =
+      mark?.cancelableBySource === true || mark?.label === 'Analise Cirurgica'
+
+    if (
+      !effectId ||
+      !mark ||
+      !sourceToken ||
+      !sourceMayCancel ||
+      !tokenCanBeControlledByPlayer(sourceToken, client.playerId)
+    ) {
+      client.lastActionErrorMessage =
+        'Este efeito nao pertence ao personagem controlado pelo jogador.'
+      return false
+    }
+
+    const nextSession = {
+      ...session,
+      publicCombatMarks: marks.filter(
+        (candidate) => !isRecord(candidate) || candidate.id !== effectId,
+      ),
+    }
+
+    saveJson(this.app, {
+      campaignId: this.campaignId,
+      data: nextSession,
+      name: 'session',
+      scope: 'campaign',
+    })
+    this.onStorageChanged?.({
+      campaignId: this.campaignId,
+      name: 'session',
+      scope: 'campaign',
+      type: 'json',
+    })
+    writeOnlineLog('combat:effect-cancelled', {
+      clientId: client.id,
+      effectId,
+      playerId: client.playerId,
+      sourceTokenId: mark.sourceTokenId,
+      targetTokenId: mark.targetTokenId,
+    })
+    this.broadcastPublicState({ immediate: true })
+    return true
+  }
+
+  handleSetCharacterEditLock(client, message) {
+    if (!PLAYER_IDS.has(client.playerId)) {
+      client.lastActionErrorMessage = 'Autentique um jogador antes de travar uma ficha.'
+      return false
+    }
+
+    const characterId =
+      typeof message.characterId === 'string' ? message.characterId.trim().slice(0, 120) : ''
+    const mode = message.mode === 'full' || message.mode === 'quick' ? message.mode : ''
+    const release = message.release === true
+    const session = loadJson(this.app, {
+      campaignId: this.campaignId,
+      name: 'session',
+      scope: 'campaign',
+    })
+    const playerAccess = loadPlayerAccess(this.app, this.campaignId)
+    const mundiState = loadJson(this.app, {
+      campaignId: this.campaignId,
+      name: 'mundi',
+      scope: 'campaign',
+    })
+    const editableCharacterIds = collectEditableCharacterIds(
+      session,
+      client.playerId,
+      playerAccess,
+      mundiState,
+    )
+
+    if (!characterId || !mode || !editableCharacterIds.has(characterId)) {
+      client.lastActionErrorMessage = 'Ficha sem permissao para esta trava.'
+      return false
+    }
+
+    const now = Date.now()
+    const locks = isRecord(session?.characterEditLocks)
+      ? Object.fromEntries(
+          Object.entries(session.characterEditLocks).filter(
+            ([, lock]) =>
+              isRecord(lock) &&
+              typeof lock.expiresAt === 'number' &&
+              lock.expiresAt > now,
+          ),
+        )
+      : {}
+    const currentLock = isRecord(locks[characterId]) ? locks[characterId] : null
+
+    if (release) {
+      if (currentLock && currentLock.ownerId !== client.playerId) {
+        client.lastActionErrorMessage =
+          `Ficha ocupada por ${currentLock.ownerLabel || 'outro editor'}.`
+        return false
+      }
+      delete locks[characterId]
+    } else {
+      if (currentLock && currentLock.ownerId !== client.playerId) {
+        client.lastActionErrorMessage =
+          `Ficha ocupada por ${currentLock.ownerLabel || 'outro editor'}.`
+        sendWs(client.socket, {
+          message: client.lastActionErrorMessage,
+          type: 'error',
+        })
+        return false
+      }
+
+      locks[characterId] = {
+        acquiredAt: currentLock?.acquiredAt ?? now,
+        characterId,
+        expiresAt: now + (mode === 'full' ? 10 * 60 * 1000 : 10000),
+        mode,
+        ownerId: client.playerId,
+        ownerLabel: getPlayerShortLabel(client.playerId),
+      }
+    }
+
+    saveJson(this.app, {
+      campaignId: this.campaignId,
+      data: {
+        ...(isRecord(session) ? session : {}),
+        characterEditLocks: locks,
+      },
+      name: 'session',
+      scope: 'campaign',
+    })
+    this.onStorageChanged?.({
+      campaignId: this.campaignId,
+      name: 'session',
+      scope: 'campaign',
+      type: 'json',
+    })
+    this.broadcastPublicState({ immediate: true })
+    return true
+  }
+
   handleUpdateMeasurement(client, message) {
     if (!PLAYER_IDS.has(client.playerId)) {
       writeOnlineLog('measurement:update-rejected-auth', {
@@ -2547,18 +3495,26 @@ class FushiMultiplayerServer {
 
   handleUpdateCharacter(client, message) {
     if (!PLAYER_IDS.has(client.playerId)) {
+      client.lastActionErrorMessage =
+        'Autentique um jogador antes de atualizar ficha.'
       writeOnlineLog('character:update-rejected-auth', {
         clientId: client.id,
       })
       sendWs(client.socket, {
-        message: 'Autentique um jogador antes de atualizar ficha.',
+        message: client.lastActionErrorMessage,
         type: 'error',
       })
       return false
     }
 
     const incomingCharacter = isRecord(message.character) ? message.character : null
-    const characterId = typeof incomingCharacter?.id === 'string' ? incomingCharacter.id : ''
+    const incomingPatch = isRecord(message.characterPatch) ? message.characterPatch : null
+    const characterId =
+      typeof message.characterId === 'string'
+        ? message.characterId
+        : typeof incomingCharacter?.id === 'string'
+          ? incomingCharacter.id
+          : ''
     const session = loadJson(this.app, {
       campaignId: this.campaignId,
       name: 'session',
@@ -2578,13 +3534,38 @@ class FushiMultiplayerServer {
     )
 
     if (!characterId || !editableCharacterIds.has(characterId)) {
+      client.lastActionErrorMessage = 'Ficha sem permissao para este jogador.'
       writeOnlineLog('character:update-rejected-permission', {
         characterId,
         clientId: client.id,
         playerId: client.playerId,
       })
       sendWs(client.socket, {
-        message: 'Ficha sem permissao para este jogador.',
+        message: client.lastActionErrorMessage,
+        type: 'error',
+      })
+      return false
+    }
+
+    const currentEditLock =
+      isRecord(session?.characterEditLocks) &&
+      isRecord(session.characterEditLocks[characterId]) &&
+      typeof session.characterEditLocks[characterId].expiresAt === 'number' &&
+      session.characterEditLocks[characterId].expiresAt > Date.now()
+        ? session.characterEditLocks[characterId]
+        : null
+
+    if (currentEditLock && currentEditLock.ownerId !== client.playerId) {
+      writeOnlineLog('character:update-rejected-edit-lock', {
+        characterId,
+        clientId: client.id,
+        ownerId: currentEditLock.ownerId,
+        playerId: client.playerId,
+      })
+      client.lastActionErrorMessage =
+        `Ficha ocupada por ${currentEditLock.ownerLabel || 'outro editor'}.`
+      sendWs(client.socket, {
+        message: client.lastActionErrorMessage,
         type: 'error',
       })
       return false
@@ -2600,31 +3581,37 @@ class FushiMultiplayerServer {
     )
 
     if (characterIndex < 0) {
+      client.lastActionErrorMessage =
+        'Ficha nao encontrada no servidor do mestre.'
       writeOnlineLog('character:update-rejected-missing', {
         characterId,
         clientId: client.id,
         playerId: client.playerId,
       })
       sendWs(client.socket, {
-        message: 'Ficha nao encontrada no servidor do mestre.',
+        message: client.lastActionErrorMessage,
         type: 'error',
       })
       return false
     }
 
-    const nextCharacter = sanitizePlayerCharacterUpdate(
+    const patchResult = incomingPatch
+      ? sanitizePlayerCharacterPatch(incomingPatch, characters[characterIndex])
+      : null
+    const nextCharacter = patchResult?.character ?? sanitizePlayerCharacterUpdate(
       incomingCharacter,
       characters[characterIndex],
     )
 
     if (!nextCharacter) {
+      client.lastActionErrorMessage = 'Atualizacao de ficha invalida.'
       writeOnlineLog('character:update-rejected-invalid', {
         characterId,
         clientId: client.id,
         playerId: client.playerId,
       })
       sendWs(client.socket, {
-        message: 'Atualizacao de ficha invalida.',
+        message: client.lastActionErrorMessage,
         type: 'error',
       })
       return false
@@ -2649,6 +3636,7 @@ class FushiMultiplayerServer {
     })
     writeOnlineLog('character:updated', {
       characterId,
+      changedFields: patchResult?.changedFields ?? ['legacy-full-character'],
       clientId: client.id,
       playerId: client.playerId,
       recursos: nextCharacter.recursos,
@@ -2747,8 +3735,10 @@ class FushiMultiplayerServer {
     if (action === 'accept') {
       client.admissionAcceptedAt = new Date().toISOString()
       client.admissionStatus = 'accepted'
+      this.grantAdmission(client)
       writeOnlineLog('admission:accepted', {
         clientId: client.id,
+        clientInstanceId: client.clientInstanceId,
         playerId: client.playerId,
       })
       this.sendAdmissionStatus(client, {
@@ -2766,8 +3756,10 @@ class FushiMultiplayerServer {
     if (action === 'reject' || action === 'kick') {
       const status = action === 'kick' ? 'kicked' : 'rejected'
       client.admissionStatus = status
+      this.revokeAdmissionGrant(client.playerId, client.clientInstanceId)
       writeOnlineLog(`admission:${status}`, {
         clientId: client.id,
+        clientInstanceId: client.clientInstanceId,
         playerId: client.playerId,
       })
       this.sendAdmissionStatus(client, {
@@ -2969,4 +3961,6 @@ class FushiMultiplayerServer {
 module.exports = {
   FushiMultiplayerServer,
   SERVER_VERSION,
+  sanitizeEventStateForPlayer,
+  sanitizeTrainingStateForPlayer,
 }

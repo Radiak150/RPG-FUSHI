@@ -327,6 +327,9 @@ export function TabletopDiceRollOverlay({
         isUltraImpact ? ' tabletop-dice-box-overlay--ultra-impact' : ''
       } tabletop-dice-box-overlay--${mode} tabletop-dice-box-overlay--${visibleOutcome}`}
       data-roll-outcome={visibleOutcome}
+      data-roll-base={activeRecord?.resultadoBase ?? ''}
+      data-roll-results={activeRecord?.resultados?.join(',') ?? ''}
+      data-roll-mode={activeRecord?.modo ?? ''}
       data-roll-physics-notation={physicsNotation}
       data-roll-total={activeRecord?.total ?? ''}
     >

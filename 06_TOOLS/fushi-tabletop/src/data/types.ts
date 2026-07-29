@@ -10,6 +10,8 @@ export type CharacterActionKind =
   | 'ritual'
   | 'item'
 export type CharacterActionCostResource = 'vida' | 'fushi' | 'determinacao'
+export type CombatActionTiming = 'principal' | 'curta' | 'reacao' | 'movimento' | 'passiva'
+export type CombatDamageType = 'fisico' | 'mental' | 'fushi' | 'ambiental' | 'outro'
 export type TabletopTokenSize = 1 | 2 | 3
 export type TabletopTokenSizePreset = '1x1' | '2x2' | '3x3' | 'custom'
 export type EncounterDifficulty = 'facil' | 'medio' | 'dificil' | 'boss'
@@ -102,13 +104,168 @@ export interface CharacterAttack {
   automation?: CharacterActionAutomation
 }
 
+export interface CharacterActionCheckOption {
+  atributo: AttributeKey
+  damageContext?: 'melee' | 'ranged'
+  id: string
+  label: string
+  pericia?: string
+}
+
+export interface CharacterActionCheck {
+  atributo?: AttributeKey
+  pericia?: string
+  alvo?: 'ca' | 'dt' | 'resistido'
+  dificuldade?: number
+  detalhe?: string
+  opcoes?: CharacterActionCheckOption[]
+  oposto?: {
+    atributo?: AttributeKey
+    detalhe?: string
+    pericia?: string
+  }
+}
+
+export interface CharacterActionDamage {
+  formula: string
+  tipo?: CombatDamageType
+  critico?: 'dados' | 'nenhum'
+  gatilho?: 'acerto' | 'falha' | 'automatico'
+}
+
+export type CharacterActionRangeBand =
+  | 'corpo-a-corpo'
+  | 'curto'
+  | 'medio'
+  | 'longo'
+  | 'extremo'
+  | 'mapa'
+
+export interface CharacterActionRangeRule {
+  band: CharacterActionRangeBand
+  minSquares?: number
+  maxSquares?: number
+  closeRangePenaltySquares?: number
+}
+
+export interface CharacterActionResolutionRule {
+  mode?: 'damage' | 'heal' | 'drain-transfer'
+  healingFormula?: string
+  healingTarget?: 'self' | 'selected'
+  healingAmount?: 'rolled' | 'effective-damage'
+}
+
+export interface CharacterActionCombatData {
+  acao?: CombatActionTiming
+  teste?: CharacterActionCheck
+  dano?: CharacterActionDamage
+  alcance?: CharacterActionRangeRule
+  resolucao?: CharacterActionResolutionRule
+  efeitoRapido?: string
+  falha?: string
+  reacao?: string
+  risco?: string
+}
+
+export type CharacterBuildArchetype =
+  | 'tank'
+  | 'assassino'
+  | 'suporte'
+  | 'lutador'
+  | 'atirador'
+  | 'ocultista'
+
+export type CharacterBuildRarity =
+  | 'comum'
+  | 'raro'
+  | 'epico'
+  | 'lendario'
+  | 'mitico'
+  | 'secreto'
+
+export interface CharacterBuildModifiers {
+  abilityDamage: number
+  adjacentDamage: number
+  block: number
+  ca: number
+  caPenetration: number
+  criticalDamage: number
+  damage: number
+  determination: number
+  fushi: number
+  healing: number
+  healingReceived: number
+  initiative: number
+  life: number
+  meleeDamage: number
+  movement: number
+  rangedDamage: number
+}
+
+export interface CharacterBuildItemIntegration {
+  absorbedAt?: string
+  archetype: CharacterBuildArchetype
+  biomeId: string
+  catalogItemId: string
+  modifiers: CharacterBuildModifiers
+  name: string
+  passive: string
+  potency: number
+  rarity: CharacterBuildRarity
+  rarityLabel: string
+}
+
+export interface CharacterBuildBaseline {
+  actionRolls?: Record<
+    string,
+    {
+      bonus?: number
+      quantidadeDados?: number
+    }
+  >
+  attacks?: Record<
+    string,
+    {
+      atributoBase?: keyof CharacterAttributes
+      bonusPericia?: number
+    }
+  >
+  defesa: number
+  deslocamento?: string
+  pericias: Record<string, number>
+  recursos: CharacterResources
+}
+
+export interface CharacterBuildProfile {
+  archetype: CharacterBuildArchetype
+  assignmentConfidence: 'alta' | 'media'
+  assignmentReason: string
+  baseline: CharacterBuildBaseline
+  /** Compatibilidade de leitura com builds v1. Novas gravacoes usam items. */
+  item?: CharacterBuildItemIntegration
+  items: CharacterBuildItemIntegration[]
+  powerLevel: 'Basico' | 'Avancado' | 'Ascensao' | 'Cataclisma'
+  totals: CharacterBuildModifiers
+  version: 2
+}
+
+export interface CharacterCombatProfile {
+  versao: 2
+  bloqueioBonus?: number
+  bloqueioCap?: number
+  build?: CharacterBuildProfile
+  podeEsquivar?: boolean
+  papelBuild?: string
+  powerLevel?: 'Basico' | 'Avancado' | 'Ascensao' | 'Cataclisma'
+}
+
 export interface CharacterActionCost {
   resource: CharacterActionCostResource
   amount: number
   label?: string
 }
 
-export type CharacterActionEffectTarget = 'self'
+export type CharacterActionEffectTarget = 'self' | 'target'
 
 export interface CharacterActionResourceEffect {
   type: 'resource'
@@ -120,6 +277,10 @@ export interface CharacterActionResourceEffect {
 
 export interface CharacterActionStatusEffect {
   type: 'status'
+  cancelableBySource?: boolean
+  durationRounds?: number
+  stacks?: number
+  statusId?: string
   target?: CharacterActionEffectTarget
   mode?: 'add' | 'remove'
   status: string
@@ -150,6 +311,22 @@ export interface CharacterActionAutomation {
   publicText?: string
   gmText?: string
   visualColor?: string
+  combat?: CharacterActionCombatData
+  presentation?: CharacterActionPresentation
+}
+
+export type CharacterActionAreaShape = 'adjacent' | 'cone' | 'line' | 'map' | 'radius' | 'single'
+
+export interface CharacterActionPresentation {
+  area?: {
+    color?: string
+    radiusMeters?: number
+    shape: CharacterActionAreaShape
+  }
+  audioCueId?: string
+  domainSceneId?: string
+  preferGmCamera3d?: boolean
+  vfxPresetId?: string
 }
 
 export interface CharacterFeatureDetail {
@@ -168,8 +345,17 @@ export type CharacterFeatureActivationSource =
 
 export interface CharacterFeatureActivationRequest {
   character: CharacterSheet
+  checkOptionId?: string
+  combatSnapshot?: {
+    distanceMeters: number | null
+    distanceSquares: number | null
+    sourceCell?: TabletopCell
+    targetCell?: TabletopCell
+  }
   feature: CharacterFeatureDetail
   source: CharacterFeatureActivationSource
+  targetTokenId?: string
+  tokenId?: string
 }
 
 export interface CharacterInventoryItem {
@@ -178,7 +364,21 @@ export interface CharacterInventoryItem {
   descricao: string
   efeitos: string[]
   imagemUrl?: string
+  porte?: InventoryItemSize
+  quantidade?: number
   automation?: CharacterActionAutomation
+}
+
+export type InventoryItemSize =
+  | 'pequeno'
+  | 'medio'
+  | 'grande'
+  | 'grande_plus'
+
+export type InventoryPackType = 'nenhuma' | 'mochila' | 'mochila_plus'
+
+export interface CharacterInventoryProfile {
+  mochila: InventoryPackType
 }
 
 export interface CharacterDescription {
@@ -225,6 +425,7 @@ export interface CharacterSheet {
   notas: string
   tier?: number
   combatRole?: string
+  combatProfile?: CharacterCombatProfile
   defesa: number
   nivel?: number
   deslocamento?: string
@@ -238,6 +439,7 @@ export interface CharacterSheet {
   rituais?: CharacterFeatureDetail[]
   inventario: string[]
   inventarioDetalhado?: CharacterInventoryItem[]
+  inventarioPerfil?: CharacterInventoryProfile
   descricao?: CharacterDescription
   sharedBody?: SharedBodyLink
   permissions?: CharacterPermissionProfile

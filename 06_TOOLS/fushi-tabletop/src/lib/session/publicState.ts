@@ -183,6 +183,46 @@ function sanitizeSessionForPlayer(session: unknown, playerId: string) {
           }
         })
     : []
+  const visibleTokenIds = new Set<string>()
+
+  scenes.forEach((scene) => {
+    if (!isRecord(scene) || !Array.isArray(scene.tokens)) {
+      return
+    }
+
+    scene.tokens.forEach((token) => {
+      if (isRecord(token) && typeof token.id === 'string') {
+        visibleTokenIds.add(token.id)
+      }
+    })
+  })
+
+  const receipt = isRecord(session.publicCombatReceipt)
+    ? session.publicCombatReceipt
+    : null
+  const receiptVisibleToPlayer =
+    receipt &&
+    Array.isArray(receipt.visibleToPlayerIds) &&
+    receipt.visibleToPlayerIds.includes(playerId)
+  const playerReceipt = receiptVisibleToPlayer
+    ? {
+        attackerName: receipt.attackerName,
+        createdAt: receipt.createdAt,
+        damageApplied: receipt.damageApplied,
+        healingApplied: receipt.healingApplied,
+        id: receipt.id,
+        outcome: receipt.outcome,
+        resourceChangesByPlayerId: isRecord(receipt.resourceChangesByPlayerId)
+          ? {
+              [playerId]: cloneValue(receipt.resourceChangesByPlayerId[playerId] ?? []),
+            }
+          : {},
+        sceneId: receipt.sceneId,
+        summary: receipt.summary,
+        targetName: receipt.targetName,
+        visibleToPlayerIds: [playerId],
+      }
+    : null
 
   return {
     currentSceneId,
@@ -199,8 +239,53 @@ function sanitizeSessionForPlayer(session: unknown, playerId: string) {
     logEntries: Array.isArray(session.logEntries)
       ? session.logEntries.filter(
           (entry) => isRecord(entry) && entry.visibility === 'public',
+        ).map((entry) => {
+          const safeEntry = cloneValue(entry) as Record<string, unknown>
+          delete safeEntry.combat
+          delete safeEntry.turnRequest
+          return safeEntry
+        })
+      : [],
+    publicCombatImpacts: Array.isArray(session.publicCombatImpacts)
+      ? session.publicCombatImpacts.filter(
+          (impact) =>
+            isRecord(impact) &&
+            typeof impact.tokenId === 'string' &&
+            visibleTokenIds.has(impact.tokenId),
         )
       : [],
+    publicCombatMarks: Array.isArray(session.publicCombatMarks)
+      ? session.publicCombatMarks
+          .filter(
+            (mark) =>
+              isRecord(mark) &&
+              typeof mark.sourceTokenId === 'string' &&
+              typeof mark.targetTokenId === 'string' &&
+              visibleTokenIds.has(mark.sourceTokenId) &&
+              visibleTokenIds.has(mark.targetTokenId),
+          )
+          .map((mark) => ({
+            cancelableBySource: mark.cancelableBySource === true,
+            color: typeof mark.color === 'string' ? mark.color : '#a88cff',
+            createdAt: mark.createdAt,
+            description:
+              typeof mark.description === 'string' ? mark.description : undefined,
+            icon: typeof mark.icon === 'string' ? mark.icon : undefined,
+            id: mark.id,
+            kind: typeof mark.kind === 'string' ? mark.kind : undefined,
+            label: mark.label,
+            sourceTokenId: mark.sourceTokenId,
+            targetTokenId: mark.targetTokenId,
+          }))
+      : [],
+    publicCombatReceipt: playerReceipt,
+    playerDeathStates: isRecord(session.playerDeathStates)
+      ? Object.fromEntries(
+          Object.entries(session.playerDeathStates).filter(([tokenId]) =>
+            visibleTokenIds.has(tokenId),
+          ),
+        )
+      : {},
     audioMixerState: isRecord(session.audioMixerState)
       ? cloneValue(session.audioMixerState)
       : { tracks: {}, updatedAt: Date.now() },

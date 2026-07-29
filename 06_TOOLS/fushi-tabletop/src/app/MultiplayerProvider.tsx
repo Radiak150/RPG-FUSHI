@@ -12,7 +12,11 @@ import {
   type FushiAccessProfileId,
   type FushiAccessState,
 } from '../lib/playerAccess'
-import type { TabletopLogEntry, TabletopMeasurement } from '../lib/tabletopSession'
+import type {
+  TabletopLogEntry,
+  TabletopMeasurement,
+  TabletopTurnActionRequest,
+} from '../lib/tabletopSession'
 import {
   MultiplayerContext,
   type MultiplayerClientConfig,
@@ -122,13 +126,14 @@ function buildBaseHttpUrl(config: MultiplayerClientConfig) {
   return `${protocol}://${host}:${config.port}`
 }
 
-function buildWebSocketUrl(config: MultiplayerClientConfig) {
+function buildWebSocketUrl(config: MultiplayerClientConfig, clientInstanceId: string) {
   const host = normalizeHost(config.host)
   const hostWithPort = shouldOmitConfiguredPort(config, host)
     ? host
     : `${host}:${config.port}`
   const protocol = config.secure ? 'wss' : 'ws'
   const params = new URLSearchParams({
+    clientInstanceId,
     code: config.sessionCode.trim().toUpperCase(),
   })
 
@@ -278,6 +283,108 @@ function createRemoteActionId(profileId: string, type: unknown) {
   return `remote-${profileId}-${typeof type === 'string' ? type : 'action'}-${randomPart}`
 }
 
+function createClientInstanceId() {
+  const randomPart =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+  return `fushi-client-${randomPart}`
+}
+
+const PLAYER_MUTABLE_CHARACTER_FIELDS = [
+  'nome',
+  'jogador',
+  'classe',
+  'origem',
+  'faccao',
+  'localAtual',
+  'notas',
+  'tier',
+  'combatRole',
+  'defesa',
+  'nivel',
+  'deslocamento',
+  'bloqueio',
+  'esquiva',
+  'protecao',
+  'resistencia',
+  'proficiencias',
+  'habilidades',
+  'habilidadesDetalhadas',
+  'rituais',
+  'inventario',
+  'inventarioDetalhado',
+  'inventarioPerfil',
+  'descricao',
+  'pericias',
+  'ataques',
+  'atributos',
+  'recursos',
+  'rolagemBase',
+  'tone',
+] as const
+
+function valuesMatch(left: unknown, right: unknown) {
+  if (Object.is(left, right)) {
+    return true
+  }
+
+  try {
+    return JSON.stringify(left) === JSON.stringify(right)
+  } catch {
+    return false
+  }
+}
+
+function buildPlayerCharacterPatch(
+  character: CharacterSheet,
+  previousCharacter: unknown,
+) {
+  if (!previousCharacter || typeof previousCharacter !== 'object' || Array.isArray(previousCharacter)) {
+    return null
+  }
+
+  const nextRecord = character as unknown as Record<string, unknown>
+  const previousRecord = previousCharacter as Record<string, unknown>
+  const patch: Record<string, unknown> = {}
+
+  PLAYER_MUTABLE_CHARACTER_FIELDS.forEach((field) => {
+    const nextValue = nextRecord[field]
+    const previousValue = previousRecord[field]
+
+    if (valuesMatch(nextValue, previousValue)) {
+      return
+    }
+
+    if (
+      (field === 'recursos' || field === 'atributos' || field === 'descricao') &&
+      nextValue &&
+      typeof nextValue === 'object' &&
+      !Array.isArray(nextValue) &&
+      previousValue &&
+      typeof previousValue === 'object' &&
+      !Array.isArray(previousValue)
+    ) {
+      const nestedPatch = Object.fromEntries(
+        Object.entries(nextValue).filter(
+          ([key, value]) =>
+            !valuesMatch(value, (previousValue as Record<string, unknown>)[key]),
+        ),
+      )
+
+      if (Object.keys(nestedPatch).length > 0) {
+        patch[field] = nestedPatch
+      }
+      return
+    }
+
+    patch[field] = nextValue
+  })
+
+  return patch
+}
+
 function normalizeRemoteAccessState(value: unknown): FushiAccessState {
   const input =
     value && typeof value === 'object' && !Array.isArray(value)
@@ -308,6 +415,7 @@ function normalizeRemoteAccessState(value: unknown): FushiAccessState {
 
 export function MultiplayerProvider({ children }: PropsWithChildren) {
   const socketRef = useRef<WebSocket | null>(null)
+  const clientInstanceIdRef = useRef(createClientInstanceId())
   const pendingAuthRef = useRef<{
     password: string
     profile?: FushiAccessProfile
@@ -319,6 +427,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
   const [connectedPlayers, setConnectedPlayers] = useState<
     Array<{
       admissionStatus?: 'accepted' | 'anonymous' | 'kicked' | 'pending' | 'rejected'
+      clientInstanceId?: string
       connectedAt: string
       id: string
       latencyMs?: number | null
@@ -339,6 +448,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
   )
   const [networkLatencyMs, setNetworkLatencyMs] = useState<number | null>(null)
   const [publicState, setPublicState] = useState<MultiplayerPublicState | null>(null)
+  const publicStateRef = useRef<MultiplayerPublicState | null>(publicState)
   const [remoteAccessState, setRemoteAccessState] = useState<FushiAccessState | null>(null)
   const [remoteActiveProfile, setRemoteActiveProfile] =
     useState<FushiAccessProfile | null>(null)
@@ -349,6 +459,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
   const lastPublicStateVersionRef = useRef(0)
   const remoteServerInstanceIdRef = useRef('')
   const remoteActionsInFlightRef = useRef(0)
+  const remoteAdmissionAcceptedRef = useRef(false)
   const remoteActionFlushTimerRef = useRef<number | null>(null)
   const remoteActionProcessingRef = useRef(false)
   const remoteActionQueueRef = useRef<RemoteQueuedAction[]>([])
@@ -416,6 +527,13 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
 
   const disconnect = useCallback(() => {
     manualDisconnectRef.current = true
+    if (
+      remoteAdmissionAcceptedRef.current &&
+      socketRef.current?.readyState === WebSocket.OPEN
+    ) {
+      socketRef.current.send(JSON.stringify({ type: 'end-client-session' }))
+    }
+    remoteAdmissionAcceptedRef.current = false
     if (reconnectTimerRef.current !== null) {
       window.clearTimeout(reconnectTimerRef.current)
       reconnectTimerRef.current = null
@@ -444,6 +562,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
     setConnectionStatus((current) => (current === 'hosting' ? 'hosting' : 'offline'))
     setErrorMessage('')
     setPublicState(null)
+    publicStateRef.current = null
     setRemoteAccessState(null)
     setRemoteActiveProfile(null)
     setNetworkLatencyMs(null)
@@ -456,6 +575,20 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
     }
     pendingAuthRef.current?.resolve(false)
     pendingAuthRef.current = null
+  }, [])
+
+  useEffect(() => {
+    const endSessionOnWindowClose = () => {
+      if (
+        remoteAdmissionAcceptedRef.current &&
+        socketRef.current?.readyState === WebSocket.OPEN
+      ) {
+        socketRef.current.send(JSON.stringify({ type: 'end-client-session' }))
+      }
+    }
+
+    window.addEventListener('beforeunload', endSessionOnWindowClose)
+    return () => window.removeEventListener('beforeunload', endSessionOnWindowClose)
   }, [])
 
   const startHosting = useCallback(
@@ -584,6 +717,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
 
       if (nextPublicStateKey !== lastPublicStateKeyRef.current) {
         lastPublicStateKeyRef.current = nextPublicStateKey
+        publicStateRef.current = nextPublicState
         setPublicState(nextPublicState)
       }
 
@@ -632,7 +766,10 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
         }
         manualDisconnectRef.current = false
 
-        const socket = new WebSocket(buildWebSocketUrl(nextConfig))
+        remoteAdmissionAcceptedRef.current = false
+        const socket = new WebSocket(
+          buildWebSocketUrl(nextConfig, clientInstanceIdRef.current),
+        )
         let settled = false
         const connectionTimeoutId = window.setTimeout(() => {
           if (settled) {
@@ -674,10 +811,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
 
             if (!settled) {
               window.clearTimeout(connectionTimeoutId)
-              setConnectionStatus('connected')
-              reconnectAttemptRef.current = 0
               updateDiagnostics({
-                reconnectAttempts: 0,
                 socketState: 'open',
               })
               settled = true
@@ -737,14 +871,25 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
                   : 'Entrada remota atualizada pelo mestre.'
 
             if (status === 'pending') {
+              remoteAdmissionAcceptedRef.current = false
+              setConnectionStatus('connecting')
               setErrorMessage(admissionMessage)
             }
 
             if (status === 'accepted') {
+              remoteAdmissionAcceptedRef.current = true
+              setConnectionStatus('connected')
+              reconnectAttemptRef.current = 0
               setErrorMessage('')
+              updateDiagnostics({
+                reconnectAttempts: 0,
+                socketState: 'open',
+              })
+              processRemoteActionQueueRef.current()
             }
 
             if (status === 'rejected' || status === 'kicked') {
+              remoteAdmissionAcceptedRef.current = false
               if (pendingAuthRef.current?.timeoutId) {
                 window.clearTimeout(pendingAuthRef.current.timeoutId)
               }
@@ -802,6 +947,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
             const payload = message.payload as {
               players?: Array<{
                 admissionStatus?: 'accepted' | 'anonymous' | 'kicked' | 'pending' | 'rejected'
+                clientInstanceId?: string
                 connectedAt: string
                 id: string
                 latencyMs?: number | null
@@ -850,6 +996,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
           }
 
           window.clearTimeout(connectionTimeoutId)
+          remoteAdmissionAcceptedRef.current = false
           const wasPending = !settled
           const shouldReconnect =
             !manualDisconnectRef.current &&
@@ -918,6 +1065,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
             )
             setClientConfig(null)
             setPublicState(null)
+            publicStateRef.current = null
             setRemoteAccessState(null)
             setRemoteActiveProfile(null)
             lastPublicStateKeyRef.current = ''
@@ -961,12 +1109,13 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
     const config = clientConfigRef.current
     const profile = remoteActiveProfileRef.current
 
-    if (!config || !profile) {
+    if (!config || !profile || !remoteAdmissionAcceptedRef.current) {
       return false
     }
 
     const url = new URL(buildSessionHttpUrl(config, '/state'))
     url.searchParams.set('code', config.sessionCode.trim().toUpperCase())
+    url.searchParams.set('clientInstanceId', clientInstanceIdRef.current)
     url.searchParams.set('playerId', profile.id)
 
     const response = await fetch(url.toString(), {
@@ -1012,9 +1161,9 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
           const profile = remoteActiveProfileRef.current
           const action = remoteActionQueueRef.current[0]
 
-          if (!config || !profile) {
+          if (!config || !profile || !remoteAdmissionAcceptedRef.current) {
             updateDiagnostics({
-              lastActionStatus: 'offline',
+              lastActionStatus: config && profile ? 'queued' : 'offline',
               pendingActions: remoteActionQueueRef.current.length,
               socketState: socketRef.current ? 'closed' : 'unavailable',
             })
@@ -1036,6 +1185,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
             const response = await fetch(buildSessionHttpUrl(config, '/action'), {
               body: JSON.stringify({
                 actionId: action.id,
+                clientInstanceId: clientInstanceIdRef.current,
                 code: config.sessionCode.trim().toUpperCase(),
                 message: messageWithActionId,
                 playerId: profile.id,
@@ -1093,8 +1243,26 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
               continue
             }
 
+            if (response.status === 401 || response.status === 403) {
+              remoteAdmissionAcceptedRef.current = false
+              setConnectionStatus('connecting')
+              const login = lastRemoteLoginRef.current
+              if (login && socketRef.current?.readyState === WebSocket.OPEN) {
+                socketRef.current.send(
+                  JSON.stringify({
+                    password: login.password,
+                    profileId: login.profileId,
+                    type: 'authenticate',
+                  }),
+                )
+              }
+            }
             shouldRetry =
-              response.status === 408 || response.status === 429 || response.status >= 500
+              response.status === 401 ||
+              response.status === 403 ||
+              response.status === 408 ||
+              response.status === 429 ||
+              response.status >= 500
           } catch {
             const socket = socketRef.current
 
@@ -1191,7 +1359,8 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
         })
         if (
           remoteActionQueueRef.current.length > 0 &&
-          remoteActionFlushTimerRef.current === null
+          remoteActionFlushTimerRef.current === null &&
+          remoteAdmissionAcceptedRef.current
         ) {
           remoteActionFlushTimerRef.current = window.setTimeout(() => {
             remoteActionFlushTimerRef.current = null
@@ -1413,7 +1582,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
           pendingAuthRef.current.resolve(false)
           pendingAuthRef.current = null
           setErrorMessage('Tempo esgotado aguardando liberacao do mestre.')
-        }, 15000)
+        }, REMOTE_AUTH_APPROVAL_TIMEOUT_MS)
         socketRef.current.send(
           JSON.stringify({
             password,
@@ -1440,9 +1609,53 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
     })
   }, [sendRemoteAction])
 
+  const cancelCombatEffect = useCallback((effectId: string) => {
+    sendRemoteAction({
+      effectId,
+      type: 'cancel-combat-effect',
+    })
+  }, [sendRemoteAction])
+
+  const requestTurnAction = useCallback(
+    (request: Omit<TabletopTurnActionRequest, 'id' | 'playerId' | 'status'>) => {
+      sendRemoteAction({
+        request,
+        type: 'request-turn-action',
+      })
+    },
+    [sendRemoteAction],
+  )
+
+  const setCharacterEditLock = useCallback(
+    (input: { characterId: string; mode: 'full' | 'quick'; release?: boolean }) => {
+      sendRemoteAction({
+        ...input,
+        type: 'set-character-edit-lock',
+      })
+    },
+    [sendRemoteAction],
+  )
+
   const updateCharacter = useCallback((character: CharacterSheet) => {
+    const previousCharacter = Array.isArray(publicStateRef.current?.characters)
+      ? publicStateRef.current.characters.find(
+          (candidate) =>
+            candidate &&
+            typeof candidate === 'object' &&
+            !Array.isArray(candidate) &&
+            (candidate as { id?: unknown }).id === character.id,
+        )
+      : null
+    const characterPatch = buildPlayerCharacterPatch(character, previousCharacter)
+
+    if (characterPatch && Object.keys(characterPatch).length === 0) {
+      return
+    }
+
     sendRemoteAction({
       character,
+      characterId: character.id,
+      characterPatch,
       type: 'update-character',
     })
   }, [sendRemoteAction])
@@ -1467,6 +1680,7 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
       value={{
         addLogEntry,
         authenticateRemoteProfile,
+        cancelCombatEffect,
         clientConfig,
         connectedPlayers,
         connectionStatus,
@@ -1483,6 +1697,8 @@ export function MultiplayerProvider({ children }: PropsWithChildren) {
         remoteActiveProfile,
         refreshHostStatus,
         requestState,
+        requestTurnAction,
+        setCharacterEditLock,
         startHosting,
         stopHosting,
         updateCharacter,

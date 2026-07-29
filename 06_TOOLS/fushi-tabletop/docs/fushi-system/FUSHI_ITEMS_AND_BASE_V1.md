@@ -1,5 +1,12 @@
 # FUSHI Items And Base V1
 
+> Atualizacao canonica 2026-07-10: o FUSHI integra a identidade mecanica do
+> item ao individuo. O objeto nao desaparece e pode ser integrado por varias
+> pessoas; cada identidade integra o mesmo item apenas uma vez. Beneficio e
+> downside sao permanentes, nao podem ser retirados por troca de loadout e
+> acompanham a identidade mesmo se ela mudar de corpo. Catalogo, quantidade e
+> limiares por Nivel de Poder continuam em construcao.
+
 Objetivo: criar itemizacao simples, builds claras e uma BASE que organize progresso sem quebrar o MUN.
 
 ## Filosofia de item
@@ -285,8 +292,9 @@ Futuro painel:
 - Cada item mostra imagem, Nivel de Poder, build, local no MUN, efeito, custo e status.
 - Clicar abre descricao e onde encontrar.
 - Itens podem ficar como rascunho ate aprovados pelo mestre.
-- Item consumido por um personagem aplica efeito uma vez naquele personagem; depois
-  vira decorativo para ele, mas outro personagem ainda pode consumir uma vez.
+- Item integrado por um personagem aplica beneficio e custo uma vez naquela
+  identidade. O objeto continua existindo como matriz e pode ser integrado por
+  outras identidades, inclusive na mesma cena quando houver acesso.
 
 ## Ideias de itens por mapa inicial
 

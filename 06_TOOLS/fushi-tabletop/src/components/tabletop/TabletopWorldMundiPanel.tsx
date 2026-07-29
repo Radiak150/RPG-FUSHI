@@ -78,16 +78,20 @@ interface TabletopWorldMundiPanelProps {
   campaignId?: string
   characters: CharacterSheet[]
   factions?: FactionItem[]
+  isTrainingActive?: boolean
   maps?: TabletopMap[]
   mapPreviewById?: Record<string, string>
   state: WorldMundiState
   onChange: (nextState: WorldMundiState) => void
+  onActivateTraining?: (locationId: string) => void
   onEnsureMapPlaceholders?: (requests: WorldMundiMapPlaceholderRequest[]) => void
   onLinkMapToLocation?: (mapId: string, locationId: string) => void
   onOpenMap?: (mapId: string) => void
   onPrepareMap?: (mapId: string) => void
   onShowTransition?: (transitionId: string) => void
 }
+
+const VILLAGE_TRAINING_LOCATION_ID = 'campo_treino_vila'
 
 type WorldMundiTab =
   | 'mestre'
@@ -2178,10 +2182,12 @@ export function TabletopWorldMundiPanel({
   campaignId,
   characters,
   factions = [],
+  isTrainingActive = false,
   maps = [],
   mapPreviewById = {},
   state,
   onChange,
+  onActivateTraining,
   onEnsureMapPlaceholders,
   onLinkMapToLocation,
   onOpenMap,
@@ -8429,6 +8435,16 @@ export function TabletopWorldMundiPanel({
                         type="button"
                       >
                         Preparar MAP
+                      </button>
+                    ) : null}
+                    {selectedLocation.id === VILLAGE_TRAINING_LOCATION_ID && onActivateTraining ? (
+                      <button
+                        className="button button--primary world-mundi__training-action"
+                        data-testid="activate-village-training"
+                        onClick={() => onActivateTraining(selectedLocation.id)}
+                        type="button"
+                      >
+                        {isTrainingActive ? 'Abrir no EVE' : 'Ativar treinamento'}
                       </button>
                     ) : null}
                     {membersAtSelectedLocation.length > 0 ? (

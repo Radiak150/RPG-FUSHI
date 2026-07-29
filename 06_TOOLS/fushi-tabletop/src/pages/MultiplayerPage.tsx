@@ -41,6 +41,7 @@ export function MultiplayerPage() {
     hostStatus,
     joinSession,
     remoteAccessState,
+    remoteActiveProfile,
     refreshHostStatus,
     startHosting,
     stopHosting,
@@ -61,6 +62,9 @@ export function MultiplayerPage() {
   const [joinStatusMessage, setJoinStatusMessage] = useState('')
   const [hostActionMessage, setHostActionMessage] = useState('')
   const canHostSession = !clientConfig && activeAccessProfile?.role !== 'player'
+  const hasAcceptedRemoteSession =
+    (connectionStatus === 'connected' || connectionStatus === 'connecting') &&
+    remoteActiveProfile?.role === 'player'
   const remoteProfiles = remoteAccessState?.profiles.length
     ? remoteAccessState.profiles.filter((profile) => profile.role === 'player')
     : PLAYER_ACCESS_OPTIONS
@@ -78,6 +82,12 @@ export function MultiplayerPage() {
   }
 
   async function handleJoinSession() {
+    if (hasAcceptedRemoteSession) {
+      setJoinStatusMessage('Sessao ativa. Voltando para a mesa...')
+      navigate('/jogar/mesa')
+      return
+    }
+
     setJoinStatusMessage('Conectando ao servidor do mestre...')
     const connected =
       connectionStatus === 'connected'
@@ -291,6 +301,25 @@ export function MultiplayerPage() {
         title="Entrar como jogador"
         subtitle="Conecta ao servidor local do mestre por IP/LAN ou endereco de tunnel."
       >
+        {hasAcceptedRemoteSession ? (
+          <article className="list-card multiplayer-active-session" data-testid="active-player-session">
+            <div className="list-card__top">
+              <h3>Sessao ativa</h3>
+              <span className="tag">{remoteActiveProfile.label}</span>
+            </div>
+            <p className="support-copy">
+              O Mestre ja liberou esta entrada. Voce pode voltar para a mesa sem pedir um novo aceite enquanto o app permanecer aberto.
+            </p>
+            <button
+              className="button button--primary"
+              disabled={connectionStatus !== 'connected'}
+              onClick={() => void handleJoinSession()}
+              type="button"
+            >
+              {connectionStatus === 'connected' ? 'Voltar a mesa' : 'Reconectando...'}
+            </button>
+          </article>
+        ) : (
         <div className="cards-grid">
           <article className="list-card">
             <label className="field">
@@ -363,6 +392,7 @@ export function MultiplayerPage() {
             </button>
           </article>
         </div>
+        )}
 
         <p className="support-copy">
           Status: {connectionStatus}. {joinStatusMessage || errorMessage}

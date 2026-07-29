@@ -433,11 +433,10 @@ export function TabletopMapLibrary({
     const baseFolders = transitions.some(isBaseLibraryTransition)
       ? [buildBaseVirtualFolder('transitions')]
       : []
-    const munFolders = transitions.some((transition) =>
-      transition.id.startsWith(AUTOMATIC_MUN_TRANSITION_PREFIX),
-    )
-      ? [buildMunVirtualFolder()]
-      : []
+    // The automatic interludes are derived after campaign hydration. Keep the
+    // MUN home visible while that list is being assembled so a first library
+    // open never appears to have lost its campaign transitions.
+    const munFolders = [buildMunVirtualFolder()]
 
     return [
       ...baseFolders,

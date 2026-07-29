@@ -1,5 +1,7 @@
 import type {
   AppViewMode,
+  CharacterActionCost,
+  CharacterActionResolutionRule,
   CharacterResources,
   RollRecord,
   TabletopBoardObject,
@@ -17,6 +19,11 @@ import type {
   TabletopTokenVisibility,
 } from '../data/types'
 import {
+  TABLETOP_STATUS_CATALOG,
+  type TabletopStatusIcon,
+  type TabletopStatusId,
+} from '../data/statusCatalog'
+import {
   clampTabletopGridCellSize,
   normalizeTabletopTokenSize,
   normalizeTabletopTokenCustomSize,
@@ -26,6 +33,14 @@ import {
   MIN_TABLETOP_ZOOM,
 } from './tabletop'
 import { storageAdapter } from './storage/storageAdapter'
+import {
+  normalizeTabletopTrainingState,
+  type TabletopTrainingState,
+} from './tabletopTraining'
+import {
+  normalizeTabletopEventSystemState,
+  type TabletopEventSystemState,
+} from './tabletopEvents'
 
 export const TABLETOP_SESSION_STORAGE_KEY = 'fushi-tabletop:mesa-session:v1'
 export const TABLETOP_VIEW_STORAGE_KEY = 'fushi-tabletop:mesa-view:v1'
@@ -71,6 +86,79 @@ export interface TabletopMeasurement {
   updatedAt: number
 }
 
+export interface TabletopCombatPreview {
+  color: string
+  createdAt: number
+  expiresAt: number
+  id: string
+  label: string
+  origin: TabletopCell
+  radiusMeters?: number
+  sceneId: string
+  shape: 'adjacent' | 'map' | 'radius'
+  sourceTokenId: string
+  targetTokenId?: string
+}
+
+export interface TabletopCombatImpact {
+  amount?: number
+  createdAt: number
+  expiresAt: number
+  id: string
+  tokenId: string
+  type: 'ability-failure' | 'ability-success' | 'attack' | 'damage' | 'heal'
+}
+
+export interface TabletopCombatMark {
+  cancelableBySource?: boolean
+  color: string
+  createdAt: number
+  description?: string
+  durationRounds?: number
+  id: string
+  icon?: TabletopStatusIcon
+  kind?: 'buff' | 'condition' | 'debuff' | 'mark'
+  label: string
+  lastProcessedRound?: number
+  notes?: string
+  sourceCharacterId?: string
+  sourceFeatureId?: string
+  sourceTokenId: string
+  stacks?: number
+  statusId?: TabletopStatusId
+  targetCharacterId?: string
+  targetTokenId: string
+}
+
+export interface TabletopPlayerDeathState {
+  failures: number
+  results: Array<'failure' | 'success' | null>
+  status: 'down' | 'dead'
+  successes: number
+  tokenId: string
+  updatedAt: number
+}
+
+export interface TabletopCombatResourceChange {
+  after: number
+  before: number
+  label: string
+}
+
+export interface TabletopCombatReceipt {
+  attackerName: string
+  createdAt: number
+  damageApplied: number
+  healingApplied: number
+  id: string
+  outcome: 'block' | 'dodge' | 'hit' | 'miss'
+  resourceChangesByPlayerId: Record<string, TabletopCombatResourceChange[]>
+  sceneId: string
+  summary: string
+  targetName: string
+  visibleToPlayerIds: string[]
+}
+
 export interface TabletopLogEntry {
   id: string
   type: 'message' | 'roll' | 'ping' | 'system'
@@ -80,6 +168,30 @@ export interface TabletopLogEntry {
   createdAt: string
   roll?: RollRecord
   combat?: TabletopCombatLogPayload
+  turnRequest?: TabletopTurnActionRequest
+}
+
+export interface TabletopTurnActionRequest {
+  characterId: string
+  featureId?: string
+  id: string
+  kind: 'feature' | 'maneuver'
+  label: string
+  maneuverId?: string
+  playerId: string
+  status: 'approved' | 'pending' | 'rejected'
+  timing: TabletopTurnActionId
+  tokenId: string
+  updatedAt?: number
+}
+
+export interface TabletopCharacterEditLock {
+  acquiredAt: number
+  characterId: string
+  expiresAt: number
+  mode: 'full' | 'quick'
+  ownerId: string
+  ownerLabel: string
 }
 
 export interface TabletopCombatLogPayload {
@@ -87,14 +199,36 @@ export interface TabletopCombatLogPayload {
   attackerName: string
   attackerTokenId: string
   attackName: string
+  baseDamageFormula?: string
+  buildDamageBonus?: number
+  checkDifficulty?: number
+  checkTarget?: 'ca' | 'dt' | 'resistido'
+  costs?: CharacterActionCost[]
+  damageContexts?: Array<'ability' | 'adjacent' | 'melee' | 'ranged'>
   damageFormula: string
+  distanceMeters?: number | null
+  distanceSquares?: number | null
   kind: 'attack'
+  isCritical?: boolean
+  opposedAttribute?: string
+  opposedSkill?: string
+  rollBase?: number
   rollText?: string
   rollTotal?: number
   sourceFeatureId?: string
+  sourceFeatureResolution?: CharacterActionResolutionRule
+  sourceCell?: TabletopCell
+  targetCell?: TabletopCell
+  targetTokenId?: string
+  turnActionId?: TabletopTurnActionId
 }
 
-export type TabletopTurnActionId = 'fala' | 'padrao' | 'bonus' | 'movimento'
+export type TabletopTurnActionId =
+  | 'fala'
+  | 'padrao'
+  | 'bonus'
+  | 'movimento'
+  | 'reacao'
 
 export interface TabletopTurnParticipant {
   characterId: string
@@ -133,7 +267,7 @@ export interface TabletopAudioMixerState {
 }
 
 export interface PersistedTabletopSession {
-  version: 15
+  version: 17
   currentSceneId: string
   initialSceneId: string
   scenes: TabletopScene[]
@@ -145,10 +279,18 @@ export interface PersistedTabletopSession {
   zoom: number
   isGridVisible: boolean
   activeMeasurement: TabletopMeasurement | null
+  publicCombatPreview: TabletopCombatPreview | null
+  publicCombatImpacts: TabletopCombatImpact[]
+  publicCombatMarks: TabletopCombatMark[]
+  publicCombatReceipt: TabletopCombatReceipt | null
+  playerDeathStates: Record<string, TabletopPlayerDeathState>
   logEntries: TabletopLogEntry[]
   broadcastEvents: TabletopBroadcastEvent[]
   turnState: TabletopTurnState | null
+  trainingState: TabletopTrainingState | null
+  eventState: TabletopEventSystemState
   audioMixerState: TabletopAudioMixerState
+  characterEditLocks: Record<string, TabletopCharacterEditLock>
 }
 
 export interface PersistedViewPreferences {
@@ -238,6 +380,289 @@ function normalizeMeasurement(value: unknown): TabletopMeasurement | null {
     end: value.end,
     visualColor: typeof value.visualColor === 'string' ? value.visualColor : undefined,
     updatedAt: value.updatedAt,
+  }
+}
+
+function normalizeCombatPreview(value: unknown): TabletopCombatPreview | null {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== 'string' ||
+    typeof value.sceneId !== 'string' ||
+    typeof value.sourceTokenId !== 'string' ||
+    typeof value.label !== 'string' ||
+    typeof value.color !== 'string' ||
+    !isValidCell(value.origin) ||
+    (value.shape !== 'adjacent' && value.shape !== 'map' && value.shape !== 'radius') ||
+    typeof value.createdAt !== 'number' ||
+    typeof value.expiresAt !== 'number'
+  ) {
+    return null
+  }
+
+  const radiusMeters =
+    typeof value.radiusMeters === 'number' && Number.isFinite(value.radiusMeters)
+      ? Math.max(0, value.radiusMeters)
+      : undefined
+
+  return {
+    color: /^#[0-9a-f]{6}$/i.test(value.color) ? value.color : '#8e6cff',
+    createdAt: value.createdAt,
+    expiresAt: value.expiresAt,
+    id: value.id,
+    label: value.label,
+    origin: value.origin,
+    radiusMeters,
+    sceneId: value.sceneId,
+    shape: value.shape,
+    sourceTokenId: value.sourceTokenId,
+    targetTokenId:
+      typeof value.targetTokenId === 'string' && value.targetTokenId
+        ? value.targetTokenId
+        : undefined,
+  }
+}
+
+function normalizeCombatImpacts(value: unknown): TabletopCombatImpact[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const now = Date.now()
+
+  return value
+    .filter(
+      (candidate): candidate is Record<string, unknown> =>
+        isRecord(candidate) &&
+        typeof candidate.id === 'string' &&
+        typeof candidate.tokenId === 'string' &&
+        (candidate.type === 'attack' ||
+          candidate.type === 'ability-failure' ||
+          candidate.type === 'ability-success' ||
+          candidate.type === 'damage' ||
+          candidate.type === 'heal') &&
+        typeof candidate.createdAt === 'number' &&
+        typeof candidate.expiresAt === 'number' &&
+        candidate.expiresAt > now - 1000,
+    )
+    .slice(-12)
+    .map((candidate) => ({
+      amount:
+        typeof candidate.amount === 'number' && Number.isFinite(candidate.amount)
+          ? Math.max(0, Math.round(candidate.amount))
+          : undefined,
+      createdAt: candidate.createdAt as number,
+      expiresAt: candidate.expiresAt as number,
+      id: candidate.id as string,
+      tokenId: candidate.tokenId as string,
+      type: candidate.type as TabletopCombatImpact['type'],
+    }))
+}
+
+const TABLETOP_STATUS_IDS = new Set(
+  TABLETOP_STATUS_CATALOG.map((status) => status.id),
+)
+const TABLETOP_STATUS_ICONS = new Set<TabletopStatusIcon>([
+  ...TABLETOP_STATUS_CATALOG.map((status) => status.icon),
+  'custom',
+  'science',
+])
+
+function normalizeCombatMarks(value: unknown): TabletopCombatMark[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .filter(
+      (candidate): candidate is Record<string, unknown> =>
+        isRecord(candidate) &&
+        typeof candidate.id === 'string' &&
+        typeof candidate.label === 'string' &&
+        typeof candidate.sourceTokenId === 'string' &&
+        typeof candidate.targetTokenId === 'string' &&
+        typeof candidate.createdAt === 'number',
+    )
+    .slice(-48)
+    .map((candidate) => ({
+      cancelableBySource:
+        typeof candidate.cancelableBySource === 'boolean'
+          ? candidate.cancelableBySource
+          : undefined,
+      color:
+        typeof candidate.color === 'string' && /^#[0-9a-f]{6}$/i.test(candidate.color)
+          ? candidate.color
+          : '#a88cff',
+      createdAt: candidate.createdAt as number,
+      description:
+        typeof candidate.description === 'string'
+          ? candidate.description.trim().slice(0, 480)
+          : undefined,
+      durationRounds:
+        typeof candidate.durationRounds === 'number' &&
+        Number.isFinite(candidate.durationRounds)
+          ? Math.max(1, Math.min(99, Math.round(candidate.durationRounds)))
+          : undefined,
+      id: candidate.id as string,
+      icon:
+        typeof candidate.icon === 'string' &&
+        TABLETOP_STATUS_ICONS.has(candidate.icon as TabletopStatusIcon)
+          ? (candidate.icon as TabletopStatusIcon)
+          : undefined,
+      kind:
+        candidate.kind === 'buff' ||
+        candidate.kind === 'condition' ||
+        candidate.kind === 'debuff' ||
+        candidate.kind === 'mark'
+          ? candidate.kind
+          : undefined,
+      label: candidate.label as string,
+      lastProcessedRound:
+        typeof candidate.lastProcessedRound === 'number' &&
+        Number.isFinite(candidate.lastProcessedRound)
+          ? Math.max(1, Math.round(candidate.lastProcessedRound))
+          : undefined,
+      notes:
+        typeof candidate.notes === 'string'
+          ? candidate.notes.trim().slice(0, 480)
+          : undefined,
+      sourceCharacterId:
+        typeof candidate.sourceCharacterId === 'string'
+          ? candidate.sourceCharacterId
+          : undefined,
+      sourceFeatureId:
+        typeof candidate.sourceFeatureId === 'string'
+          ? candidate.sourceFeatureId
+          : undefined,
+      sourceTokenId: candidate.sourceTokenId as string,
+      stacks:
+        typeof candidate.stacks === 'number' && Number.isFinite(candidate.stacks)
+          ? Math.max(1, Math.min(99, Math.round(candidate.stacks)))
+          : undefined,
+      statusId:
+        typeof candidate.statusId === 'string' &&
+        TABLETOP_STATUS_IDS.has(candidate.statusId as TabletopStatusId)
+          ? (candidate.statusId as TabletopStatusId)
+          : undefined,
+      targetCharacterId:
+        typeof candidate.targetCharacterId === 'string'
+          ? candidate.targetCharacterId
+          : undefined,
+      targetTokenId: candidate.targetTokenId as string,
+    }))
+}
+
+function normalizePlayerDeathStates(
+  value: unknown,
+): Record<string, TabletopPlayerDeathState> {
+  if (!isRecord(value)) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([tokenId, candidate]) => {
+      if (!isRecord(candidate)) {
+        return []
+      }
+
+      const legacyFailures =
+        typeof candidate.failures === 'number'
+          ? Math.max(0, Math.min(3, Math.round(candidate.failures)))
+          : 0
+      const legacySuccesses =
+        typeof candidate.successes === 'number'
+          ? Math.max(0, Math.min(3, Math.round(candidate.successes)))
+          : 0
+      const results = (
+        Array.isArray(candidate.results)
+          ? candidate.results
+              .slice(0, 3)
+              .map((result) =>
+                result === 'failure' || result === 'success' ? result : null,
+              )
+          : [
+              ...Array.from({ length: legacySuccesses }, () => 'success' as const),
+              ...Array.from({ length: legacyFailures }, () => 'failure' as const),
+            ]
+      ).concat([null, null, null]).slice(0, 3)
+      const failures = results.filter((result) => result === 'failure').length
+      const successes = results.filter((result) => result === 'success').length
+
+      return [[
+        tokenId,
+        {
+          failures,
+          results,
+          status: candidate.status === 'dead' || failures >= 3 ? 'dead' : 'down',
+          successes,
+          tokenId,
+          updatedAt:
+            typeof candidate.updatedAt === 'number' ? candidate.updatedAt : Date.now(),
+        } satisfies TabletopPlayerDeathState,
+      ]]
+    }),
+  )
+}
+
+function normalizeCombatReceipt(value: unknown): TabletopCombatReceipt | null {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== 'string' ||
+    typeof value.sceneId !== 'string' ||
+    typeof value.attackerName !== 'string' ||
+    typeof value.targetName !== 'string' ||
+    typeof value.summary !== 'string' ||
+    typeof value.createdAt !== 'number' ||
+    !Array.isArray(value.visibleToPlayerIds) ||
+    !isRecord(value.resourceChangesByPlayerId) ||
+    (value.outcome !== 'hit' &&
+      value.outcome !== 'block' &&
+      value.outcome !== 'dodge' &&
+      value.outcome !== 'miss')
+  ) {
+    return null
+  }
+
+  const resourceChangesByPlayerId = Object.fromEntries(
+    Object.entries(value.resourceChangesByPlayerId).map(([playerId, changes]) => [
+      playerId,
+      Array.isArray(changes)
+        ? changes
+            .filter(
+              (change): change is Record<string, unknown> =>
+                isRecord(change) &&
+                typeof change.label === 'string' &&
+                typeof change.before === 'number' &&
+                typeof change.after === 'number',
+            )
+            .map((change) => ({
+              after: Math.round(change.after as number),
+              before: Math.round(change.before as number),
+              label: change.label as string,
+            }))
+        : [],
+    ]),
+  )
+
+  return {
+    attackerName: value.attackerName,
+    createdAt: value.createdAt,
+    damageApplied:
+      typeof value.damageApplied === 'number'
+        ? Math.max(0, Math.round(value.damageApplied))
+        : 0,
+    healingApplied:
+      typeof value.healingApplied === 'number'
+        ? Math.max(0, Math.round(value.healingApplied))
+        : 0,
+    id: value.id,
+    outcome: value.outcome,
+    resourceChangesByPlayerId,
+    sceneId: value.sceneId,
+    summary: value.summary,
+    targetName: value.targetName,
+    visibleToPlayerIds: value.visibleToPlayerIds.filter(
+      (playerId): playerId is string => typeof playerId === 'string',
+    ),
   }
 }
 
@@ -1082,7 +1507,8 @@ function normalizeTurnActionId(value: string): value is TabletopTurnActionId {
     value === 'fala' ||
     value === 'padrao' ||
     value === 'bonus' ||
-    value === 'movimento'
+    value === 'movimento' ||
+    value === 'reacao'
   )
 }
 
@@ -1189,6 +1615,42 @@ function normalizeTurnState(value: unknown): TabletopTurnState | null {
   }
 }
 
+function normalizeCharacterEditLocks(value: unknown) {
+  if (!isRecord(value)) {
+    return {}
+  }
+
+  const now = Date.now()
+  const locks: Record<string, TabletopCharacterEditLock> = {}
+
+  Object.entries(value).forEach(([characterId, candidate]) => {
+    if (
+      !isRecord(candidate) ||
+      typeof candidate.characterId !== 'string' ||
+      candidate.characterId !== characterId ||
+      typeof candidate.ownerId !== 'string' ||
+      typeof candidate.ownerLabel !== 'string' ||
+      typeof candidate.acquiredAt !== 'number' ||
+      typeof candidate.expiresAt !== 'number' ||
+      candidate.expiresAt <= now ||
+      (candidate.mode !== 'full' && candidate.mode !== 'quick')
+    ) {
+      return
+    }
+
+    locks[characterId] = {
+      acquiredAt: candidate.acquiredAt,
+      characterId,
+      expiresAt: candidate.expiresAt,
+      mode: candidate.mode,
+      ownerId: candidate.ownerId,
+      ownerLabel: candidate.ownerLabel,
+    }
+  })
+
+  return locks
+}
+
 export function createPersistedTabletopSession(input?: {
   currentSceneId?: string
   initialSceneId?: string
@@ -1201,10 +1663,18 @@ export function createPersistedTabletopSession(input?: {
   zoom?: number
   isGridVisible?: boolean
   activeMeasurement?: TabletopMeasurement | null
+  publicCombatPreview?: TabletopCombatPreview | null
+  publicCombatImpacts?: TabletopCombatImpact[]
+  publicCombatMarks?: TabletopCombatMark[]
+  publicCombatReceipt?: TabletopCombatReceipt | null
+  playerDeathStates?: Record<string, TabletopPlayerDeathState>
   logEntries?: TabletopLogEntry[]
   broadcastEvents?: TabletopBroadcastEvent[]
   turnState?: TabletopTurnState | null
+  trainingState?: TabletopTrainingState | null
+  eventState?: TabletopEventSystemState | null
   audioMixerState?: TabletopAudioMixerState
+  characterEditLocks?: Record<string, TabletopCharacterEditLock>
 }): PersistedTabletopSession {
   const normalizedScenes = normalizeScenes({
     scenes: input?.scenes,
@@ -1218,8 +1688,13 @@ export function createPersistedTabletopSession(input?: {
       ? [input.selectedTokenId]
       : []
 
+  const trainingState = normalizeTabletopTrainingState(input?.trainingState)
+  const eventState = normalizeTabletopEventSystemState(input?.eventState, {
+    legacyTrainingActive: trainingState?.isActive === true,
+  })
+
   return {
-    version: 15,
+    version: 17,
     currentSceneId: normalizedScenes.currentSceneId,
     initialSceneId: normalizedScenes.initialSceneId,
     scenes: normalizedScenes.scenes,
@@ -1237,10 +1712,18 @@ export function createPersistedTabletopSession(input?: {
         ? input.isGridVisible
         : DEFAULT_TABLETOP_GRID_VISIBLE,
     activeMeasurement: normalizeMeasurement(input?.activeMeasurement),
+    publicCombatPreview: normalizeCombatPreview(input?.publicCombatPreview),
+    publicCombatImpacts: normalizeCombatImpacts(input?.publicCombatImpacts),
+    publicCombatMarks: normalizeCombatMarks(input?.publicCombatMarks),
+    publicCombatReceipt: normalizeCombatReceipt(input?.publicCombatReceipt),
+    playerDeathStates: normalizePlayerDeathStates(input?.playerDeathStates),
     logEntries: Array.isArray(input?.logEntries) ? input.logEntries : [],
     broadcastEvents: normalizeBroadcastEvents(input?.broadcastEvents),
     turnState: normalizeTurnState(input?.turnState),
+    trainingState,
+    eventState,
     audioMixerState: normalizeAudioMixerState(input?.audioMixerState),
+    characterEditLocks: normalizeCharacterEditLocks(input?.characterEditLocks),
   }
 }
 
@@ -1254,6 +1737,8 @@ export function readPersistedTabletopSession(
   }
 
   if (
+    parsedValue.version !== 17 &&
+    parsedValue.version !== 16 &&
     parsedValue.version !== 15 &&
     parsedValue.version !== 14 &&
     parsedValue.version !== 12 &&
@@ -1320,10 +1805,21 @@ export function readPersistedTabletopSession(
         ? parsedValue.isGridVisible
         : DEFAULT_TABLETOP_GRID_VISIBLE,
     activeMeasurement: normalizeMeasurement(parsedValue.activeMeasurement),
+    publicCombatPreview: normalizeCombatPreview(parsedValue.publicCombatPreview),
+    publicCombatImpacts: normalizeCombatImpacts(parsedValue.publicCombatImpacts),
+    publicCombatMarks: normalizeCombatMarks(parsedValue.publicCombatMarks),
+    publicCombatReceipt: normalizeCombatReceipt(parsedValue.publicCombatReceipt),
+    playerDeathStates: normalizePlayerDeathStates(parsedValue.playerDeathStates),
     logEntries,
     broadcastEvents,
     turnState: normalizeTurnState(parsedValue.turnState),
+    trainingState: normalizeTabletopTrainingState(parsedValue.trainingState),
+    eventState: normalizeTabletopEventSystemState(parsedValue.eventState, {
+      legacyTrainingActive:
+        normalizeTabletopTrainingState(parsedValue.trainingState)?.isActive === true,
+    }),
     audioMixerState: normalizeAudioMixerState(parsedValue.audioMixerState),
+    characterEditLocks: normalizeCharacterEditLocks(parsedValue.characterEditLocks),
   })
 }
 

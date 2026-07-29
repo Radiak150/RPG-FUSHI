@@ -256,7 +256,7 @@
   {
     "changes": [],
     "id": "npc-vila-elara-vonn",
-    "name": "Elara Vonn",
+    "name": "Elara",
     "powerLevel": "Basico",
     "type": "npc",
     "warnings": []
@@ -264,7 +264,7 @@
   {
     "changes": [],
     "id": "npc-vila-orian-vonn",
-    "name": "Orian Vonn",
+    "name": "Orian",
     "powerLevel": "Basico",
     "type": "npc",
     "warnings": []
@@ -272,7 +272,7 @@
   {
     "changes": [],
     "id": "npc-vila-nilo-arven",
-    "name": "Nilo Arven",
+    "name": "Nilo",
     "powerLevel": "Basico",
     "type": "npc",
     "warnings": []
@@ -288,7 +288,7 @@
   {
     "changes": [],
     "id": "npc-vila-dalvo-seren",
-    "name": "Dalvo Seren",
+    "name": "Dalvo",
     "powerLevel": "Basico",
     "type": "npc",
     "warnings": []
@@ -296,7 +296,7 @@
   {
     "changes": [],
     "id": "npc-vila-elias-norem",
-    "name": "Elias Norem",
+    "name": "Elias",
     "powerLevel": "Basico",
     "type": "npc",
     "warnings": []
@@ -304,7 +304,7 @@
   {
     "changes": [],
     "id": "npc-vila-nayr-velcaris",
-    "name": "Nayr Velcaris",
+    "name": "Nayr",
     "powerLevel": "Basico",
     "type": "npc",
     "warnings": []
@@ -312,7 +312,7 @@
   {
     "changes": [],
     "id": "npc-vila-renji-akimura",
-    "name": "Renji Akimura",
+    "name": "Renji",
     "powerLevel": "Basico",
     "type": "npc",
     "warnings": []
@@ -355,6 +355,46 @@
     "name": "Vhazaryon",
     "powerLevel": "Cataclisma",
     "type": "npc",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "mob-eco-kael-interno",
+    "name": "Eco de Kael",
+    "powerLevel": "Basico",
+    "type": "mob",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "mob-eco-kairos-interno",
+    "name": "Eco de Kairos",
+    "powerLevel": "Basico",
+    "type": "mob",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "mob-eco-davi-interno",
+    "name": "Eco de Davi",
+    "powerLevel": "Basico",
+    "type": "mob",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "mob-eco-grim-interno",
+    "name": "Eco de Grim",
+    "powerLevel": "Basico",
+    "type": "mob",
+    "warnings": []
+  },
+  {
+    "changes": [],
+    "id": "mob-eco-connor-interno",
+    "name": "Eco de Connor",
+    "powerLevel": "Basico",
+    "type": "mob",
     "warnings": []
   }
 ]

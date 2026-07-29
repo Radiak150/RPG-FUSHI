@@ -392,24 +392,55 @@ async function ensureShortcutRail(page) {
 }
 
 async function samplePageMetrics(page) {
-  const firstFrame = await page.evaluate(
-    () =>
+  await delay(2_000)
+  const fpsSamples = []
+
+  for (let index = 0; index < 5; index += 1) {
+    const firstFrame = await page.evaluate(() =>
       Number(
         document.querySelector('.tabletop-board__free-3d-layer canvas')?.dataset.renderFrame ??
           0,
       ),
-  )
-  await delay(2500)
-  const secondFrame = await page.evaluate(
-    () =>
-      Number(
-        document.querySelector('.tabletop-board__free-3d-layer canvas')?.dataset.renderFrame ??
-          0,
-      ),
+    )
+    const sampleStartedAt = Date.now()
+    await delay(1_000)
+    const sample = await page.evaluate(() => {
+      const overlayFps = Number.parseInt(
+        document.querySelector('.tabletop-performance-overlay span')?.textContent ?? '',
+        10,
+      )
+      return {
+        frame: Number(
+          document.querySelector('.tabletop-board__free-3d-layer canvas')?.dataset.renderFrame ??
+            0,
+        ),
+        overlayFps: Number.isFinite(overlayFps) ? overlayFps : 0,
+      }
+    })
+    const elapsedSeconds = Math.max(0.001, (Date.now() - sampleStartedAt) / 1_000)
+    const frameFps = Number(((sample.frame - firstFrame) / elapsedSeconds).toFixed(1))
+
+    fpsSamples.push({
+      effectiveFps: Math.max(frameFps, sample.overlayFps),
+      frameDelta: sample.frame - firstFrame,
+      frameFps,
+      overlayFps: sample.overlayFps,
+    })
+  }
+
+  const sortedEffectiveFps = fpsSamples
+    .map((sample) => sample.effectiveFps)
+    .sort((left, right) => left - right)
+  const effectiveFps = sortedEffectiveFps[Math.floor(sortedEffectiveFps.length / 2)] ?? 0
+  const minimumFps = sortedEffectiveFps[0] ?? 0
+  const frameDelta = fpsSamples.reduce((total, sample) => total + sample.frameDelta, 0)
+  const frameFpsApprox = Number(
+    (fpsSamples.reduce((total, sample) => total + sample.frameFps, 0) / fpsSamples.length)
+      .toFixed(1),
   )
 
   return page.evaluate(
-    ({ firstFrame, secondFrame }) => {
+    ({ effectiveFps, fpsSamples, frameDelta, frameFpsApprox, minimumFps }) => {
       const overlayText = Array.from(
         document.querySelectorAll('.tabletop-performance-overlay span'),
       ).map((element) => element.textContent?.trim() ?? '')
@@ -450,8 +481,11 @@ async function samplePageMetrics(page) {
           tokens: document.querySelectorAll('.tabletop-token').length,
         },
         fps: Number.isFinite(fps) ? fps : 0,
-        frameDelta: secondFrame - firstFrame,
-        frameFpsApprox: Number(((secondFrame - firstFrame) / 2.5).toFixed(1)),
+        effectiveFps,
+        fpsSamples,
+        frameDelta,
+        frameFpsApprox,
+        minimumFps,
         hasHorizontalOverflow: document.body.scrollWidth > window.innerWidth + 1,
         hasReadinessGate: Boolean(document.querySelector('.tabletop-readiness')),
         hasRouteError: Boolean(document.querySelector('.route-error')),
@@ -466,7 +500,7 @@ async function samplePageMetrics(page) {
         overlayText,
       }
     },
-    { firstFrame, secondFrame },
+    { effectiveFps, fpsSamples, frameDelta, frameFpsApprox, minimumFps },
   )
 }
 
@@ -529,8 +563,6 @@ async function measureQuality(quality, options, artifactDir) {
     const workingSet = getProcessTreeWorkingSet(processInfo?.pid)
     const screenshotPath = path.join(artifactDir, `${quality}.png`)
     await page.screenshot({ path: screenshotPath })
-    pageMetrics.effectiveFps = Math.max(pageMetrics.fps, pageMetrics.frameFpsApprox)
-
     const failures = []
 
     if (readyMs > options.maxReadyMs) {

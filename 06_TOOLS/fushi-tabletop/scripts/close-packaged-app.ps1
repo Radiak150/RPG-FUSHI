@@ -23,8 +23,12 @@ Get-CimInstance Win32_Process -Filter "Name = 'RPG FUSHI.exe'" |
       return
     }
 
-    Stop-Process -Id $_.ProcessId -Force
-    $script:closed += 1
+    try {
+      Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop
+      $script:closed += 1
+    } catch [Microsoft.PowerShell.Commands.ProcessCommandException] {
+      # O processo pode fechar sozinho entre a consulta WMI e o Stop-Process.
+    }
   }
 
 if ($closed -gt 0) {

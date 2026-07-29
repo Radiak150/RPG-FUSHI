@@ -8,7 +8,16 @@ import type {
   TabletopTokenSizePreset,
 } from '../../data/types'
 import type { FushiAccessProfile, FushiAccessProfileId } from '../../lib/playerAccess'
-import { CharacterProfileCard } from '../characters/CharacterProfileCard'
+import { prepareCharacterForEditing } from '../../lib/characterSheet'
+import type {
+  TabletopCharacterEditLock,
+  TabletopPlayerDeathState,
+} from '../../lib/tabletopSession'
+import {
+  CharacterProfileCard,
+  type CharacterSheetEffectView,
+  type CharacterSheetFocusRequest,
+} from '../characters/CharacterProfileCard'
 import { FloatingWindow } from '../ui/FloatingWindow'
 
 interface SharedBodySheetOption {
@@ -31,11 +40,17 @@ interface TokenInspectorProps {
   token: TabletopToken | null
   selectedCount: number
   canEdit: boolean
+  editLock?: TabletopCharacterEditLock | null
   canEditToken: boolean
   canDuplicateMobToken: boolean
   canResizeToken: boolean
   canRemoveToken: boolean
+  deathState?: TabletopPlayerDeathState | null
+  canManageDeathState?: boolean
+  effectsAppliedByCharacter?: CharacterSheetEffectView[]
+  effectsAppliedToCharacter?: CharacterSheetEffectView[]
   factions: FactionItem[]
+  focusRequest?: CharacterSheetFocusRequest
   playerProfiles: FushiAccessProfile[]
   showMasterControls: boolean
   showSensitiveNotes: boolean
@@ -47,6 +62,8 @@ interface TokenInspectorProps {
   tokenSizeSummary: string | null
   restoreSignal?: number | string
   onCharacterChange: (nextCharacter: CharacterSheet) => void
+  onBeginCharacterEdit?: () => boolean
+  onEndCharacterEdit?: () => void
   onActivateFeature?: (input: CharacterFeatureActivationRequest) => void
   onPreviewImage: (src: string, label: string) => void
   onBroadcastImage?: (src: string, label: string) => void
@@ -62,6 +79,9 @@ interface TokenInspectorProps {
   onToggleVisibility?: () => void
   onClose: () => void
   onDuplicateMobToken?: () => void
+  onDeathSaveSlotChange?: (slotIndex: number) => void
+  onCancelEffect?: (effectId: string) => void
+  onOpenStatusGuide?: (statusId?: string) => void
 }
 
 function getTokenControlPlayerIds(
@@ -91,11 +111,17 @@ export function TokenInspector({
   token,
   selectedCount,
   canEdit,
+  editLock = null,
   canEditToken,
   canDuplicateMobToken,
   canResizeToken,
   canRemoveToken,
+  deathState = null,
+  canManageDeathState = false,
+  effectsAppliedByCharacter = [],
+  effectsAppliedToCharacter = [],
   factions,
+  focusRequest,
   playerProfiles,
   showMasterControls,
   showSensitiveNotes,
@@ -107,6 +133,10 @@ export function TokenInspector({
   tokenSizeSummary,
   restoreSignal,
   onCharacterChange,
+  onBeginCharacterEdit,
+  onEndCharacterEdit,
+  onCancelEffect,
+  onOpenStatusGuide,
   onActivateFeature,
   onPreviewImage,
   onBroadcastImage,
@@ -119,8 +149,11 @@ export function TokenInspector({
   onToggleVisibility,
   onClose,
   onDuplicateMobToken,
+  onDeathSaveSlotChange,
 }: TokenInspectorProps) {
   const [editingSheetKey, setEditingSheetKey] = useState('')
+  const [sheetDraft, setSheetDraft] = useState<CharacterSheet | null>(null)
+  const [sheetDraftKey, setSheetDraftKey] = useState('')
   const [isMasterPanelOpen, setIsMasterPanelOpen] = useState(false)
   const [masterInspectorTab, setMasterInspectorTab] =
     useState<MasterInspectorTab>('token')
@@ -139,13 +172,15 @@ export function TokenInspector({
     bodyBindingDraft.key === bodyBindingKey
       ? bodyBindingDraft.playerIds
       : getTokenControlPlayerIds(token, playerProfiles)
+  const sheetKey = character && token ? `${character.id}:${token.id}` : ''
+  const sheetIsEditable = Boolean(canEdit && sheetKey && editingSheetKey === sheetKey)
+  const renderedCharacter =
+    sheetIsEditable && sheetDraftKey === sheetKey && sheetDraft ? sheetDraft : character
 
-  if (!character || !token) {
+  if (!character || !token || !renderedCharacter) {
     return null
   }
 
-  const sheetKey = `${character.id}:${token.id}`
-  const sheetIsEditable = canEdit && editingSheetKey === sheetKey
   const visibilityLabel =
     token.visibility === 'gm'
       ? 'Visivel somente para o mestre'
@@ -173,7 +208,12 @@ export function TokenInspector({
       className="floating-window--sheet"
       initialPosition={{ x: 120, y: 72 }}
       initialSize={{ width: 980, height: 760 }}
-      onClose={onClose}
+      onClose={() => {
+        if (sheetIsEditable) {
+          onEndCharacterEdit?.()
+        }
+        onClose()
+      }}
       restoreSignal={restoreSignal}
       subtitle={selectedCount > 1 ? `${selectedCount} tokens selecionados` : visibilityLabel}
       title={character.nome}
@@ -476,33 +516,130 @@ export function TokenInspector({
             ) : null}
           </article>
         ) : null}
+        {editLock && editLock.ownerId !== 'gm' && !sheetIsEditable ? (
+          <article className="list-card tabletop-sheet-lock" role="status">
+            <p className="eyebrow">Ficha em edicao</p>
+            <strong>{editLock.ownerLabel} esta atualizando esta ficha.</strong>
+            <p className="support-copy">
+              Aguarde o salvamento antes de editar ou alterar recursos.
+            </p>
+          </article>
+        ) : null}
+
+        {deathState ? (
+          <article className="list-card tabletop-sheet-death-state" role="status">
+            <div className="list-card__top">
+              <div>
+                <p className="eyebrow">Estado atual</p>
+                <h3>Desmaiado</h3>
+              </div>
+              <span aria-hidden="true" className="tabletop-sheet-death-state__skull">
+                ☠
+              </span>
+            </div>
+            <p className="support-copy">
+              Tres sucessos estabilizam. Tres falhas encerram as tentativas.
+              Recuperar 2 de Vida tambem remove este estado.
+            </p>
+            <div
+              aria-label="Tentativas de estabilizacao"
+              className="tabletop-sheet-death-state__results"
+            >
+              {[0, 1, 2].map((slotIndex) => {
+                const result = deathState.results[slotIndex]
+                const label =
+                  result === 'success'
+                    ? 'Sucesso'
+                    : result === 'failure'
+                      ? 'Falha'
+                      : 'Pendente'
+
+                return (
+                  <button
+                    aria-label={`Tentativa ${slotIndex + 1}: ${label}`}
+                    className={`tabletop-sheet-death-state__result${
+                      result ? ` is-${result}` : ''
+                    }`}
+                    disabled={!canManageDeathState}
+                    key={slotIndex}
+                    onClick={() => onDeathSaveSlotChange?.(slotIndex)}
+                    type="button"
+                  >
+                    <span>{slotIndex + 1}</span>
+                    <strong>{label}</strong>
+                  </button>
+                )
+              })}
+            </div>
+          </article>
+        ) : null}
 
         <CharacterProfileCard
           allowQuickResourceEdit={canEdit}
           canBroadcastImage={Boolean(onBroadcastImage)}
-          character={character}
+          character={renderedCharacter}
           className="sheet-view--window"
           editable={sheetIsEditable}
           factionName={factionName ?? character.faccao}
           factions={factions}
+          focusRequest={focusRequest}
+          effectsAppliedByCharacter={effectsAppliedByCharacter}
+          effectsAppliedToCharacter={effectsAppliedToCharacter}
           onActivateFeature={onActivateFeature}
           onBroadcastImage={onBroadcastImage}
-          onChange={onCharacterChange}
+          onCancelEffect={onCancelEffect}
+          onOpenStatusGuide={onOpenStatusGuide}
+          onChange={sheetIsEditable ? setSheetDraft : onCharacterChange}
           onPreviewImage={onPreviewImage}
           showSensitiveNotes={showSensitiveNotes}
         />
 
         {canEdit ? (
           <div className="sheet-editor-footer">
-            <button
-              className={`button${sheetIsEditable ? ' button--primary' : ''}`}
-              onClick={() =>
-                setEditingSheetKey((currentKey) => (currentKey === sheetKey ? '' : sheetKey))
-              }
-              type="button"
-            >
-              {sheetIsEditable ? 'Salvar' : 'Editar'}
-            </button>
+            {sheetIsEditable ? (
+              <>
+                <button
+                  className="button button--primary"
+                  onClick={() => {
+                    if (sheetDraft && sheetDraftKey === sheetKey) {
+                      onCharacterChange(sheetDraft)
+                    }
+                    onEndCharacterEdit?.()
+                    setEditingSheetKey('')
+                  }}
+                  type="button"
+                >
+                  Salvar
+                </button>
+                <button
+                  className="button"
+                  onClick={() => {
+                    setSheetDraft(prepareCharacterForEditing(character))
+                    setSheetDraftKey(sheetKey)
+                    onEndCharacterEdit?.()
+                    setEditingSheetKey('')
+                  }}
+                  type="button"
+                >
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <button
+                className="button"
+                onClick={() => {
+                  if (onBeginCharacterEdit && !onBeginCharacterEdit()) {
+                    return
+                  }
+                  setSheetDraft(prepareCharacterForEditing(character))
+                  setSheetDraftKey(sheetKey)
+                  setEditingSheetKey(sheetKey)
+                }}
+                type="button"
+              >
+                Editar
+              </button>
+            )}
           </div>
         ) : null}
       </div>

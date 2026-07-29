@@ -1,0 +1,3520 @@
+{
+  "audience": "master",
+  "title": "FUSHI - Livro do Mestre",
+  "subtitle": "Escudo de regras, segredos de campanha e condução mecânica",
+  "edition": "Edição Alpha 0.1 - Julho de 2026",
+  "confidentiality": "CONFIDENCIAL DO MESTRE. Contém progressão oculta, morte, reencarnação, identidade, Rituais e informações que não devem aparecer para jogadores.",
+  "quickReference": [
+    {
+      "label": "DTs",
+      "detail": "10 rotina; 15 comum; 20 Básico difícil; 25 Avançado; 30 Ascensão; 32+ Cataclisma.",
+      "sectionId": "escudo"
+    },
+    {
+      "label": "0 Vida",
+      "detail": "Desmaio; 1d20 puro por turno; 10+ estabiliza; 3 falhas matam.",
+      "sectionId": "morte"
+    },
+    {
+      "label": "Morte",
+      "detail": "Após a terceira falha, interrompa o combate e abra o protocolo secreto.",
+      "sectionId": "reencarnacao"
+    },
+    {
+      "label": "Reencarnação",
+      "detail": "Alvo mais próximo, 3 pulsos, depois disputa de posse e log obrigatório.",
+      "sectionId": "reencarnacao"
+    },
+    {
+      "label": "Cataclisma",
+      "detail": "Fases, arena, objetivo, telégrafo, consequência e aprovação de morte canônica.",
+      "sectionId": "bosses"
+    },
+    {
+      "label": "Progressão",
+      "detail": "Marque identidade e risco em segredo; não anuncie a tabela aos jogadores.",
+      "sectionId": "progressao"
+    },
+    {
+      "label": "Ritual",
+      "detail": "Preparo, abertura, 3 pulsos, fechamento, custo e registro no MUN.",
+      "sectionId": "rituais"
+    },
+    {
+      "label": "Canon",
+      "detail": "A IA sugere; o Mestre aprova. Nenhuma morte canônica é automática.",
+      "sectionId": "canon"
+    }
+  ],
+  "sections": [
+    {
+      "id": "escudo",
+      "number": "M01",
+      "label": "Escudo do Mestre",
+      "summary": "As fórmulas e decisões que precisam estar disponíveis no meio da narração.",
+      "status": "canon",
+      "tags": [
+        "consulta",
+        "fórmulas",
+        "sessão"
+      ],
+      "searchTerms": [
+        "escudo",
+        "rápido",
+        "DT",
+        "dano",
+        "turno"
+      ],
+      "blocks": [
+        {
+          "kind": "lead",
+          "tone": "secret",
+          "title": "Conduza a consequência, não apenas a rolagem",
+          "text": "Antes de pedir dado, declare o que está em risco. Depois do resultado, mude posição, recurso, condição, informação, relógio ou relação. Se nada pode mudar, não peça teste."
+        },
+        {
+          "kind": "table",
+          "title": "Matemática central",
+          "table": {
+            "columns": [
+              "Regra",
+              "Cálculo"
+            ],
+            "rows": [
+              [
+                "Teste",
+                "d20 escolhido do Atributo + Pericia + item + cena"
+              ],
+              [
+                "Atributo 0",
+                "2d20, pega o pior"
+              ],
+              [
+                "Treino",
+                "+0 / +5 / +10 / +15"
+              ],
+              [
+                "Ataque corpo a corpo",
+                "FOR + Luta vs CA valida"
+              ],
+              [
+                "Ataque a distancia",
+                "AGI + Pontaria vs CA valida"
+              ],
+              [
+                "Critico de ataque",
+                "20 escolhido dobra dados de dano; bonus fixo nao dobra"
+              ],
+              [
+                "Bloqueio V2",
+                "dano final = dano - Fortitude; teto normal 15"
+              ],
+              [
+                "Esquiva V2",
+                "Reacao: CA atual + AGI + Reflexos vs ataque; sem dados"
+              ],
+              [
+                "Contra-ataque",
+                "se ataque < CA, defensor gasta Reacao para ataque normal"
+              ],
+              [
+                "Coreografia",
+                "cada d20 sacrificado adiciona 1 dado de dano"
+              ],
+              [
+                "Agro",
+                "Acao Completa; PRE + Intimidacao vs CA por alvo; custo usa Determinacao atual do alvo"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "DT oficial",
+          "table": {
+            "columns": [
+              "DT",
+              "Uso"
+            ],
+            "rows": [
+              [
+                "10",
+                "Rotina sob pressão"
+              ],
+              [
+                "15",
+                "Comum treinado"
+              ],
+              [
+                "20",
+                "Difícil Básico"
+              ],
+              [
+                "25",
+                "Difícil Avançado"
+              ],
+              [
+                "30",
+                "Difícil Ascensão"
+              ],
+              [
+                "32",
+                "Cataclísmico inicial"
+              ],
+              [
+                "35",
+                "Teto natural sem item forte"
+              ],
+              [
+                "40+",
+                "Exige item, Ritual, ajuda, condição ou evento"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Estados de zero",
+          "table": {
+            "columns": [
+              "Recurso",
+              "Estado operacional"
+            ],
+            "rows": [
+              [
+                "Vida 0",
+                "Desmaiado; inicia estabilização"
+              ],
+              [
+                "FUSHI 0",
+                "Paralisado; percebe e fala, não age nem reage"
+              ],
+              [
+                "Determinação 0",
+                "Mestre assume o personagem temporariamente"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Três travas de segurança",
+          "items": [
+            "Nenhum NPC canônico morre por automação, simulação ou Cataclisma sem aprovação manual.",
+            "Nenhuma regra oculta aparece no Livro do Jogador ou em mensagem pública de multiplayer.",
+            "Qualquer ajuste improvisado é regra da cena até ser consolidado fora da sessão."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "canon",
+      "number": "M02",
+      "label": "Canon e precedência",
+      "summary": "Como resolver contradições entre lore antiga, ficha, app e decisão recente.",
+      "status": "canon",
+      "tags": [
+        "fonte de verdade",
+        "segredo",
+        "aprovação"
+      ],
+      "searchTerms": [
+        "contradição",
+        "regra antiga",
+        "lore",
+        "workspace",
+        "IA"
+      ],
+      "blocks": [
+        {
+          "kind": "steps",
+          "title": "Ordem de precedência",
+          "items": [
+            "Decisão definitiva mais recente do Mestre.",
+            "Documento mecânico canônico mais recente e explicitamente aprovado.",
+            "Ficha real persistida no workspace para números atuais de personagem.",
+            "Lore primária em 01_LORE para história, vontade, relações e segredos.",
+            "Documentos antigos, seeds, mocks e ideias ficam como referência, nunca como verdade automática."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Estados editoriais",
+          "table": {
+            "columns": [
+              "Selo",
+              "Significado",
+              "Uso na mesa"
+            ],
+            "rows": [
+              [
+                "Cânone",
+                "Regra fechada e utilizável",
+                "Aplicar como escrita"
+              ],
+              [
+                "Em teste",
+                "Regra operacional com balanceamento em observação",
+                "Aplicar e registrar resultado"
+              ],
+              [
+                "Em construção",
+                "Direção aprovada, números ou catálogo incompletos",
+                "Não inventar benefício ausente"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Regra de IA e mundo vivo",
+          "items": [
+            "IA gera prévia, diagnóstico ou sugestão; nunca aplica ação sozinha.",
+            "NPC não sabe plot que ainda não viveu em Canon.",
+            "Facção organiza contexto, mas não substitui vontade individual.",
+            "MUN é fonte de local, grupo, tempo, memória e consequência de mundo.",
+            "Toda mudança relevante precisa de log e possibilidade de revisão pelo Mestre."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Contradição conhecida sobre o corpo morto",
+          "text": "A decisão recente determina que, após três falhas de estabilização, a busca padrão segue para outro corpo. A opção antiga de reacender o próprio corpo com FUSHI ao redor fica suspensa até nova aprovação explícita e não deve ser usada como rotina."
+        }
+      ]
+    },
+    {
+      "id": "adjudicacao",
+      "number": "M03",
+      "label": "Adjudicação de combate",
+      "summary": "Como transformar improviso em vantagem, condição e posição sem quebrar Luta e Pontaria.",
+      "status": "playtest",
+      "tags": [
+        "manobras",
+        "vantagem",
+        "oportunidade"
+      ],
+      "searchTerms": [
+        "improvisar",
+        "outro atributo",
+        "dano direto",
+        "manada",
+        "flanquear"
+      ],
+      "blocks": [
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Separação entre criar abertura e causar dano",
+          "items": [
+            "FOR + Luta causa dano corpo a corpo.",
+            "AGI + Pontaria causa dano à distância.",
+            "Outro Atributo ou Perícia cria abertura: +1d20, -1d20, cobertura, posição, condição ou gatilho.",
+            "Habilidade, Ritual, item ou perigo ambiental pode declarar dano próprio e é exceção explícita.",
+            "Nunca permita que a mesma rolagem improvise vantagem e dano completo sem custo."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Margem de sucesso sugerida",
+          "table": {
+            "columns": [
+              "Margem",
+              "Efeito recomendado"
+            ],
+            "rows": [
+              [
+                "0 a 4",
+                "Efeito básico declarado"
+              ],
+              [
+                "5 a 9",
+                "Efeito básico + posição ou duração melhor"
+              ],
+              [
+                "10+",
+                "Efeito forte, informação adicional ou segundo benefício pequeno"
+              ],
+              [
+                "Falha por 1 a 4",
+                "Sem efeito; mantenha posição"
+              ],
+              [
+                "Falha por 5+",
+                "Consequência anunciada, Exposto ou perda de recurso curto"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Vantagem e desvantagem",
+          "text": "Use +1d20 ou -1d20 para condição tática clara. Limite cena comum a +2d20/-2d20; regras nomeadas podem ultrapassar. Aplique modificadores ao conjunto antes de Coreografia. Se restar menos de 1 dado, use 2d20 e pegue o pior."
+        },
+        {
+          "kind": "rule",
+          "title": "Cercado, manada e oportunidade",
+          "items": [
+            "Dois ou mais inimigos em lados diferentes deixam o alvo Cercado; ataques corpo a corpo recebem +1d20.",
+            "Sair sem Desengajar permite um ataque de oportunidade, escolhido entre inimigos com Reação disponível.",
+            "Duelo 1 contra 1 não gera oportunidade padrão.",
+            "Provocação, Passiva de controle ou Habilidade de agarrar atenção pode criar oportunidade em 1 contra 1.",
+            "Ataque de oportunidade não usa Coreografia por padrão."
+          ]
+        },
+        {
+          "kind": "steps",
+          "tone": "warning",
+          "title": "Resolver ataque no app",
+          "text": "As manobras, cobertura e oportunidade desta edição são jogáveis, mas ainda precisam de teste físico contra diferentes builds. Registre abuso, lentidão ou opção que nunca vale a pena.",
+          "items": [
+            "A Mesa registra o ataque, total, dado escolhido e critico quando houver.",
+            "Compare o total com CA. Se falhar, ofereca Contra-ataque se houver Reacao.",
+            "Se acertar, defensor escolhe Bloqueio ou Esquiva antes do dano.",
+            "Role dano com dados dobrados apenas em critico; aplique Bloqueio por Fortitude depois.",
+            "Registre dano, condicao, empurrao, gasto e proximo gatilho no log da Mesa."
+          ]
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Agro: procedimento do Mestre",
+          "text": "O usuario gasta uma Acao Completa, declara alvos visiveis e resolve PRE + Intimidacao contra a CA atual de cada alvo. Sucesso: o proximo ataque legal do alvo prioriza o usuario; o usuario perde metade da Determinacao atual daquele alvo, arredondada para cima. Falha: nao ha Agro e o usuario perde a Determinacao atual inteira do alvo. Resolva custo e resultado individualmente; um alvo sem ataque legal nao e obrigado a executar uma acao impossivel."
+        }
+      ]
+    },
+    {
+      "id": "morte",
+      "number": "M04",
+      "label": "0 Vida e estabilização",
+      "summary": "Procedimento numérico completo antes de qualquer morte real.",
+      "status": "playtest",
+      "tags": [
+        "morte",
+        "Medicina",
+        "três falhas"
+      ],
+      "searchTerms": [
+        "desmaio",
+        "teste de morte",
+        "bandagem",
+        "1 Vida",
+        "estabilizado"
+      ],
+      "blocks": [
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Regra operacional V1",
+          "text": "Esta matemática fecha o vazio de sessão e deve ser usada até revisão. O gatilho narrativo de reencarnação continua secreto."
+        },
+        {
+          "kind": "steps",
+          "title": "Fluxo ao chegar a 0 Vida",
+          "items": [
+            "Interrompa ações do personagem: ele desmaia, perde concentração e não fala.",
+            "Marque 0 sucessos e 0 falhas de estabilização.",
+            "No início de cada turno do caído, role 1d20 puro.",
+            "10 ou mais: estabiliza em 0 Vida e para de rolar.",
+            "2 a 9: marque 1 falha.",
+            "1 natural: marque 2 falhas.",
+            "20 natural: recupera 1 Vida, acorda e encerra a estabilização.",
+            "Ao completar 3 falhas, declare morte e abra o protocolo secreto imediatamente."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Intervenções externas",
+          "table": {
+            "columns": [
+              "Intervenção",
+              "Custo",
+              "Resultado"
+            ],
+            "rows": [
+              [
+                "Primeiros socorros",
+                "Ação Principal; INT + Medicina DT 20",
+                "Estabiliza em 0 Vida; falha não adiciona falha de morte"
+              ],
+              [
+                "Bandagem de Emergência",
+                "Ação Principal; consome 1 uso",
+                "Recupera 1 Vida e acorda"
+              ],
+              [
+                "Cura ou Habilidade",
+                "Conforme a regra",
+                "Qualquer recuperação acima de 0 acorda"
+              ],
+              [
+                "Dano enquanto caído",
+                "Ao sofrer dano",
+                "Adiciona 1 falha; crítico adiciona 2"
+              ],
+              [
+                "Mover para segurança",
+                "Ação e teste conforme posição",
+                "Não estabiliza, mas evita novos ataques"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Estabilizado",
+          "items": [
+            "Permanece inconsciente em 0 Vida.",
+            "Não faz novos testes enquanto não sofrer dano.",
+            "Se sofrer dano, perde a estabilidade e volta com 1 falha marcada.",
+            "Acorda ao receber ao menos 1 Vida ou quando efeito específico disser."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Morte canônica exige aprovação do Mestre",
+          "text": "Automação, simulação, IA e resolução de NPC nunca confirmam morte canônica sozinhas. Para protagonista, a terceira falha dispara o protocolo; para NPC canônico, pare e aprove manualmente."
+        }
+      ]
+    },
+    {
+      "id": "reencarnacao",
+      "number": "M05",
+      "label": "Reencarnação e posse",
+      "summary": "Runbook secreto de morte real, busca de corpo, pulsos, disputa e consequências.",
+      "status": "canon",
+      "tags": [
+        "SEGREDO",
+        "pulsos",
+        "corpo"
+      ],
+      "searchTerms": [
+        "posse",
+        "animal",
+        "dano de alma",
+        "fragmento preso",
+        "morte real"
+      ],
+      "blocks": [
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Nunca antecipe esta regra aos jogadores",
+          "text": "Narre sensação, memória, direção e pânico. Não diga 'reencarnação', lista de corpos, DT ou garantia de continuidade antes de o personagem descobrir isso em Canon."
+        },
+        {
+          "kind": "lead",
+          "tone": "secret",
+          "title": "Verdade de lore",
+          "text": "A identidade do Fragmentado tenta continuar existindo por instinto biológico e espiritual. Não é escolha livre nem prêmio. A morte é traumática, o corpo perdido tem consequência e a consciência não conhece o resultado de antemão."
+        },
+        {
+          "kind": "steps",
+          "title": "Ordem de busca aprovada",
+          "items": [
+            "Ficha Avançada viável mais próxima.",
+            "Ficha Básica viável mais próxima.",
+            "Animal silvestre mais próximo como fallback inevitável.",
+            "Resolva proximidade por mesmo submapa, mesmo ponto MUN, mesmo bioma e depois rota conectada mais curta.",
+            "O corpo morto não volta pela rotina padrão; exceção exige evento ou Ritual aprovado."
+          ]
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Etapa A - Três pulsos por alvo",
+          "text": "Em cada pulso, o jogador descreve uma âncora sem conhecer a tabela: Identidade (PRE/Vontade/Determinação), Corpo (FOR/VIG) ou Memória (INT/Determinação). Role contra a DT do alvo atual."
+        },
+        {
+          "kind": "table",
+          "title": "DT de entrada",
+          "table": {
+            "columns": [
+              "Alvo",
+              "DT base"
+            ],
+            "rows": [
+              [
+                "Ficha Avançada",
+                "30"
+              ],
+              [
+                "Ficha Básica",
+                "20"
+              ],
+              [
+                "Animal silvestre",
+                "Automático; segue direto para disputa de posse"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Modificadores da entrada",
+          "table": {
+            "columns": [
+              "Condição",
+              "Ajuste"
+            ],
+            "rows": [
+              [
+                "Corpo tocando o morto",
+                "-5 DT"
+              ],
+              [
+                "Corpo no mesmo ponto",
+                "-2 DT"
+              ],
+              [
+                "Local com FUSHI favorável",
+                "-2 DT"
+              ],
+              [
+                "Ajuda ritual ou ação relevante",
+                "-2 DT por ajuda, máximo -6"
+              ],
+              [
+                "Item menor de ancoragem",
+                "-2 DT"
+              ],
+              [
+                "Item alinhado à identidade",
+                "-3 DT"
+              ],
+              [
+                "Item único de identidade",
+                "-5 DT"
+              ],
+              [
+                "Local distorcido",
+                "+2 DT"
+              ],
+              [
+                "Local hostil ou cataclísmico",
+                "+5 DT"
+              ],
+              [
+                "Corpo com objetivo central ativo",
+                "+5 DT"
+              ],
+              [
+                "Vontade Ascensão/Cataclisma ou destino selado",
+                "+8 DT"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Leitura dos três pulsos",
+          "table": {
+            "columns": [
+              "Sucessos",
+              "Resultado"
+            ],
+            "rows": [
+              [
+                "3",
+                "Entra na melhor opção tentada"
+              ],
+              [
+                "2",
+                "Entra com custo leve"
+              ],
+              [
+                "1",
+                "Entra instável, com custo grave ou condição pior"
+              ],
+              [
+                "0",
+                "Falha o alvo e tenta o próximo da ordem"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Etapa B - Disputa de posse",
+          "formula": "Vontade do Fragmento vs Vontade do Corpo",
+          "items": [
+            "Fragmento usa Presença ou Determinação.",
+            "Animal: 1d20 +0 a +5; Ficha Básica: 1d20 +5; Avançada: +10; Ascensão: +15.",
+            "Cataclisma não pode ser possuído sem evento ou Ritual aprovado.",
+            "NPC canônico exige aprovação manual mesmo se a matemática permitir."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Resultado da posse",
+          "table": {
+            "columns": [
+              "Margem do Fragmento",
+              "Estado"
+            ],
+            "rows": [
+              [
+                "Vence por 5+",
+                "Controle estável; consciência original vira ruído até novo gatilho"
+              ],
+              [
+                "Vence por 1 a 4",
+                "Controle com resistência; -2 em ações contra a vontade do corpo"
+              ],
+              [
+                "Empate",
+                "Ações contra a vontade central recebem -5 ou pedem nova disputa"
+              ],
+              [
+                "Perde por 1 a 4",
+                "Corpo age; Fragmento tenta 1 comando curto por cena com DT 25"
+              ],
+              [
+                "Perde por 5+",
+                "Fragmento preso: percebe e pensa, mas não controla"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Bônus ou penalidade pela morte",
+          "items": [
+            "Morte comum ou caótica: +0.",
+            "Protegeu vínculo real: +2.",
+            "Assumiu custo de identidade: +3.",
+            "Cena central do próprio arco: +5.",
+            "Morreu em medo/confusão sem escolha: -2.",
+            "Traiu a própria vontade declarada: -5."
+          ]
+        },
+        {
+          "kind": "rule",
+          "title": "Resgate de Fragmento preso",
+          "items": [
+            "Aliado precisa chegar, tocar/conter/chamar e testar Vontade ou Determinação.",
+            "Corpo animal/Básico: DT 25; Avançado: DT 30.",
+            "Resíduo hostil +2; FUSHI Escuro +3; local cataclísmico +5.",
+            "Falha causa 1 dano de Determinação a quem tentou.",
+            "Um preso impõe -2 aos demais em PRE/Determinação/Vontade; dois presos impõem -5 e retiram 1 Reação do corpo por rodada."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Dano crítico de alma",
+          "table": {
+            "columns": [
+              "Dano",
+              "Efeito"
+            ],
+            "rows": [
+              [
+                "1",
+                "-5 em Presença, Determinação e Vontade até estabilização"
+              ],
+              [
+                "2",
+                "Todos os testes e danos ficam pela metade até arco de recuperação"
+              ],
+              [
+                "3",
+                "Testes, danos e recursos ficam em 1/3; perde poderes e escolhe apagar ou recomeçar"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Log obrigatório",
+          "items": [
+            "Quem morreu e onde.",
+            "Corpos tentados, DT final e pulsos.",
+            "Corpo final e disputa de posse.",
+            "Custo, condição e dano de alma.",
+            "O que entrou em Canon e o que continua segredo."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fushi-secreto",
+      "number": "M06",
+      "label": "Natureza do FUSHI",
+      "summary": "Identidade, esporos, estados, custos e dano imbuído fora da visão pública.",
+      "status": "canon",
+      "tags": [
+        "SEGREDO",
+        "identidade",
+        "esporos"
+      ],
+      "searchTerms": [
+        "FUSHI puro",
+        "escuro",
+        "desequilibrado",
+        "imbuído",
+        "Poder Unido"
+      ],
+      "blocks": [
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Verdade central",
+          "text": "FUSHI é energia fundamental presente em tudo e ligada à identidade. Ele não cria do zero: transforma o existente. Quanto maior a consciência de si, maior a capacidade de perceber, manipular e distorcer a realidade."
+        },
+        {
+          "kind": "table",
+          "title": "Estados conhecidos",
+          "table": {
+            "columns": [
+              "Estado",
+              "Leitura",
+              "Risco"
+            ],
+            "rows": [
+              [
+                "Puro",
+                "Equilíbrio e controle consciente",
+                "Exige identidade e domínio"
+              ],
+              [
+                "Desequilibrado",
+                "Uso ativo sem domínio completo",
+                "Instabilidade e perda de controle"
+              ],
+              [
+                "Escuro",
+                "Vontade absoluta e distorção extrema",
+                "Condição, contra-condição e pior custo do mundo"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Esporos e acesso",
+          "text": "Todo ser possui FUSHI, mas o acesso ativo exige abertura dos esporos por condição extrema, treino, emoção ou desenvolvimento pessoal. Não transforme isso em botão público: o desbloqueio precisa de cena e consequência."
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "FUSHI imbuído",
+          "formula": "bônus de dano = FUSHI gasto",
+          "items": [
+            "Declare gasto antes do ataque; 1 uso por atacante por turno.",
+            "Erro, Esquiva ou Contra-ataque bem-sucedido ainda queimam o recurso.",
+            "Pode combinar com Coreografia.",
+            "Ao chegar a 0, o usuário fica paralisado até recuperar acima de zero."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Limite de FUSHI imbuído",
+          "table": {
+            "columns": [
+              "Nível",
+              "Seguro",
+              "Extremo"
+            ],
+            "rows": [
+              [
+                "Básico",
+                "1 a 5",
+                "6 a 10"
+              ],
+              [
+                "Avançado",
+                "1 a 15",
+                "16 a 25"
+              ],
+              [
+                "Ascensão",
+                "1 a 25",
+                "26 a 50"
+              ],
+              [
+                "Cataclisma",
+                "1 a 50",
+                "51 a 100+ como fase/evento"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Tempo de carga",
+          "table": {
+            "columns": [
+              "Gasto",
+              "Carga"
+            ],
+            "rows": [
+              [
+                "1 a 10",
+                "Mesmo turno"
+              ],
+              [
+                "11 a 25",
+                "Prepara 1 turno; solta no seguinte"
+              ],
+              [
+                "26 a 50",
+                "Prepara 2 turnos; solta no terceiro"
+              ],
+              [
+                "51+",
+                "Ritual, item lendário, fase ou evento Cataclisma"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Interromper carga",
+          "items": [
+            "Carga acima de 10 é perceptível.",
+            "Dano, controle, empurrão, condição ou quebra de concentração podem interromper.",
+            "Interrompido perde metade do FUSHI carregado, arredondando para cima.",
+            "Ataque final falho queima o total carregado."
+          ]
+        },
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Poder Unido",
+          "items": [
+            "Só libera após Esporos de FUSHI e Ritual correspondente.",
+            "1 vez por cena.",
+            "Soma Vida, FUSHI e Determinação das consciências no mesmo corpo; não soma Atributos.",
+            "Qualquer consciência reunida pode usar Habilidade de outra enquanto durar.",
+            "Consciências separadas não compartilham recursos sem fusão/Ritual aprovado."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "progressao",
+      "number": "M07",
+      "label": "Progressão oculta",
+      "summary": "Níveis por identidade, Atos e marcos que nunca viram uma barra pública de grind.",
+      "status": "canon",
+      "tags": [
+        "SEGREDO",
+        "XP",
+        "Atos"
+      ],
+      "searchTerms": [
+        "nível",
+        "risco",
+        "vontade",
+        "vínculo",
+        "item marco"
+      ],
+      "blocks": [
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Os jogadores conhecem direção, não a planilha",
+          "text": "Diga que progresso vem de escolhas, treino, descobertas e integração de itens. Não mostre quantidade de caixas, gatilhos exatos, Reencarnação como fonte ou faixas completas."
+        },
+        {
+          "kind": "table",
+          "title": "Faixas por Ato",
+          "table": {
+            "columns": [
+              "Ato",
+              "Faixa",
+              "Ganhos necessários",
+              "Poder"
+            ],
+            "rows": [
+              [
+                "1",
+                "1 a 9",
+                "8",
+                "Inicial para Básico"
+              ],
+              [
+                "2",
+                "9 a 17",
+                "8",
+                "Avançado"
+              ],
+              [
+                "3",
+                "17 a 20",
+                "3",
+                "Ascensão curta"
+              ],
+              [
+                "4",
+                "20 a 30",
+                "10",
+                "Ascensão alta / Cataclisma inicial"
+              ],
+              [
+                "5",
+                "30 a 37",
+                "7",
+                "Cataclisma"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Fontes de nível por Ato",
+          "table": {
+            "columns": [
+              "Fonte",
+              "Limite"
+            ],
+            "rows": [
+              [
+                "Sobreviveu risco real",
+                "Até 2"
+              ],
+              [
+                "Decisão que revela vontade",
+                "1"
+              ],
+              [
+                "Criou, fortaleceu, rompeu ou sacrificou vínculo",
+                "1"
+              ],
+              [
+                "Entendeu algo real sobre FUSHI/identidade",
+                "1"
+              ],
+              [
+                "Assumiu custo de escolha",
+                "Até 2"
+              ],
+              [
+                "Treino real com mentor, corpo ou BASE",
+                "1"
+              ],
+              [
+                "Ritual concluído",
+                "1"
+              ],
+              [
+                "Reencarnação com consequência",
+                "1"
+              ],
+              [
+                "Item marco ou descoberta de identidade",
+                "1"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Aplicação",
+          "items": [
+            "Marque somente quando a cena aconteceu de verdade.",
+            "Ato 3 limita ganho total a 3 mesmo com mais marcos.",
+            "Não conceda por quantidade de inimigos mortos.",
+            "Aplique em descanso, reflexão, Ritual ou fim de sessão quando for narrativamente legível.",
+            "Registre por identidade; corpo novo não apaga progresso."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "poder-balanceamento",
+      "number": "M08",
+      "label": "Níveis de Poder e balanceamento",
+      "summary": "Faixas numéricas completas para montar encontros e reconhecer ficha fora de escala.",
+      "status": "playtest",
+      "tags": [
+        "Vida",
+        "CA",
+        "Cataclisma"
+      ],
+      "searchTerms": [
+        "Básico",
+        "Avançado",
+        "Ascensão",
+        "pontos de ameaça",
+        "dano médio"
+      ],
+      "blocks": [
+        {
+          "kind": "table",
+          "title": "Referência numérica",
+          "table": {
+            "columns": [
+              "Nível",
+              "Atributos",
+              "Perícias",
+              "Vida",
+              "FUSHI",
+              "CA",
+              "DT difícil"
+            ],
+            "rows": [
+              [
+                "Básico",
+                "1 a 3",
+                "+5; alguns +10",
+                "20 a 30",
+                "10 a 25",
+                "16+",
+                "20"
+              ],
+              [
+                "Avançado",
+                "2 a 4",
+                "+5/+10; alguns +15",
+                "130 a 150",
+                "~75",
+                "20+",
+                "25"
+              ],
+              [
+                "Ascensão",
+                "3 a 5",
+                "+10/+15",
+                "250 a 400",
+                "100 a 150",
+                "25+",
+                "30"
+              ],
+              [
+                "Cataclisma",
+                "4 a 6+",
+                "+15",
+                "450+ ou fases",
+                "150+",
+                "30+",
+                "30 a 40+"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Dano de referência",
+          "table": {
+            "columns": [
+              "Nivel",
+              "Dano comum",
+              "Leitura"
+            ],
+            "rows": [
+              [
+                "Golpe desarmado",
+                "1d2",
+                "Luta define o acerto; o dado nao sobe por treino."
+              ],
+              [
+                "Arma leve",
+                "1d6",
+                "Base de mob ou protagonista."
+              ],
+              [
+                "Arma maior",
+                "1d8",
+                "Precisa espaco, preparo ou risco."
+              ],
+              [
+                "Acima de 1d8",
+                "Regra nomeada",
+                "Custo, condicao, preparo, item, habilidade ou fase."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Alvo de escala Cataclisma",
+          "items": [
+            "Quase impossível para 5 Fichas Avançadas sem preparo.",
+            "8 Fichas Avançadas devem oferecer trabalho real.",
+            "10 Fichas Avançadas podem ficar pareadas, se objetivos e arena permitirem.",
+            "Não balanceie apenas por Vida: use fases, condição, telégrafo e objetivo."
+          ]
+        },
+        {
+          "kind": "formula",
+          "title": "Leitura de duração",
+          "formula": "turnos para cair ≈ Vida do alvo / dano médio real do grupo por rodada",
+          "text": "Conte apenas ataques que têm chance razoável de acertar. Verifique média, máximo e combo crítico; não use somente dano máximo como previsão."
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Nunca reajuste NPC canônico em lote",
+          "text": "Marque a discrepância, crie ficha mecânica de fase separada e peça aprovação. Lore, vontade, aparência e identidade do poder não são efeitos colaterais de uma correção matemática."
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Protocolo de simulacao",
+          "text": "Antes de mudar Vida, dano, Bloqueio ou item, rode os simuladores offline de combate e builds. Registre taxa de vitoria, rodadas medias, dano, bloqueios, esquivas e criticos. Ajuste uma variavel por vez e mostre o plano ao Mestre antes de escrever na ficha."
+        }
+      ]
+    },
+    {
+      "id": "itens-builds",
+      "number": "M09",
+      "label": "Itens, integração e builds",
+      "summary": "A regra aprovada de permanência e o protocolo para criar catálogo sem item quebrado.",
+      "status": "canon",
+      "tags": [
+        "48 matrizes",
+        "identidade",
+        "permanente",
+        "catalogo aplicado"
+      ],
+      "searchTerms": [
+        "absorção",
+        "item não some",
+        "classe",
+        "downside",
+        "slot"
+      ],
+      "blocks": [
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Explicação de lore",
+          "text": "O FUSHI absorve a identidade mecânica do item e a integra à identidade do usuário. O objeto não é destruído; torna-se uma matriz que pode ser integrada por outras pessoas. O vínculo já integrado não pode ser retirado porque passou a compor o indivíduo."
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Regras aprovadas",
+          "items": [
+            "Cada identidade integra o mesmo item no maximo uma vez.",
+            "Varias identidades podem integrar a mesma matriz; o objeto fisico permanece no mundo.",
+            "O beneficio, o custo e a passiva sao permanentes e acompanham a identidade.",
+            "Nao existe remover, trocar ou resetar build por rotina.",
+            "Nao existe teto artificial de itens diferentes; localizacao, raridade e tradeoffs controlam a progressao.",
+            "Misturar arquetipos e valido: some todos os modificadores, inclusive custos.",
+            "Passivas sao pequenas e automaticas; item padrao nao vira botao com recarga por cena.",
+            "A raridade so e revelada depois que o jogador confirma a absorcao.",
+            "Remocao existe apenas no BUI do Mestre como ferramenta de correcao tecnica."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Raridade operacional",
+          "text": "Para item padrao, role 1d10 uma vez. A forma fisica pode ser renomeada para combinar com a cena sem mudar a matriz mecanica.",
+          "table": {
+            "columns": [
+              "Raridade",
+              "d10",
+              "Uso do Mestre"
+            ],
+            "rows": [
+              [
+                "Comum",
+                "1-2",
+                "Primeiro tradeoff simples."
+              ],
+              [
+                "Raro",
+                "3-4",
+                "Especializa um papel."
+              ],
+              [
+                "Epico",
+                "5-6",
+                "Muda a rotina de combate ou cena."
+              ],
+              [
+                "Lendario",
+                "7-9",
+                "Assinatura forte da matriz."
+              ],
+              [
+                "Mitico",
+                "10",
+                "Pico da matriz padrao; ainda respeita seu custo."
+              ],
+              [
+                "Secreto",
+                "fora do d10",
+                "Item de trama com numeros e passiva definidos individualmente."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "tone": "rule",
+          "title": "Catalogo oficial: 48 matrizes padrao",
+          "text": "Sao 6 itens por bioma e 8 itens por arquetipo. Cada coluna mostra apenas a matriz do item; a afinidade do arquetipo dominante e calculada uma unica vez pela ficha.",
+          "table": {
+            "columns": [
+              "Bioma",
+              "Arquetipo",
+              "Item",
+              "Comum",
+              "Raro",
+              "Epico",
+              "Lendario",
+              "Mitico",
+              "Passiva"
+            ],
+            "rows": [
+              [
+                "Planície / Floresta Inicial",
+                "Tank",
+                "Casca de Vigia",
+                "-3 Dano; +7 Vida",
+                "-4 Dano; +8 Vida",
+                "-4 Dano; +10 Vida",
+                "-5 Dano; +11 Vida",
+                "-5 Dano; +13 Vida",
+                "A primeira fonte de dano de cada cena causa 1 a menos."
+              ],
+              [
+                "Praia / Litoral / Oceano",
+                "Tank",
+                "Âncora Salina",
+                "+4 Bloqueio; -2 Iniciativa; -4 Deslocamento",
+                "+5 Bloqueio; -2 Iniciativa; -5 Deslocamento",
+                "+6 Bloqueio; -3 Iniciativa; -5 Deslocamento",
+                "+7 Bloqueio; -3 Iniciativa; -6 Deslocamento",
+                "+7 Bloqueio; -4 Iniciativa; -7 Deslocamento",
+                "Empurrões recebidos movem 1 m a menos. Em Disparada, a perda de Deslocamento desta build é aplicada outra vez durante a ação."
+              ],
+              [
+                "Montanhas do Vazio Sereno",
+                "Tank",
+                "Placa do Vazio Sereno",
+                "+6 Determinacao; -4 FUSHI",
+                "+7 Determinacao; -5 FUSHI",
+                "+8 Determinacao; -6 FUSHI",
+                "+10 Determinacao; -6 FUSHI",
+                "+11 Determinacao; -7 FUSHI",
+                "Recebe +1 em testes para permanecer consciente."
+              ],
+              [
+                "Floresta Mística",
+                "Tank",
+                "Cerne Guardião",
+                "-4 Iniciativa; +6 Vida",
+                "-5 Iniciativa; +7 Vida",
+                "-6 Iniciativa; +8 Vida",
+                "-6 Iniciativa; +10 Vida",
+                "-7 Iniciativa; +11 Vida",
+                "Cura recebida recupera +1 Vida."
+              ],
+              [
+                "Vulcão / Terras Cinzentas",
+                "Tank",
+                "Escama de Obsidiana",
+                "+3 CA; -7 Dano",
+                "+4 CA; -8 Dano",
+                "+4 CA; -10 Dano",
+                "+5 CA; -11 Dano",
+                "+5 CA; -13 Dano",
+                "Reduz em 1 o primeiro dano de fogo ou calor da cena."
+              ],
+              [
+                "Região Congelada / Neve",
+                "Tank",
+                "Casco de Geada",
+                "-5 Dano; +5 Cura recebida",
+                "-6 Dano; +6 Cura recebida",
+                "-7 Dano; +7 Cura recebida",
+                "-8 Dano; +8 Cura recebida",
+                "-9 Dano; +9 Cura recebida",
+                "Ignora a primeira penalidade de terreno gelado da cena."
+              ],
+              [
+                "Ruínas Antigas",
+                "Tank",
+                "Placa do Memorial",
+                "+3 Determinacao; -3 Iniciativa; +4 Vida",
+                "+4 Determinacao; -3 Iniciativa; +5 Vida",
+                "+4 Determinacao; -4 Iniciativa; +6 Vida",
+                "+5 Determinacao; -5 Iniciativa; +6 Vida",
+                "+6 Determinacao; -5 Iniciativa; +7 Vida",
+                "Enquanto protege um aliado adjacente, recebe +1 Bloqueio."
+              ],
+              [
+                "Vale Cinzento / Rotas do Véu",
+                "Tank",
+                "Manto de Bruma Densa",
+                "-3 Dano; +2 Cura recebida; +5 Vida",
+                "-4 Dano; +2 Cura recebida; +6 Vida",
+                "-4 Dano; +3 Cura recebida; +7 Vida",
+                "-5 Dano; +3 Cura recebida; +8 Vida",
+                "-5 Dano; +4 Cura recebida; +9 Vida",
+                "Cobertura parcial concede +1 CA adicional."
+              ],
+              [
+                "Planície / Floresta Inicial",
+                "Assassino",
+                "Dente do Primeiro Lobo",
+                "+3 Dano; -7 Vida",
+                "+4 Dano; -8 Vida",
+                "+4 Dano; -10 Vida",
+                "+5 Dano; -11 Vida",
+                "+5 Dano; -13 Vida",
+                "Causa +1 dano contra alvo isolado."
+              ],
+              [
+                "Praia / Litoral / Oceano",
+                "Assassino",
+                "Lâmina de Maré Baixa",
+                "-5 CA; +3 Dano corpo a corpo; +2 Deslocamento",
+                "-6 CA; +4 Dano corpo a corpo; +2 Deslocamento",
+                "-7 CA; +4 Dano corpo a corpo; +3 Deslocamento",
+                "-8 CA; +5 Dano corpo a corpo; +3 Deslocamento",
+                "-9 CA; +5 Dano corpo a corpo; +4 Deslocamento",
+                "Após atravessar 3 m, o primeiro ataque corpo a corpo causa +1 dano."
+              ],
+              [
+                "Montanhas do Vazio Sereno",
+                "Assassino",
+                "Agulha de Cristal",
+                "-5 Cura recebida; +5 Iniciativa",
+                "-6 Cura recebida; +6 Iniciativa",
+                "-7 Cura recebida; +7 Iniciativa",
+                "-8 Cura recebida; +8 Iniciativa",
+                "-9 Cura recebida; +9 Iniciativa",
+                "O primeiro acerto da cena causa +1 dano."
+              ],
+              [
+                "Floresta Mística",
+                "Assassino",
+                "Espinho sem Rastro",
+                "-7 Determinacao; +3 Dano corpo a corpo",
+                "-8 Determinacao; +4 Dano corpo a corpo",
+                "-10 Determinacao; +4 Dano corpo a corpo",
+                "-11 Determinacao; +5 Dano corpo a corpo",
+                "-13 Determinacao; +5 Dano corpo a corpo",
+                "Sair de ocultação concede +1 dano no primeiro acerto."
+              ],
+              [
+                "Vulcão / Terras Cinzentas",
+                "Assassino",
+                "Estilhaço de Cinza",
+                "+3 Dano de Habilidade; -7 FUSHI",
+                "+4 Dano de Habilidade; -8 FUSHI",
+                "+4 Dano de Habilidade; -10 FUSHI",
+                "+5 Dano de Habilidade; -11 FUSHI",
+                "+5 Dano de Habilidade; -13 FUSHI",
+                "Habilidades contra alvo abaixo de metade da Vida causam +1 dano."
+              ],
+              [
+                "Região Congelada / Neve",
+                "Assassino",
+                "Lasca de Gelo Negro",
+                "-7 Cura; +3 Dano a distancia",
+                "-8 Cura; +4 Dano a distancia",
+                "-10 Cura; +4 Dano a distancia",
+                "-11 Cura; +5 Dano a distancia",
+                "-13 Cura; +5 Dano a distancia",
+                "Contra alvo que ainda não agiu, causa +1 dano."
+              ],
+              [
+                "Ruínas Antigas",
+                "Assassino",
+                "Chave sem Nome",
+                "+3 Dano Critico; -7 Cura recebida",
+                "+4 Dano Critico; -8 Cura recebida",
+                "+4 Dano Critico; -10 Cura recebida",
+                "+5 Dano Critico; -11 Cura recebida",
+                "+5 Dano Critico; -13 Cura recebida",
+                "Em um crítico, o bônus de Dano Crítico é aplicado depois de dobrar os dados."
+              ],
+              [
+                "Vale Cinzento / Rotas do Véu",
+                "Assassino",
+                "Faca do Passo Cinza",
+                "-7 CA; +3 Perfuracao de CA",
+                "-8 CA; +4 Perfuracao de CA",
+                "-10 CA; +4 Perfuracao de CA",
+                "-11 CA; +5 Perfuracao de CA",
+                "-13 CA; +5 Perfuracao de CA",
+                "Perfuração reduz apenas a CA usada contra o ataque; nunca reduz a ficha do alvo."
+              ],
+              [
+                "Planície / Floresta Inicial",
+                "Suporte",
+                "Fita de Memória",
+                "-5 Dano; +3 Determinacao; +2 Cura",
+                "-6 Dano; +4 Determinacao; +2 Cura",
+                "-7 Dano; +4 Determinacao; +3 Cura",
+                "-8 Dano; +5 Determinacao; +3 Cura",
+                "-9 Dano; +5 Determinacao; +4 Cura",
+                "A primeira cura da cena recupera +1 Vida."
+              ],
+              [
+                "Praia / Litoral / Oceano",
+                "Suporte",
+                "Concha de Retorno",
+                "-4 Dano; +6 Determinacao",
+                "-5 Dano; +7 Determinacao",
+                "-6 Dano; +8 Determinacao",
+                "-6 Dano; +10 Determinacao",
+                "-7 Dano; +11 Determinacao",
+                "Ajudar um aliado concede +1 Determinação temporária até o fim da cena."
+              ],
+              [
+                "Montanhas do Vazio Sereno",
+                "Suporte",
+                "Sino do Fôlego",
+                "+6 FUSHI; -4 Vida",
+                "+7 FUSHI; -5 Vida",
+                "+8 FUSHI; -6 Vida",
+                "+10 FUSHI; -6 Vida",
+                "+11 FUSHI; -7 Vida",
+                "A primeira Habilidade de suporte da cena custa 1 FUSHI a menos."
+              ],
+              [
+                "Floresta Mística",
+                "Suporte",
+                "Musgo de Vigília",
+                "-5 CA; +3 FUSHI; +2 Cura",
+                "-6 CA; +4 FUSHI; +2 Cura",
+                "-7 CA; +4 FUSHI; +3 Cura",
+                "-8 CA; +5 FUSHI; +3 Cura",
+                "-9 CA; +5 FUSHI; +4 Cura",
+                "Estabilizar um alvo concede +1 Vida imediata."
+              ],
+              [
+                "Vulcão / Terras Cinzentas",
+                "Suporte",
+                "Brasa de Retorno",
+                "+3 Determinacao; +2 Cura; -5 Deslocamento",
+                "+4 Determinacao; +2 Cura; -6 Deslocamento",
+                "+4 Determinacao; +3 Cura; -7 Deslocamento",
+                "+5 Determinacao; +3 Cura; -8 Deslocamento",
+                "+5 Determinacao; +4 Cura; -9 Deslocamento",
+                "Aliado curado abaixo de metade da Vida recebe +1 no próximo teste."
+              ],
+              [
+                "Região Congelada / Neve",
+                "Suporte",
+                "Fio Térmico",
+                "+5 Cura recebida; -5 Iniciativa",
+                "+6 Cura recebida; -6 Iniciativa",
+                "+7 Cura recebida; -7 Iniciativa",
+                "+8 Cura recebida; -8 Iniciativa",
+                "+9 Cura recebida; -9 Iniciativa",
+                "Cura em alvo Caído recupera +1 Vida."
+              ],
+              [
+                "Ruínas Antigas",
+                "Suporte",
+                "Medalhão de Vigília",
+                "+5 Determinacao; -5 Iniciativa",
+                "+6 Determinacao; -6 Iniciativa",
+                "+7 Determinacao; -7 Iniciativa",
+                "+8 Determinacao; -8 Iniciativa",
+                "+9 Determinacao; -9 Iniciativa",
+                "A primeira falha de Vontade da cena recebe +1 no total."
+              ],
+              [
+                "Vale Cinzento / Rotas do Véu",
+                "Suporte",
+                "Fio de Sinal",
+                "-4 Dano; +6 FUSHI",
+                "-5 Dano; +7 FUSHI",
+                "-6 Dano; +8 FUSHI",
+                "-6 Dano; +10 FUSHI",
+                "-7 Dano; +11 FUSHI",
+                "Ajudar a distância de até 6 m continua sendo possível com linha de visão."
+              ],
+              [
+                "Planície / Floresta Inicial",
+                "Lutador",
+                "Punho de Estrada",
+                "-6 FUSHI; +2 Vida; +2 Dano corpo a corpo",
+                "-7 FUSHI; +3 Vida; +2 Dano corpo a corpo",
+                "-8 FUSHI; +3 Vida; +3 Dano corpo a corpo",
+                "-10 FUSHI; +3 Vida; +3 Dano corpo a corpo",
+                "-11 FUSHI; +4 Vida; +3 Dano corpo a corpo",
+                "Manobras corpo a corpo recebem +1 no total."
+              ],
+              [
+                "Praia / Litoral / Oceano",
+                "Lutador",
+                "Nó de Convés",
+                "+2 Bloqueio; -6 Cura; +2 Deslocamento",
+                "+2 Bloqueio; -7 Cura; +3 Deslocamento",
+                "+3 Bloqueio; -8 Cura; +3 Deslocamento",
+                "+3 Bloqueio; -10 Cura; +3 Deslocamento",
+                "+3 Bloqueio; -11 Cura; +4 Deslocamento",
+                "Empurrar ou Puxar move 1 m adicional."
+              ],
+              [
+                "Montanhas do Vazio Sereno",
+                "Lutador",
+                "Faixa de Pedra",
+                "-6 Dano de Habilidade; +2 Bloqueio; +2 Dano corpo a corpo",
+                "-7 Dano de Habilidade; +3 Bloqueio; +2 Dano corpo a corpo",
+                "-8 Dano de Habilidade; +3 Bloqueio; +3 Dano corpo a corpo",
+                "-10 Dano de Habilidade; +3 Bloqueio; +3 Dano corpo a corpo",
+                "-11 Dano de Habilidade; +4 Bloqueio; +3 Dano corpo a corpo",
+                "Após Bloquear, o próximo ataque corpo a corpo causa +1 dano."
+              ],
+              [
+                "Floresta Mística",
+                "Lutador",
+                "Braçadeira de Cipó",
+                "+2 CA; -6 Determinacao; +2 Vida",
+                "+2 CA; -7 Determinacao; +3 Vida",
+                "+3 CA; -8 Determinacao; +3 Vida",
+                "+3 CA; -10 Determinacao; +3 Vida",
+                "+3 CA; -11 Determinacao; +4 Vida",
+                "Agarrar recebe +1 no total."
+              ],
+              [
+                "Vulcão / Terras Cinzentas",
+                "Lutador",
+                "Manopla de Escória",
+                "+2 Determinacao; -6 Cura recebida; +2 Dano corpo a corpo",
+                "+2 Determinacao; -7 Cura recebida; +3 Dano corpo a corpo",
+                "+3 Determinacao; -8 Cura recebida; +3 Dano corpo a corpo",
+                "+3 Determinacao; -10 Cura recebida; +3 Dano corpo a corpo",
+                "+3 Determinacao; -11 Cura recebida; +4 Dano corpo a corpo",
+                "Ao sofrer dano corpo a corpo, o próximo acerto causa +1 dano."
+              ],
+              [
+                "Região Congelada / Neve",
+                "Lutador",
+                "Punho de Gelo Azul",
+                "-6 Iniciativa; +2 Vida; +2 Deslocamento",
+                "-7 Iniciativa; +3 Vida; +2 Deslocamento",
+                "-8 Iniciativa; +3 Vida; +3 Deslocamento",
+                "-10 Iniciativa; +3 Vida; +3 Deslocamento",
+                "-11 Iniciativa; +4 Vida; +3 Deslocamento",
+                "Derrubar recebe +1 no total."
+              ],
+              [
+                "Ruínas Antigas",
+                "Lutador",
+                "Manopla do Arco Caído",
+                "+2 Perfuracao de CA; +2 Dano corpo a corpo; -6 Dano a distancia",
+                "+2 Perfuracao de CA; +3 Dano corpo a corpo; -7 Dano a distancia",
+                "+3 Perfuracao de CA; +3 Dano corpo a corpo; -8 Dano a distancia",
+                "+3 Perfuracao de CA; +3 Dano corpo a corpo; -10 Dano a distancia",
+                "+3 Perfuracao de CA; +4 Dano corpo a corpo; -11 Dano a distancia",
+                "Desarmar recebe +1 no total."
+              ],
+              [
+                "Vale Cinzento / Rotas do Véu",
+                "Lutador",
+                "Braçadeira do Caminho Oculto",
+                "+2 Determinacao; -6 Cura recebida; +2 Iniciativa",
+                "+3 Determinacao; -7 Cura recebida; +2 Iniciativa",
+                "+3 Determinacao; -8 Cura recebida; +3 Iniciativa",
+                "+3 Determinacao; -10 Cura recebida; +3 Iniciativa",
+                "+4 Determinacao; -11 Cura recebida; +3 Iniciativa",
+                "Desengajar concede +1 CA até o próximo turno."
+              ],
+              [
+                "Planície / Floresta Inicial",
+                "Atirador",
+                "Mira de Vidro Claro",
+                "-5 Dano adjacente; +5 Dano a distancia",
+                "-6 Dano adjacente; +6 Dano a distancia",
+                "-7 Dano adjacente; +7 Dano a distancia",
+                "-8 Dano adjacente; +8 Dano a distancia",
+                "-9 Dano adjacente; +9 Dano a distancia",
+                "A mais de 6 m, o primeiro disparo da cena causa +1 dano."
+              ],
+              [
+                "Praia / Litoral / Oceano",
+                "Atirador",
+                "Luneta da Ressaca",
+                "+5 Iniciativa; -5 Vida",
+                "+6 Iniciativa; -6 Vida",
+                "+7 Iniciativa; -7 Vida",
+                "+8 Iniciativa; -8 Vida",
+                "+9 Iniciativa; -9 Vida",
+                "Ignora a primeira penalidade de clima em Pontaria."
+              ],
+              [
+                "Montanhas do Vazio Sereno",
+                "Atirador",
+                "Olho do Pico",
+                "-7 CA; +3 Dano a distancia",
+                "-8 CA; +4 Dano a distancia",
+                "-10 CA; +4 Dano a distancia",
+                "-11 CA; +5 Dano a distancia",
+                "-13 CA; +5 Dano a distancia",
+                "Atacar de posição elevada causa +1 dano à distância."
+              ],
+              [
+                "Floresta Mística",
+                "Atirador",
+                "Semente de Mira",
+                "-6 Determinacao; +4 Deslocamento",
+                "-7 Determinacao; +5 Deslocamento",
+                "-8 Determinacao; +6 Deslocamento",
+                "-10 Determinacao; +6 Deslocamento",
+                "-11 Determinacao; +7 Deslocamento",
+                "Cobertura vegetal leve não reduz a linha de tiro."
+              ],
+              [
+                "Vulcão / Terras Cinzentas",
+                "Atirador",
+                "Mira de Basalto",
+                "-7 FUSHI; +3 Dano a distancia",
+                "-8 FUSHI; +4 Dano a distancia",
+                "-10 FUSHI; +4 Dano a distancia",
+                "-11 FUSHI; +5 Dano a distancia",
+                "-13 FUSHI; +5 Dano a distancia",
+                "Alvo imóvel sofre +1 dano à distância."
+              ],
+              [
+                "Região Congelada / Neve",
+                "Atirador",
+                "Lente de Nevasca",
+                "-7 Cura recebida; +3 Dano a distancia",
+                "-8 Cura recebida; +4 Dano a distancia",
+                "-10 Cura recebida; +4 Dano a distancia",
+                "-11 Cura recebida; +5 Dano a distancia",
+                "-13 Cura recebida; +5 Dano a distancia",
+                "A primeira troca de alvo da cena não perde preparação."
+              ],
+              [
+                "Ruínas Antigas",
+                "Atirador",
+                "Visor do Sentinela",
+                "+3 Dano Critico; -7 Cura",
+                "+4 Dano Critico; -8 Cura",
+                "+4 Dano Critico; -10 Cura",
+                "+5 Dano Critico; -11 Cura",
+                "+5 Dano Critico; -13 Cura",
+                "Em um crítico, o bônus de Dano Crítico é aplicado depois de dobrar os dados."
+              ],
+              [
+                "Vale Cinzento / Rotas do Véu",
+                "Atirador",
+                "Mira do Véu",
+                "+3 Perfuracao de CA; -7 Dano corpo a corpo",
+                "+4 Perfuracao de CA; -8 Dano corpo a corpo",
+                "+4 Perfuracao de CA; -10 Dano corpo a corpo",
+                "+5 Perfuracao de CA; -11 Dano corpo a corpo",
+                "+5 Perfuracao de CA; -13 Dano corpo a corpo",
+                "Perfuração reduz apenas a CA usada contra o disparo; nunca reduz a ficha do alvo."
+              ],
+              [
+                "Planície / Floresta Inicial",
+                "Ocultista",
+                "Pedra de Foco FUSHI",
+                "+6 FUSHI; -4 Vida",
+                "+7 FUSHI; -5 Vida",
+                "+8 FUSHI; -6 Vida",
+                "+10 FUSHI; -6 Vida",
+                "+11 FUSHI; -7 Vida",
+                "A primeira Habilidade da cena custa 1 FUSHI a menos."
+              ],
+              [
+                "Praia / Litoral / Oceano",
+                "Ocultista",
+                "Pérola de Corrente",
+                "+3 Dano de Habilidade; -7 Determinacao",
+                "+4 Dano de Habilidade; -8 Determinacao",
+                "+4 Dano de Habilidade; -10 Determinacao",
+                "+5 Dano de Habilidade; -11 Determinacao",
+                "+5 Dano de Habilidade; -13 Determinacao",
+                "Habilidade que move um alvo desloca 1 m adicional."
+              ],
+              [
+                "Montanhas do Vazio Sereno",
+                "Ocultista",
+                "Prisma de Eco",
+                "-4 CA; +6 Determinacao",
+                "-5 CA; +7 Determinacao",
+                "-6 CA; +8 Determinacao",
+                "-6 CA; +10 Determinacao",
+                "-7 CA; +11 Determinacao",
+                "A primeira falha de Ocultismo da cena recebe +1 no total."
+              ],
+              [
+                "Floresta Mística",
+                "Ocultista",
+                "Seiva Lunar",
+                "+5 FUSHI; -5 Deslocamento",
+                "+6 FUSHI; -6 Deslocamento",
+                "+7 FUSHI; -7 Deslocamento",
+                "+8 FUSHI; -8 Deslocamento",
+                "+9 FUSHI; -9 Deslocamento",
+                "Habilidade de controle recebe +1 no teste contra um único alvo."
+              ],
+              [
+                "Vulcão / Terras Cinzentas",
+                "Ocultista",
+                "Núcleo de Magma",
+                "+3 Dano de Habilidade; -7 Cura recebida",
+                "+4 Dano de Habilidade; -8 Cura recebida",
+                "+4 Dano de Habilidade; -10 Cura recebida",
+                "+5 Dano de Habilidade; -11 Cura recebida",
+                "+5 Dano de Habilidade; -13 Cura recebida",
+                "Habilidades contra alvo abaixo de metade da Vida causam +1 dano."
+              ],
+              [
+                "Região Congelada / Neve",
+                "Ocultista",
+                "Cristal de Aurora",
+                "-4 CA; +6 FUSHI",
+                "-5 CA; +7 FUSHI",
+                "-6 CA; +8 FUSHI",
+                "-6 CA; +10 FUSHI",
+                "-7 CA; +11 FUSHI",
+                "A primeira Habilidade defensiva da cena dura 1 turno adicional."
+              ],
+              [
+                "Ruínas Antigas",
+                "Ocultista",
+                "Fragmento de Inscrição",
+                "-4 Dano; +6 Determinacao",
+                "-5 Dano; +7 Determinacao",
+                "-6 Dano; +8 Determinacao",
+                "-6 Dano; +10 Determinacao",
+                "-7 Dano; +11 Determinacao",
+                "Rituais preparados recebem +1 no primeiro teste."
+              ],
+              [
+                "Vale Cinzento / Rotas do Véu",
+                "Ocultista",
+                "Orbe de Névoa",
+                "+3 Dano Critico; -7 FUSHI",
+                "+4 Dano Critico; -8 FUSHI",
+                "+4 Dano Critico; -10 FUSHI",
+                "+5 Dano Critico; -11 FUSHI",
+                "+5 Dano Critico; -13 FUSHI",
+                "Habilidade usada sem linha de visão direta recebe +1 no teste quando o alvo já foi percebido."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "tone": "secret",
+          "title": "Itens Secretos de correcao de raridade",
+          "text": "Esses itens nao entram no d10 nem na distribuicao padrao. Posicao, forma e entrega dependem da trama.",
+          "table": {
+            "columns": [
+              "Item",
+              "Efeito mecanico",
+              "Restricao"
+            ],
+            "rows": [
+              [
+                "Memória de Elevação",
+                "Eleva um item já absorvido diretamente para a raridade Mítica.",
+                "Somente trama; não participa da distribuição comum por bioma."
+              ],
+              [
+                "Eco das Cinco Escolhas",
+                "Permite rerrolar a raridade de um item já absorvido até cinco vezes, mantendo um dos resultados obtidos.",
+                "Somente trama; não participa da distribuição comum por bioma."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "steps",
+          "tone": "rule",
+          "title": "BUI: absorver e corrigir uma build",
+          "items": [
+            "Abra BUI, escolha o arquetipo e selecione a matriz encontrada.",
+            "Mostre ao jogador o ganho, o custo e a passiva, mas mantenha a raridade oculta.",
+            "Depois da confirmacao de absorcao, selecione a raridade e vincule a matriz ao personagem.",
+            "Confira os deltas automaticos na ficha e registre a absorcao no log da sessao.",
+            "Use Remover debug apenas para corrigir erro tecnico; isso nao existe como opcao normal da campanha."
+          ]
+        },
+        {
+          "kind": "rule",
+          "tone": "warning",
+          "title": "Limites operacionais das builds",
+          "text": "Bloqueio normal por Fortitude para em 15; apenas bonus explicito de item ultrapassa esse teto. Disparada aplica novamente toda perda de Deslocamento da build durante a acao. Perfuracao reduz somente a CA usada contra aquele ataque. Dano Critico de item entra depois de dobrar os dados. Em combate, apenas o primeiro efeito de cura recebido pelo alvo na rodada usa o bonus completo de Cura; os seguintes usam metade do bonus, arredondada para baixo."
+        },
+        {
+          "kind": "rule",
+          "tone": "warning",
+          "title": "FUSHI por dano generico nao esta aprovado",
+          "text": "Nao existe regra canonica generica de gastar FUSHI para aumentar dano. Habilidades e itens so alteram dano quando seu texto aprovado disser isso explicitamente."
+        },
+        {
+          "kind": "table",
+          "tone": "example",
+          "title": "Builds aplicadas aos 41 NPCs canonicos",
+          "text": "Distribuicao equilibrada entre os seis arquetipos. Lore, nome e efeito de Habilidade permanecem intocados; a build altera somente os campos numericos listados.",
+          "table": {
+            "columns": [
+              "NPC",
+              "Poder",
+              "Arquetipo",
+              "Carga",
+              "Raridade",
+              "Totais",
+              "Motivo"
+            ],
+            "rows": [
+              [
+                "Eiran",
+                "Basico",
+                "Lutador",
+                "8 matrizes",
+                "Comum R2",
+                "-6 Dano de Habilidade; +4 Bloqueio; +2 CA; +2 Perfuracao de CA; -6 FUSHI; -6 Cura; -12 Cura recebida; -4 Iniciativa; +6 Vida; +8 Dano corpo a corpo; +4 Deslocamento; -6 Dano a distancia",
+                "Luta, faixas e fluxo corporal entregam consistencia sem pico especializado."
+              ],
+              [
+                "Aureon",
+                "Basico",
+                "Tank",
+                "8 matrizes",
+                "Comum R2",
+                "+4 Bloqueio; +3 CA; -18 Dano; +9 Determinacao; -4 FUSHI; +7 Cura recebida; -9 Iniciativa; +24 Vida; -4 Deslocamento",
+                "Fortitude, Corpo Absoluto e controle de raizes seguram pressao."
+              ],
+              [
+                "Kael",
+                "Avancado",
+                "Lutador",
+                "8 matrizes",
+                "Raro R4",
+                "-7 Dano de Habilidade; +5 Bloqueio; +2 CA; +2 Perfuracao de CA; -7 FUSHI; -7 Cura; -14 Cura recebida; -5 Iniciativa; +9 Vida; +10 Dano corpo a corpo; +5 Deslocamento; -7 Dano a distancia",
+                "Fluxo elemental e mobilidade formam um generalista de combate."
+              ],
+              [
+                "Lux",
+                "Avancado",
+                "Ocultista",
+                "8 matrizes",
+                "Raro R4",
+                "+8 Dano de Habilidade; -10 CA; +4 Dano Critico; -5 Dano; +6 Determinacao; +16 FUSHI; -8 Cura recebida; -5 Vida; -6 Deslocamento",
+                "Ocultismo, Vazio e Dominio convertem FUSHI em controle e dano."
+              ],
+              [
+                "Gorin",
+                "Basico",
+                "Tank",
+                "8 matrizes",
+                "Comum R2",
+                "+4 Bloqueio; +3 CA; -18 Dano; +9 Determinacao; -4 FUSHI; +7 Cura recebida; -9 Iniciativa; +23 Vida; -4 Deslocamento",
+                "Fortitude, Corpo Inabalavel e massa pesada absorvem pressao."
+              ],
+              [
+                "Musashi",
+                "Basico",
+                "Assassino",
+                "8 matrizes",
+                "Comum R2",
+                "+3 Dano de Habilidade; -12 CA; +3 Perfuracao de CA; +3 Dano Critico; +3 Dano; -7 Determinacao; -7 FUSHI; -7 Cura; -12 Cura recebida; +8 Iniciativa; -7 Vida; +6 Dano corpo a corpo; +2 Deslocamento; +3 Dano a distancia",
+                "Iniciativa, duelo e cortes precisos convertem abertura em dano."
+              ],
+              [
+                "Yanzik",
+                "Basico",
+                "Tank",
+                "8 matrizes",
+                "Comum R2",
+                "+4 Bloqueio; +3 CA; -18 Dano; +9 Determinacao; -4 FUSHI; +7 Cura recebida; -9 Iniciativa; +24 Vida; -4 Deslocamento",
+                "Fortitude, persistencia e armadura Berserk sustentam dano recebido."
+              ],
+              [
+                "Seraph",
+                "Basico",
+                "Ocultista",
+                "8 matrizes",
+                "Comum R2",
+                "+6 Dano de Habilidade; -8 CA; +3 Dano Critico; -4 Dano; +5 Determinacao; +13 FUSHI; -7 Cura recebida; -4 Vida; -5 Deslocamento",
+                "Comando, gravidade e Eclipse dependem de poder e controle."
+              ],
+              [
+                "Velkar",
+                "Avancado",
+                "Ocultista",
+                "8 matrizes",
+                "Raro R4",
+                "+8 Dano de Habilidade; -10 CA; +4 Dano Critico; -5 Dano; +6 Determinacao; +17 FUSHI; -8 Cura recebida; -5 Vida; -6 Deslocamento",
+                "Ocultismo e distorcao de corpo/identidade dependem de FUSHI."
+              ],
+              [
+                "Ryoku",
+                "Cataclisma",
+                "Ocultista",
+                "8 matrizes",
+                "Lendário R9",
+                "+10 Dano de Habilidade; -12 CA; +5 Dano Critico; -6 Dano; +9 Determinacao; +22 FUSHI; -11 Cura recebida; -6 Vida; -8 Deslocamento",
+                "Dominio, consumo de essencia e medo sao poder de alto impacto."
+              ],
+              [
+                "Jaxir",
+                "Avancado",
+                "Assassino",
+                "8 matrizes",
+                "Raro R4",
+                "+4 Dano de Habilidade; -14 CA; +4 Perfuracao de CA; +4 Dano Critico; +4 Dano; -8 Determinacao; -8 FUSHI; -8 Cura; -14 Cura recebida; +10 Iniciativa; -8 Vida; +8 Dano corpo a corpo; +2 Deslocamento; +4 Dano a distancia",
+                "Laminas ocultas, fio e ritmo exploram abertura e explosao."
+              ],
+              [
+                "Lyssara",
+                "Basico",
+                "Ocultista",
+                "8 matrizes",
+                "Comum R2",
+                "+6 Dano de Habilidade; -8 CA; +3 Dano Critico; -4 Dano; +5 Determinacao; +12 FUSHI; -7 Cura recebida; -4 Vida; -5 Deslocamento",
+                "Dreno, dominio e vinculo emocional usam poder e controle."
+              ],
+              [
+                "Kairo",
+                "Avancado",
+                "Atirador",
+                "8 matrizes",
+                "Raro R4",
+                "-6 Dano adjacente; -8 CA; +4 Perfuracao de CA; +4 Dano Critico; -7 Determinacao; -8 FUSHI; -8 Cura; -8 Cura recebida; +9 Iniciativa; -6 Vida; -8 Dano corpo a corpo; +5 Deslocamento; +18 Dano a distancia",
+                "Leitura Total e Execucao Precisa priorizam alvo e distancia taticos."
+              ],
+              [
+                "Elion",
+                "Basico",
+                "Ocultista",
+                "8 matrizes",
+                "Comum R2",
+                "+6 Dano de Habilidade; -8 CA; +3 Dano Critico; -4 Dano; +5 Determinacao; +14 FUSHI; -7 Cura recebida; -4 Vida; -5 Deslocamento",
+                "Intelecto, Ocultismo e analise de logica usam controle e leitura."
+              ],
+              [
+                "Arven",
+                "Basico",
+                "Suporte",
+                "8 matrizes",
+                "Comum R2",
+                "-5 CA; -13 Dano; +17 Determinacao; +15 FUSHI; +7 Cura; +5 Cura recebida; -10 Iniciativa; -4 Vida; -5 Deslocamento",
+                "Comando Tatico e Determinacao Coletiva ampliam o grupo."
+              ],
+              [
+                "Varek",
+                "Avancado",
+                "Assassino",
+                "8 matrizes",
+                "Raro R4",
+                "+4 Dano de Habilidade; -14 CA; +4 Perfuracao de CA; +4 Dano Critico; +4 Dano; -8 Determinacao; -8 FUSHI; -8 Cura; -14 Cura recebida; +11 Iniciativa; -8 Vida; +8 Dano corpo a corpo; +2 Deslocamento; +4 Dano a distancia",
+                "Agilidade, Furtividade e Execucao Rapida definem explosao."
+              ],
+              [
+                "Aeron",
+                "Basico",
+                "Assassino",
+                "8 matrizes",
+                "Comum R2",
+                "+3 Dano de Habilidade; -12 CA; +3 Perfuracao de CA; +3 Dano Critico; +3 Dano; -7 Determinacao; -7 FUSHI; -7 Cura; -12 Cura recebida; +8 Iniciativa; -7 Vida; +6 Dano corpo a corpo; +2 Deslocamento; +3 Dano a distancia",
+                "Furtividade, Enganacao e Golpe Preciso sustentam execucao por abertura."
+              ],
+              [
+                "Sélian Velan",
+                "Basico",
+                "Suporte",
+                "8 matrizes",
+                "Comum R2",
+                "-5 CA; -13 Dano; +17 Determinacao; +15 FUSHI; +7 Cura; +5 Cura recebida; -10 Iniciativa; -4 Vida; -5 Deslocamento",
+                "Escuta, silencio e coro alteram a qualidade das acoes do grupo."
+              ],
+              [
+                "Yor",
+                "Avancado",
+                "Assassino",
+                "8 matrizes",
+                "Raro R4",
+                "+4 Dano de Habilidade; -14 CA; +4 Perfuracao de CA; +4 Dano Critico; +4 Dano; -8 Determinacao; -8 FUSHI; -8 Cura; -14 Cura recebida; +11 Iniciativa; -8 Vida; +8 Dano corpo a corpo; +2 Deslocamento; +4 Dano a distancia",
+                "Agilidade, Furtividade e execucao silenciosa exploram alvo exposto."
+              ],
+              [
+                "Maelra",
+                "Avancado",
+                "Suporte",
+                "8 matrizes",
+                "Raro R4",
+                "-6 CA; -16 Dano; +21 Determinacao; +18 FUSHI; +8 Cura; +6 Cura recebida; -12 Iniciativa; -5 Vida; -6 Deslocamento",
+                "Medicina, Costura Vital e Mare Viva sao cura e manutencao."
+              ],
+              [
+                "Veyra",
+                "Avancado",
+                "Assassino",
+                "8 matrizes",
+                "Raro R4",
+                "+4 Dano de Habilidade; -14 CA; +4 Perfuracao de CA; +4 Dano Critico; +4 Dano; -8 Determinacao; -8 FUSHI; -8 Cura; -14 Cura recebida; +10 Iniciativa; -8 Vida; +8 Dano corpo a corpo; +2 Deslocamento; +4 Dano a distancia",
+                "Aposta, Sorte Suicida e Tudo ou Nada formam explosao de risco."
+              ],
+              [
+                "Liryssa",
+                "Avancado",
+                "Atirador",
+                "8 matrizes",
+                "Raro R4",
+                "-6 Dano adjacente; -8 CA; +4 Perfuracao de CA; +4 Dano Critico; -7 Determinacao; -8 FUSHI; -8 Cura; -8 Cura recebida; +10 Iniciativa; -6 Vida; -8 Dano corpo a corpo; +5 Deslocamento; +18 Dano a distancia",
+                "Pistola, pilotagem e leitura de rota controlam linha e distancia."
+              ],
+              [
+                "Varden",
+                "Basico",
+                "Lutador",
+                "8 matrizes",
+                "Comum R2",
+                "-6 Dano de Habilidade; +4 Bloqueio; +2 CA; +2 Perfuracao de CA; -1 Determinacao; -6 FUSHI; -6 Cura; -12 Cura recebida; -4 Iniciativa; +6 Vida; +8 Dano corpo a corpo; +4 Deslocamento; -6 Dano a distancia",
+                "Corte clinico e autoexperimento criam consistencia corpo a corpo."
+              ],
+              [
+                "Nyx",
+                "Avancado",
+                "Atirador",
+                "8 matrizes",
+                "Raro R4",
+                "-6 Dano adjacente; -8 CA; +4 Perfuracao de CA; +4 Dano Critico; -7 Determinacao; -8 FUSHI; -8 Cura; -8 Cura recebida; +9 Iniciativa; -6 Vida; -8 Dano corpo a corpo; +5 Deslocamento; +18 Dano a distancia",
+                "Invocacao digital e HUD Tatico atuam por alcance e prioridade de alvo."
+              ],
+              [
+                "Bront",
+                "Basico",
+                "Lutador",
+                "8 matrizes",
+                "Comum R2",
+                "-6 Dano de Habilidade; +4 Bloqueio; +2 CA; +2 Perfuracao de CA; +1 Determinacao; -6 FUSHI; -6 Cura; -12 Cura recebida; -4 Iniciativa; +6 Vida; +8 Dano corpo a corpo; +4 Deslocamento; -6 Dano a distancia",
+                "Martelo e resistencia pratica formam um generalista fisico."
+              ],
+              [
+                "Morghast",
+                "Ascensao",
+                "Tank",
+                "8 matrizes",
+                "Épico R6",
+                "+6 Bloqueio; +4 CA; -25 Dano; +12 Determinacao; -6 FUSHI; +10 Cura recebida; -13 Iniciativa; +36 Vida; -5 Deslocamento",
+                "Corpo Incontavel, reducao e fases defensivas seguram o encontro."
+              ],
+              [
+                "Euryaleth",
+                "Ascensao",
+                "Tank",
+                "8 matrizes",
+                "Épico R6",
+                "+6 Bloqueio; +4 CA; -25 Dano; +12 Determinacao; -6 FUSHI; +10 Cura recebida; -13 Iniciativa; +36 Vida; -5 Deslocamento",
+                "Regeneracao, petrificacao e fases defensivas compram tempo."
+              ],
+              [
+                "Vorashk",
+                "Ascensao",
+                "Tank",
+                "8 matrizes",
+                "Épico R6",
+                "+6 Bloqueio; +4 CA; -25 Dano; +12 Determinacao; -6 FUSHI; +10 Cura recebida; -13 Iniciativa; +37 Vida; -5 Deslocamento",
+                "Fortitude, escamas evolutivas e adaptacao defensiva absorvem pressao."
+              ],
+              [
+                "Aeronyx",
+                "Ascensao",
+                "Lutador",
+                "8 matrizes",
+                "Épico R6",
+                "-8 Dano de Habilidade; +6 Bloqueio; +3 CA; +3 Perfuracao de CA; +4 Determinacao; -8 FUSHI; -8 Cura; -16 Cura recebida; -5 Iniciativa; +9 Vida; +12 Dano corpo a corpo; +6 Deslocamento; -8 Dano a distancia",
+                "Investidas, mergulho e pressao fisica sustentam combate consistente."
+              ],
+              [
+                "Thal’Zhyr",
+                "Cataclisma",
+                "Tank",
+                "8 matrizes",
+                "Lendário R9",
+                "+7 Bloqueio; +5 CA; -29 Dano; +15 Determinacao; -6 FUSHI; +11 Cura recebida; -14 Iniciativa; +44 Vida; -6 Deslocamento",
+                "Vigor extremo, regeneracao e pressao oceanica sustentam fases longas."
+              ],
+              [
+                "Astrael",
+                "Cataclisma",
+                "Ocultista",
+                "8 matrizes",
+                "Lendário R9",
+                "+10 Dano de Habilidade; -12 CA; +5 Dano Critico; -6 Dano; +9 Determinacao; +25 FUSHI; -11 Cura recebida; -6 Vida; -8 Deslocamento",
+                "Ocultismo, coordenadas e efeitos dimensionais dependem de FUSHI."
+              ],
+              [
+                "Elara",
+                "Basico",
+                "Suporte",
+                "8 matrizes",
+                "Comum R2",
+                "-5 CA; -13 Dano; +17 Determinacao; +15 FUSHI; +7 Cura; +5 Cura recebida; -10 Iniciativa; -4 Vida; -5 Deslocamento",
+                "Lideranca, civis e controle de panico priorizam o grupo."
+              ],
+              [
+                "Orian",
+                "Basico",
+                "Atirador",
+                "8 matrizes",
+                "Comum R2",
+                "-5 Dano adjacente; -7 CA; +3 Perfuracao de CA; +3 Dano Critico; -6 Determinacao; -7 FUSHI; -7 Cura; -7 Cura recebida; +7 Iniciativa; -5 Vida; -7 Dano corpo a corpo; +4 Deslocamento; +14 Dano a distancia",
+                "Arco Curto, Pontaria e Disparo de Cobertura definem o papel."
+              ],
+              [
+                "Nilo",
+                "Basico",
+                "Atirador",
+                "8 matrizes",
+                "Comum R2",
+                "-5 Dano adjacente; -7 CA; +3 Perfuracao de CA; +3 Dano Critico; -6 Determinacao; -7 FUSHI; -7 Cura; -7 Cura recebida; +9 Iniciativa; -5 Vida; -7 Dano corpo a corpo; +4 Deslocamento; +14 Dano a distancia",
+                "Movimento, resgate e leitura espacial controlam alcance e posicao."
+              ],
+              [
+                "Maira Velan",
+                "Basico",
+                "Suporte",
+                "8 matrizes",
+                "Comum R2",
+                "-5 CA; -13 Dano; +17 Determinacao; +15 FUSHI; +8 Cura; +5 Cura recebida; -10 Iniciativa; -4 Vida; -5 Deslocamento",
+                "Canticos, abrigo e suporte emocional sustentam o grupo."
+              ],
+              [
+                "Dalvo",
+                "Basico",
+                "Suporte",
+                "8 matrizes",
+                "Comum R2",
+                "-5 CA; -13 Dano; +17 Determinacao; +15 FUSHI; +6 Cura; +5 Cura recebida; -10 Iniciativa; -4 Vida; -5 Deslocamento",
+                "Medicina, tratamento e retirada sustentam aliados."
+              ],
+              [
+                "Elias",
+                "Basico",
+                "Atirador",
+                "8 matrizes",
+                "Comum R2",
+                "-5 Dano adjacente; -7 CA; +3 Perfuracao de CA; +3 Dano Critico; -6 Determinacao; -7 FUSHI; -7 Cura; -7 Cura recebida; +7 Iniciativa; -5 Vida; -7 Dano corpo a corpo; +4 Deslocamento; +14 Dano a distancia",
+                "Reagentes e contencao operam por posicao e alcance, nao por linha de frente."
+              ],
+              [
+                "Nayr",
+                "Basico",
+                "Assassino",
+                "8 matrizes",
+                "Comum R2",
+                "+3 Dano de Habilidade; -12 CA; +3 Perfuracao de CA; +3 Dano Critico; +3 Dano; -7 Determinacao; -7 FUSHI; -7 Cura; -12 Cura recebida; +8 Iniciativa; -7 Vida; +6 Dano corpo a corpo; +2 Deslocamento; +3 Dano a distancia",
+                "Crime, reflexos e Corte de Esquina priorizam ataque oportunista."
+              ],
+              [
+                "Renji",
+                "Basico",
+                "Lutador",
+                "8 matrizes",
+                "Comum R2",
+                "-6 Dano de Habilidade; +4 Bloqueio; +2 CA; +2 Perfuracao de CA; -6 FUSHI; -6 Cura; -12 Cura recebida; -4 Iniciativa; +6 Vida; +8 Dano corpo a corpo; +4 Deslocamento; -6 Dano a distancia",
+                "Luta, Guarda de Rua e interrupcao entregam presenca fisica constante."
+              ],
+              [
+                "Kazuo",
+                "Basico",
+                "Suporte",
+                "8 matrizes",
+                "Comum R2",
+                "-5 CA; -13 Dano; +17 Determinacao; +15 FUSHI; +7 Cura; +5 Cura recebida; -10 Iniciativa; -4 Vida; -5 Deslocamento",
+                "Desvio, Palavra de Centro e protecao de aliados sao sustentacao."
+              ],
+              [
+                "Vhazaryon",
+                "Cataclisma",
+                "Lutador",
+                "8 matrizes",
+                "Lendário R9",
+                "-10 Dano de Habilidade; +6 Bloqueio; +3 CA; +3 Perfuracao de CA; +3 Determinacao; -10 FUSHI; -10 Cura; -20 Cura recebida; -7 Iniciativa; +9 Vida; +12 Dano corpo a corpo; +6 Deslocamento; -10 Dano a distancia",
+                "Garras, cauda, chama e multiplas fases exigem base fisica generalista."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Eixos de troca",
+          "table": {
+            "columns": [
+              "Ganho",
+              "Custos coerentes"
+            ],
+            "rows": [
+              [
+                "Vida / Bloqueio",
+                "Mobilidade, furtividade ou dano explosivo"
+              ],
+              [
+                "Dano / crítico",
+                "Vida, defesa ou segurança na falha"
+              ],
+              [
+                "Cura / proteção",
+                "Dano direto, tempo ou preparo"
+              ],
+              [
+                "Alcance / precisão",
+                "Defesa sob pressão corpo a corpo"
+              ],
+              [
+                "FUSHI máximo / controle",
+                "Instabilidade, custo maior ou fragilidade sem recurso"
+              ],
+              [
+                "Mobilidade",
+                "Defesa estática, carga ou sustentação"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Checklist obrigatório de item",
+          "table": {
+            "columns": [
+              "Campo",
+              "Pergunta"
+            ],
+            "rows": [
+              [
+                "Nível de Poder",
+                "Em qual escala entra?"
+              ],
+              [
+                "Arquétipo",
+                "Qual estilo ele fortalece?"
+              ],
+              [
+                "Ganho",
+                "Qual número, dado ou permissão muda?"
+              ],
+              [
+                "Custo",
+                "Qual eixo enfraquece?"
+              ],
+              [
+                "Gatilho",
+                "Quando funciona?"
+              ],
+              [
+                "Limite",
+                "Por turno, cena ou condição?"
+              ],
+              [
+                "Local",
+                "Onde existe no MUN?"
+              ],
+              [
+                "Integração",
+                "Quem já absorveu e quando?"
+              ],
+              [
+                "Teste",
+                "Qual smoke ou cenário prova que não quebra?"
+              ]
+            ]
+          },
+          "items": [
+            "Raridade padrao: Comum, Raro, Epico, Lendario ou Mitico; Secreto fica fora da rolagem.",
+            "Ganho numerico e perda numerica ou de situacao.",
+            "Passiva pequena e permanente, sem botao de ativacao ou recarga por cena.",
+            "Nivel de Poder sugerido e ponto de origem no MUN.",
+            "Resultado de simulacao antes de entregar o item na campanha."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Pontos de playtest que continuam visiveis",
+          "items": [
+            "Itens Secretos continuam sendo definidos individualmente pela trama.",
+            "A distribuicao exata dentro de cada ponto do MUN pode mudar por decisao narrativa do Mestre.",
+            "Combates de boss por fase, controle sem dano e objetivos de arena exigem validacao de mesa alem do duelo numerico.",
+            "Nenhum alerta de simulacao autoriza mudar lore ou efeito de Habilidade automaticamente."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inventario-carga",
+      "number": "M09B",
+      "label": "Inventário, carga e deslocamento",
+      "summary": "Regra operacional única para ficha, mesa, multiplayer e futuras automações.",
+      "status": "canon",
+      "tags": [
+        "inventário",
+        "capacidade",
+        "mochila",
+        "Grande+",
+        "migração"
+      ],
+      "searchTerms": [
+        "3 pequenos",
+        "3 médios",
+        "6 médios",
+        "Mochila+",
+        "Grande+",
+        "deslocamento efetivo"
+      ],
+      "blocks": [
+        {
+          "kind": "table",
+          "tone": "rule",
+          "title": "Unidade de cálculo",
+          "table": {
+            "columns": [
+              "Carga",
+              "Unidades pequenas",
+              "Equivalência média"
+            ],
+            "rows": [
+              [
+                "Pequeno",
+                "1",
+                "1/3"
+              ],
+              [
+                "Médio",
+                "3",
+                "1"
+              ],
+              [
+                "Grande",
+                "6",
+                "2"
+              ],
+              [
+                "Grande+",
+                "Exclusivo",
+                "Não entra na soma comum"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Fórmulas aplicadas pelo app",
+          "items": [
+            "Inventário comum: capacidade 3 médios, sem penalidade automática; excedente gera alerta e não é apagado.",
+            "Mochila normal: capacidade 6 médios; penalidade = teto dos médios equivalentes acima de 3 x 2 m.",
+            "Mochila+: referência de carga = 3 + (deslocamento base - 1) médios; não existe teto de itens depois que o deslocamento chega a 1 m.",
+            "Deslocamento efetivo = deslocamento base - penalidade, com piso de 1 m.",
+            "O app preserva o deslocamento base da ficha e calcula o efetivo; remover carga ou mochila restaura o valor sem perda acumulada."
+          ]
+        },
+        {
+          "kind": "rule",
+          "title": "Grande+",
+          "items": [
+            "Aceita apenas um Grande+ por vez.",
+            "Médio, grande ou item legado sem porte junto de Grande+ gera combinação inválida.",
+            "Sem mochila, Grande+ permite 3 pequenos.",
+            "Com mochila normal, a cota de pequenos acompanha a capacidade da mochila.",
+            "Com Mochila+, a referência acompanha a capacidade calculada; 12 m permite Grande+ + 42 pequenos antes do piso, e carga adicional continua permitida no piso de 1 m."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Compatibilidade e segurança",
+          "items": [
+            "Item antigo sem porte não é reescrito automaticamente: conta como médio e aparece como pendente.",
+            "Nenhuma validação remove item, mochila ou lore; conflito fica visível para decisão do Mestre.",
+            "A ficha canônica envia porte, quantidade e mochila tanto Mestre > Jogador quanto Jogador > Mestre.",
+            "O sistema MSC permanece fora desta entrega e só será desenhado com aprovação direta do Mestre."
+          ]
+        },
+        {
+          "kind": "steps",
+          "title": "Teste rápido de mesa",
+          "items": [
+            "Sem mochila: confirme 9 pequenos, 3 médios e grande + médio.",
+            "Confirme Grande+ + 3 pequenos e bloqueie Grande+ + médio.",
+            "Mochila normal: 6 médios devem mostrar -6 m.",
+            "Mochila+ com 12 m: 42 pequenos devem mostrar 1 m restante; carga maior continua válida e permanece em 1 m.",
+            "Edite em uma ponta multiplayer e confirme capacidade e deslocamento efetivo na outra."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rituais",
+      "number": "M10",
+      "label": "Rituais e Domínios",
+      "summary": "Estrutura completa para efeitos que mudam corpo, mapa, consciência ou Canon.",
+      "status": "playtest",
+      "tags": [
+        "Ritual",
+        "Domínio",
+        "MUN"
+      ],
+      "searchTerms": [
+        "preparo",
+        "pulsos",
+        "Silêncio",
+        "separação",
+        "selo"
+      ],
+      "blocks": [
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Ficha mínima de Ritual",
+          "items": [
+            "Nome e Nível de Poder mínimo.",
+            "Custo, tempo e participantes.",
+            "Componentes, local e condição de abertura.",
+            "Teste, DT e três pulsos quando for importante.",
+            "Efeito, duração e fechamento.",
+            "Falha, falha crítica e custo final.",
+            "Impacto no MUN, log e forma de desfazer."
+          ]
+        },
+        {
+          "kind": "steps",
+          "title": "Ritual importante em cinco passos",
+          "items": [
+            "Preparar: reunir local, tributo, corpos e participantes.",
+            "Abrir: teste contra DT do Nível de Poder.",
+            "Sustentar: três pulsos, cada um com risco diferente.",
+            "Fechar: escolher custo final, consequência ou selamento.",
+            "Registrar: atualizar MUN, fichas, estado e Canon aprovado."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "DT de Ritual",
+          "table": {
+            "columns": [
+              "Escala",
+              "DT"
+            ],
+            "rows": [
+              [
+                "Básico",
+                "20"
+              ],
+              [
+                "Avançado",
+                "25"
+              ],
+              [
+                "Ascensão",
+                "30"
+              ],
+              [
+                "Cataclisma",
+                "32+"
+              ],
+              [
+                "Fora do local principal",
+                "+5"
+              ],
+              [
+                "Local hostil ao conceito",
+                "+10 ou proibido"
+              ],
+              [
+                "BASE apropriada ativa",
+                "-2"
+              ],
+              [
+                "Ajuda de NPC que conhece o Ritual",
+                "-2 por ajuda relevante, conforme limite"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Catálogo inicial secreto",
+          "table": {
+            "columns": [
+              "Ritual",
+              "Nível",
+              "Função",
+              "Local principal"
+            ],
+            "rows": [
+              [
+                "Ritual de Silêncio",
+                "Ascensão",
+                "Remover voz ou consciência real",
+                "Biblioteca Morta / Torre do Abismo"
+              ],
+              [
+                "Transposição de Consciência",
+                "Avançado/Ascensão",
+                "Mover consciência entre corpo morto e vivo",
+                "Caverna / Torre do Abismo"
+              ],
+              [
+                "Separação dos Fragmentos",
+                "Avançado",
+                "Separar corpo compartilhado",
+                "Caverna / Núcleo FUSHI da BASE"
+              ],
+              [
+                "Reunião dos Fragmentos",
+                "Avançado",
+                "Reunir corpos/consciências",
+                "Caverna do Primeiro Corpo"
+              ],
+              [
+                "Ancoragem de Reencarnação",
+                "Básico/Avançado",
+                "Criar bônus para morte futura",
+                "Caverna / Riacho / Sala MUN"
+              ],
+              [
+                "Purificação de Dano de Alma",
+                "Ascensão",
+                "Remover dano crítico de alma",
+                "Riacho / Árvore viva / Sala de Música"
+              ],
+              [
+                "Domínio Parcial",
+                "Ascensão/Cataclisma",
+                "Abrir arena, fase ou Habilidade lendária",
+                "Local ligado ao conceito"
+              ],
+              [
+                "Selo de Cataclisma",
+                "Cataclisma",
+                "Conter entidade ou evento global",
+                "Torre / Campo de Cinzas / Deus Dragão"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Ritual nunca é apenas um botão",
+          "text": "Rituais que mudam mapa, corpo, fase ou consciência precisam de estado, cinematic, áudio, fallback, sincronização multiplayer e teste. Não coloque como Habilidade simples na ficha."
+        }
+      ]
+    },
+    {
+      "id": "condicoes",
+      "number": "M11",
+      "label": "Condições completas",
+      "summary": "Duração, remoção e condições Cataclisma que ficam fora do livro público.",
+      "status": "canon",
+      "tags": [
+        "leve",
+        "grave",
+        "cataclísmica"
+      ],
+      "searchTerms": [
+        "Corrompido",
+        "Selado",
+        "Apagado",
+        "Fora do tempo",
+        "Trauma"
+      ],
+      "blocks": [
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Condições Cataclisma",
+          "table": {
+            "columns": [
+              "Condição",
+              "Efeito"
+            ],
+            "rows": [
+              [
+                "Corrompido",
+                "Mestre ganha 1 gatilho de interferência por cena"
+              ],
+              [
+                "Fragmentado",
+                "Consciências sofrem -5 para agir em conjunto"
+              ],
+              [
+                "Selado",
+                "Não usa FUSHI ativo até quebrar selo"
+              ],
+              [
+                "Apagado",
+                "Perde memória ou Habilidade definida até restauração"
+              ],
+              [
+                "Fora do tempo",
+                "Age em turnos alternados ou entra 1 rodada atrasado"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Duração padrão",
+          "items": [
+            "Leve: cena ou descanso curto.",
+            "Grave: tratamento, item, Ritual ou descanso longo seguro.",
+            "Cataclisma: arco, Ritual específico ou custo grande.",
+            "Sempre registre origem, duração e forma de remoção."
+          ]
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Operacao na mesa",
+          "items": [
+            "Use o painel BUF para aplicar, acompanhar e encerrar estados da cena.",
+            "Registre origem, alvo, duracao, acumulos e qualquer DT propria da habilidade.",
+            "O Mestre pode remover qualquer estado. A fonte so pode cancelar uma marca Especial explicitamente cancelavel.",
+            "Vacina remove os demais estados do alvo e impede novos estados enquanto durar.",
+            "Palavra parecida em uma habilidade nao vira automacao sem revisao da regra."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Estados canonicos - debuffs e condicoes",
+          "table": {
+            "columns": [
+              "Estado",
+              "Efeito",
+              "Causa",
+              "Como encerrar"
+            ],
+            "rows": [
+              [
+                "Sangrando",
+                "Perde 1 Vida no inicio de cada turno. O dano nao aumenta sozinho.",
+                "Ferimento grave, corte profundo ou regra que abra sangramento.",
+                "Medicina leve, estancar o sangramento ou efeito que feche a ferida."
+              ],
+              [
+                "Cansado",
+                "Recebe -1 dado em todas as jogadas.",
+                "Fome, falta de sono ou tarefa fisica prolongada.",
+                "Descanso ou cuidados medicos apropriados."
+              ],
+              [
+                "Quebrado",
+                "No inicio do turno, VIG + Fortitude DT 15. Sucesso: -1 dado em acoes fisicas e metade do Deslocamento. Falha: perde a Acao Principal e o Movimento.",
+                "Fratura, esmagamento ou pressao extrema sobre o corpo.",
+                "Cuidados medicos maximos, imobilizacao e descanso longo seguro."
+              ],
+              [
+                "Exausto",
+                "Nao pode agir nem se mover; ainda pode perceber, pensar e falar brevemente.",
+                "Chegar a 0 de FUSHI.",
+                "Recuperar ao menos 1 FUSHI, normalmente com descanso curto."
+              ],
+              [
+                "Desmaiado",
+                "Nao fala, move, reage ou mantem concentracao. Tres falhas causam morte; tres sucessos recuperam 1 Vida, mas o personagem continua desmaiado.",
+                "Chegar a 0 de Vida ou sofrer um efeito que apague a consciencia.",
+                "Chegar a 2 de Vida e receber cuidados maiores ou descanso longo."
+              ],
+              [
+                "Descontrolado",
+                "O Mestre assume o personagem e conduz suas acoes enquanto durar o estado.",
+                "Chegar a 0 de Determinacao.",
+                "Recuperar Determinacao por cuidados de sanidade e contato com algo que acalme o personagem."
+              ],
+              [
+                "Desnorteado",
+                "Perde o proximo turno. Novas perdas exigem reaplicar o estado.",
+                "Concussao, impacto sensorial ou efeito que atrase a consciencia.",
+                "Encerra depois do turno perdido ou por efeito que remova atordoamento."
+              ],
+              [
+                "Enfraquecido",
+                "Remove 1 dado da rolagem de dano.",
+                "Fraqueza fisica, ferimento debilitante ou efeito de habilidade.",
+                "Cuidados medicos leves ou fim indicado pela fonte."
+              ],
+              [
+                "Vulneravel",
+                "Dobra o dano final recebido depois dos demais bonus e reducoes.",
+                "Guarda aberta, ponto fraco exposto ou efeito que amplifique dano recebido.",
+                "Fim da duracao da fonte, protecao adequada ou efeito que remova a abertura."
+              ],
+              [
+                "Lento",
+                "Metade do Deslocamento, arredondada para baixo, e nao pode usar Disparada.",
+                "Terreno, frio, peso ou efeito que limite o corpo.",
+                "Sair da causa ou encerrar a duracao indicada pela fonte."
+              ],
+              [
+                "Amedrontado",
+                "Nao pode atacar nem se aproximar voluntariamente da fonte. PRE + Vontade DT 15 ao fim do turno para encerrar, salvo DT propria da fonte.",
+                "Presenca, trauma ou efeito que imponha medo.",
+                "Passar no teste contra a fonte, afastar a fonte ou receber efeito que remova medo."
+              ],
+              [
+                "Paralisado",
+                "Perde a Acao Principal e o Movimento.",
+                "Veneno, gelo completo, choque ou poder de imobilizacao.",
+                "Fim da duracao ou tratamento indicado pela fonte."
+              ],
+              [
+                "Envenenado",
+                "Sofre 1d4 de dano no inicio de cada turno.",
+                "Veneno, toxina ou efeito contaminante.",
+                "Tratamento, vacina, antidoto ou regra especifica da toxina."
+              ],
+              [
+                "Queimando",
+                "Sofre 1d4 de dano no inicio do turno. Com 3 Acumulos, o dano passa a 2d4 enquanto o aquecimento completo durar.",
+                "Fogo, calor extremo ou acumulacao de aquecimento.",
+                "Apagar as chamas e resfriar o corpo."
+              ],
+              [
+                "Congelado",
+                "Sofre 1d4 de dano no inicio do turno. Ao chegar a 3 Acumulos, tambem fica Paralisado ate perder ao menos 1 Acumulo.",
+                "Frio extremo, gelo ou acumulacao de congelamento.",
+                "Aquecer o corpo e remover os Acumulos de frio."
+              ],
+              [
+                "Confuso",
+                "Ao mover, role 1d4: 1 frente, 2 tras, 3 direita, 4 esquerda. Para executar outra intencao, cara realiza e coroa falha.",
+                "Efeito que altere sentidos, direcao ou leitura do ambiente.",
+                "Fim da duracao da fonte ou efeito que restaure os sentidos."
+              ],
+              [
+                "Especial",
+                "Pode combinar mais de um debuff conforme a habilidade que o criou.",
+                "Poder especial de FUSHI.",
+                "Definida explicitamente pela habilidade ou pelo Mestre."
+              ],
+              [
+                "Agro",
+                "PRE + Intimidacao contra a CA atual de cada alvo. Sucesso: o proximo ataque legal prioriza o usuario e ele perde metade da Determinacao atual do alvo, arredondada para cima. Falha: nao aplica Agro e perde a Determinacao atual inteira do alvo.",
+                "Acao Completa de provocacao contra alvos visiveis.",
+                "Encerra depois do proximo ataque legal do alvo ou quando a fonte deixa de ser alvo valido."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Estados canonicos - buffs",
+          "table": {
+            "columns": [
+              "Estado",
+              "Efeito",
+              "Causa",
+              "Como encerrar"
+            ],
+            "rows": [
+              [
+                "Aura",
+                "Recupera 1 FUSHI no inicio de cada turno, salvo valor proprio da fonte.",
+                "Habilidade, campo ou local com fluxo natural elevado de FUSHI.",
+                "Encerra ao sair do campo ou ao acabar a duracao."
+              ],
+              [
+                "Protecao",
+                "Recebe +2 CA, salvo valor proprio da fonte.",
+                "Feitico, campo, item ou intencao defensiva.",
+                "Encerra com a duracao, quebra da fonte ou dissipacao."
+              ],
+              [
+                "Rapidez",
+                "Dobra o Deslocamento padrao.",
+                "Habilidade, item ou campo que acelere o corpo.",
+                "Encerra no fim da duracao indicada pela fonte."
+              ],
+              [
+                "Vacina",
+                "Anula os demais buffs e debuffs enquanto durar e impede receber novos estados.",
+                "Vacina, antidoto avancado ou efeito protetor equivalente.",
+                "Encerra no fim da duracao definida pela fonte."
+              ],
+              [
+                "Cura",
+                "Recupera 1d4 Vida no inicio de cada turno, salvo valor proprio da fonte.",
+                "Habilidade, item ou efeito sustentado de cura.",
+                "Encerra com a duracao, quebra da fonte ou Vida maxima."
+              ],
+              [
+                "Especial",
+                "Pode combinar mais de um buff conforme a habilidade que o criou.",
+                "Poder especial de FUSHI.",
+                "Definida explicitamente pela habilidade ou pelo Mestre."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Operacao na mesa",
+          "items": [
+            "Use o painel BUF para aplicar, acompanhar e encerrar estados da cena.",
+            "Registre origem, alvo, duracao, acumulos e qualquer DT propria da habilidade.",
+            "O Mestre pode remover qualquer estado. A fonte so pode cancelar uma marca Especial explicitamente cancelavel.",
+            "Vacina remove os demais estados do alvo e impede novos estados enquanto durar.",
+            "Palavra parecida em uma habilidade nao vira automacao sem revisao da regra."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fragmentado",
+      "number": "M12",
+      "label": "Fragmentado e corpos",
+      "summary": "Verdade dos protagonistas, corpo compartilhado, separação e conflito interno.",
+      "status": "canon",
+      "tags": [
+        "SEGREDO",
+        "protagonistas",
+        "consciências"
+      ],
+      "searchTerms": [
+        "corpo compartilhado",
+        "alienígena",
+        "subconsciente",
+        "separação",
+        "vozes"
+      ],
+      "blocks": [
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Natureza dos protagonistas",
+          "text": "São um único organismo alienígena microscópico coletivo que evoluiu à força e desenvolveu múltiplas consciências ao absorver características humanas. Nenhuma consciência é original ou superior. Todas são fragmentos equivalentes de um mesmo ser."
+        },
+        {
+          "kind": "rule",
+          "title": "Estado inicial operacional",
+          "items": [
+            "Um token representa o corpo compartilhado.",
+            "Cada consciência possui turno, ficha e Reação próprios.",
+            "Vida e FUSHI podem ser compartilhados enquanto ocupam o mesmo corpo, conforme o estado registrado da campanha.",
+            "Determinação é individual.",
+            "Monstros comuns atacam o corpo; usuários conscientes de FUSHI podem mirar identidade ou consciência."
+          ]
+        },
+        {
+          "kind": "rule",
+          "title": "Depois da separação",
+          "items": [
+            "Cada corpo usa Vida e FUSHI próprios; Determinação continua individual.",
+            "Atributos e limitações seguem o corpo ocupado.",
+            "Conhecimento preservado não garante execução se o corpo não sustenta a técnica.",
+            "Os Fragmentos sentem direção uns dos outros como intuição precisa, não como mapa racional.",
+            "Recursos só se somam novamente por Poder Unido ou Ritual aprovado."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Conflito interno precisa de custo e agência",
+          "text": "Disputa de controle nunca deve virar o Mestre apagando escolha sem gatilho. Declare vontade, faça teste oposto quando necessário, aplique Determinação/condição e registre o que cada consciência tentou impedir."
+        }
+      ]
+    },
+    {
+      "id": "encontros",
+      "number": "M13",
+      "label": "Encontros, mobs e waves",
+      "summary": "Ferramentas para montar oposição sem transformar NPC canônico em descarte.",
+      "status": "playtest",
+      "tags": [
+        "ameaça",
+        "mob",
+        "wave"
+      ],
+      "searchTerms": [
+        "Lobo",
+        "pontos",
+        "tutorial",
+        "recompensa",
+        "spawn"
+      ],
+      "blocks": [
+        {
+          "kind": "rule",
+          "title": "Mob e NPC não são a mesma coisa",
+          "items": [
+            "Mob tem ficha compacta, comportamento simples e não guarda Canon complexo.",
+            "Criatura que ganha história, voz ou relação vira NPC aprovado.",
+            "Não crie humano descartável para preencher encontro.",
+            "Use apenas mobs persistidos/aprovados; ideias antigas não entram automaticamente."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Escala de encontro V2",
+          "table": {
+            "columns": [
+              "Tipo",
+              "Vida guia",
+              "Leitura"
+            ],
+            "rows": [
+              [
+                "Minion",
+                "4 a 8",
+                "1 a 2 acertos; unidade de pressao, nao Nivel de Poder."
+              ],
+              [
+                "Mob Basico",
+                "8 a 16",
+                "Papel claro e sem Canon complexo."
+              ],
+              [
+                "Basico",
+                "20 a 30",
+                "3 a 5 acertos relevantes."
+              ],
+              [
+                "Avancado",
+                "110 a 150",
+                "5 a 8 acertos relevantes em duelo equilibrado."
+              ],
+              [
+                "Ascensao/Cataclisma",
+                "Por fase",
+                "Arena, telegrapho, objetivo e condicao; nao so Vida."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Pontos de ameaça",
+          "table": {
+            "columns": [
+              "Tipo",
+              "Pontos"
+            ],
+            "rows": [
+              [
+                "Minion Básico",
+                "1"
+              ],
+              [
+                "Mob Básico",
+                "2"
+              ],
+              [
+                "Elite Básico",
+                "4"
+              ],
+              [
+                "Mob Avançado",
+                "6"
+              ],
+              [
+                "Elite Avançado",
+                "10"
+              ],
+              [
+                "Boss",
+                "15+ e cena própria"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Orçamento para cinco jogadores Básicos",
+          "table": {
+            "columns": [
+              "Dificuldade",
+              "Pontos"
+            ],
+            "rows": [
+              [
+                "Tutorial fácil",
+                "4 a 6"
+              ],
+              [
+                "Médio",
+                "8 a 10"
+              ],
+              [
+                "Difícil",
+                "12 a 14"
+              ],
+              [
+                "Boss",
+                "Cena própria; não usar apenas soma de pontos"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Clareira dos Lobos",
+          "table": {
+            "columns": [
+              "Wave",
+              "Encontro",
+              "Recompensa"
+            ],
+            "rows": [
+              [
+                "1 a 4",
+                "2 Lobos Cinzentos",
+                "Wave 1: Bandagem; demais sem item"
+              ],
+              [
+                "5",
+                "3 Lobos Cinzentos",
+                "Faca 1d6 ou Dente do Primeiro Lobo, se aprovado"
+              ],
+              [
+                "6 a 9",
+                "2 Lobos Cinzentos",
+                "Sem item"
+              ],
+              [
+                "10",
+                "2 Lobos + 1 Lobo Marcado",
+                "Núcleo Instável, com registro"
+              ],
+              [
+                "11+",
+                "Repete ciclo de 10",
+                "Marcos só com custo e aprovação"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Fonte atual de mobs",
+          "text": "O PDF e o app geram o compêndio a partir do workspace real. Seeds antigos, incluindo criaturas já rejeitadas pelo Mestre, não são fonte de campanha."
+        }
+      ]
+    },
+    {
+      "id": "bosses",
+      "number": "M14",
+      "label": "Bosses e Cataclismas",
+      "summary": "Protocolo de fases, arenas, estados e aprovação para entidades complexas.",
+      "status": "development",
+      "tags": [
+        "fases",
+        "arena",
+        "VFX"
+      ],
+      "searchTerms": [
+        "Vhazaryon",
+        "Ryoku",
+        "Seraph",
+        "domínio",
+        "Ferida Cataclísmica"
+      ],
+      "blocks": [
+        {
+          "kind": "lead",
+          "tone": "secret",
+          "title": "Boss complexo é um sistema de produção",
+          "text": "Vhazaryon, Ryoku, Seraph e entidades equivalentes não cabem em uma ficha plana. A ficha do personagem preserva lore; a ficha de encontro controla fases, mapas, recursos, gatilhos e consequências."
+        },
+        {
+          "kind": "table",
+          "title": "Ficha obrigatória de boss",
+          "table": {
+            "columns": [
+              "Bloco",
+              "Precisa conter"
+            ],
+            "rows": [
+              [
+                "Arena",
+                "Mapa, escala, cobertura, hazards, saída e fallback"
+              ],
+              [
+                "Entrada",
+                "Gatilho, interlúdio, estado inicial e objetivo público"
+              ],
+              [
+                "Fases",
+                "Vida/recurso por fase, mudança de forma e trigger"
+              ],
+              [
+                "Ações",
+                "Ataque, Habilidade, Ritual, Reação e limite"
+              ],
+              [
+                "Telégrafo",
+                "Como o grupo percebe e interrompe o efeito"
+              ],
+              [
+                "Falha",
+                "O que muda sem encerrar a campanha automaticamente"
+              ],
+              [
+                "Vitória",
+                "Condição além de reduzir Vida"
+              ],
+              [
+                "MUN",
+                "Local, relógio, facções, Canon e consequência"
+              ],
+              [
+                "Produção",
+                "Topdown/3D, VFX, áudio, interlúdio e fallback leve"
+              ],
+              [
+                "Teste",
+                "Multiplayer, performance e retomada de estado"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Acerto Cataclisma - regra em teste",
+          "items": [
+            "Acerto comum causa dano da ficha.",
+            "Se passar 10+ acima da CA, aplica uma condição grave coerente.",
+            "Crítico/perfeito contra Básico ou Avançado sem Reação válida pode derrubar a 0 Vida.",
+            "Se uma Reação válida evita a queda, aplique Ferida Cataclísmica.",
+            "Ferida Cataclísmica: -5 em testes físicos e Vontade; cura comum não remove."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Gates antes de programar",
+          "items": [
+            "Fases e números aprovados pelo Mestre.",
+            "Estado serializável e retomada após fechar o app.",
+            "Sincronização Mestre > Jogador sem enviar segredos futuros.",
+            "Fallback low/balanced e budget GTX 1050 Ti 4 GB.",
+            "Teste de release real e nenhum asset obrigatório faltando."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mun-base",
+      "number": "M15",
+      "label": "MUN, BASE e mundo vivo",
+      "summary": "Regras operacionais de local, tempo, facção e infraestrutura da campanha.",
+      "status": "canon",
+      "tags": [
+        "MUN",
+        "BASE",
+        "mundo"
+      ],
+      "searchTerms": [
+        "biomas",
+        "rotas",
+        "relógio",
+        "upgrades",
+        "facções"
+      ],
+      "blocks": [
+        {
+          "kind": "rule",
+          "title": "MUN é a fonte do mundo",
+          "items": [
+            "Local, grupo, tempo, memória, Canon e BASE saem do MUN.",
+            "Facções não ficam congeladas; membros se movem por vontade e contexto.",
+            "Encontro pode ocorrer com indivíduo, dupla ou grupo parcial.",
+            "Nenhum NPC recebe conhecimento de evento ainda não vivido.",
+            "Toda mudança importante precisa de log e aprovação quando vira Canon."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Oito BASES",
+          "table": {
+            "columns": [
+              "BASE",
+              "Bioma"
+            ],
+            "rows": [
+              [
+                "Base da Nascente",
+                "Planície / Floresta Inicial"
+              ],
+              [
+                "Base da Âncora",
+                "Praia / Litoral / Oceano"
+              ],
+              [
+                "Base do Refúgio Alto",
+                "Montanhas do Vazio Sereno"
+              ],
+              [
+                "Base da Seiva",
+                "Floresta Mística"
+              ],
+              [
+                "Base de Obsidiana",
+                "Vulcão / Terras Cinzentas"
+              ],
+              [
+                "Base do Abrigo Branco",
+                "Região Congelada"
+              ],
+              [
+                "Base Memorial",
+                "Ruínas Antigas"
+              ],
+              [
+                "Base do Esconderijo Cinza",
+                "Vale / Véu Cinzento"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Espinha de upgrades",
+          "table": {
+            "columns": [
+              "#",
+              "Upgrade",
+              "Função"
+            ],
+            "rows": [
+              [
+                "1",
+                "Reforma Inicial",
+                "Libera trilha local"
+              ],
+              [
+                "2",
+                "Dormitório",
+                "Descanso e condição leve"
+              ],
+              [
+                "3",
+                "Água e Cozinha",
+                "Sobrevivência"
+              ],
+              [
+                "4",
+                "Depósito",
+                "Inventário de grupo"
+              ],
+              [
+                "5",
+                "Oficina",
+                "Craft, armadilhas e reparo"
+              ],
+              [
+                "6",
+                "Enfermaria",
+                "Tratamento de ferimento grave"
+              ],
+              [
+                "7",
+                "Biblioteca de Memória",
+                "Descoberta vira preparo"
+              ],
+              [
+                "8",
+                "Sala de Música",
+                "Moral, trauma e vínculo"
+              ],
+              [
+                "9",
+                "Defesas Externas",
+                "Reduz surpresa"
+              ],
+              [
+                "10",
+                "Núcleo FUSHI",
+                "Ritual e estudo controlado"
+              ],
+              [
+                "11",
+                "Sala MUN",
+                "Rotas, relógio e checkpoints"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Economia ainda em construção",
+          "text": "Nomes, custo e bônus finais por bioma ainda precisam de balanceamento. A estrutura existe; não conceda buff numérico inexistente porque um upgrade ficou visualmente ativo."
+        }
+      ]
+    },
+    {
+      "id": "sessao",
+      "number": "M16",
+      "label": "Operação de sessão",
+      "summary": "Checklist de mesa, sigilo e continuidade para narrar sem procurar regra no improviso.",
+      "status": "canon",
+      "tags": [
+        "checklist",
+        "multiplayer",
+        "log"
+      ],
+      "searchTerms": [
+        "antes da sessão",
+        "mapa",
+        "jogador move token",
+        "interlúdio",
+        "backup"
+      ],
+      "blocks": [
+        {
+          "kind": "steps",
+          "title": "Antes de chamar jogadores",
+          "items": [
+            "Abra a release empacotada e confirme mapa ativo, personagens e campanha.",
+            "Inicie Multiplayer, aceite cada jogador e confira vínculo de ficha.",
+            "Teste uma rolagem Mestre > Jogador e uma Jogador > Mestre.",
+            "Teste régua, ficha remota e um interlúdio curto.",
+            "Prepare mapa sem puxar jogadores; só Ativar muda o mapa público.",
+            "Separe Livro do Jogador, Escudo do Mestre, MSC e NPCs da cena."
+          ]
+        },
+        {
+          "kind": "rule",
+          "title": "Permissões que não podem regredir",
+          "items": [
+            "Jogador não move token; Mestre move.",
+            "Jogador pode rolar, medir, consultar ficha e usar o que foi liberado.",
+            "Conteúdo do Mestre não é enviado como seção pública.",
+            "Preparar mapa muda a visão do Mestre; Ativar conduz os jogadores.",
+            "Retries de rede usam idempotência para não duplicar ação."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Quando a mesa travar narrativamente",
+          "table": {
+            "columns": [
+              "Problema",
+              "Pergunta de destrave"
+            ],
+            "rows": [
+              [
+                "Jogador não sabe o que fazer",
+                "Qual mudança você quer provocar: dano, posição, proteção, informação ou fuga?"
+              ],
+              [
+                "Combate vira só ataque",
+                "Há cobertura, manobra, ajuda, preparo ou objetivo além de Vida?"
+              ],
+              [
+                "Regra não existe",
+                "Qual risco foi anunciado e qual resultado mínimo resolve esta cena?"
+              ],
+              [
+                "Segredo pode vazar",
+                "A informação é sensação pública, interpretação ou verdade do Mestre?"
+              ],
+              [
+                "Boss parece saco de Vida",
+                "Qual fase, telégrafo ou condição de vitória está ativa?"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Depois da sessão",
+          "items": [
+            "Registrar mortes, recursos, integrações, Rituais e mudanças de MUN.",
+            "Separar decisão de mesa de regra permanente.",
+            "Atualizar fichas reais, não mocks.",
+            "Guardar checkpoint antes de conteúdo novo."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "compendio",
+      "number": "M17",
+      "label": "Compêndio vivo",
+      "summary": "Personagens, NPCs, mobs, Habilidades e Rituais lidos do workspace real.",
+      "status": "canon",
+      "tags": [
+        "workspace",
+        "NPC",
+        "fichas"
+      ],
+      "searchTerms": [
+        "personagens",
+        "mobs",
+        "habilidades",
+        "ataques",
+        "rituais",
+        "Vhazaryon"
+      ],
+      "blocks": [
+        {
+          "kind": "lead",
+          "tone": "info",
+          "title": "Este capítulo é gerado, não digitado duas vezes",
+          "text": "No app, a lista usa o workspace ativo. No PDF do Mestre, o apêndice é congelado com data e origem para registrar exatamente quais fichas existiam na edição. Personagem de teste e seed não entram."
+        },
+        {
+          "kind": "rule",
+          "title": "Cada ficha do compêndio mostra",
+          "items": [
+            "Tipo, facção, local, Nível e Nível de Poder registrado.",
+            "Atributos, Vida, FUSHI, Determinação, CA, Bloqueio, Esquiva e Deslocamento.",
+            "História, objetivo, aparência e personalidade disponíveis.",
+            "Ataques, Habilidades e Rituais com texto e automação persistida.",
+            "Fonte e data do snapshot."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Ficha real não significa balanceamento final",
+          "text": "O compêndio documenta o estado persistido; não aprova automaticamente números antigos, DTs legadas ou boss sem fases. Divergências entram na revisão individual, nunca em reescrita automática."
+        }
+      ]
+    },
+    {
+      "id": "bibliografia",
+      "number": "M18",
+      "label": "Bibliografia e manutenção",
+      "summary": "Fontes internas, referências de design e processo de atualização dos dois livros.",
+      "status": "canon",
+      "tags": [
+        "fontes",
+        "edição",
+        "manutenção"
+      ],
+      "searchTerms": [
+        "bibliografia",
+        "referência",
+        "versão",
+        "atualização"
+      ],
+      "blocks": [
+        {
+          "kind": "rule",
+          "title": "Uma regra, três saídas",
+          "text": "A fonte estruturada gera a leitura do app, o Livro do Jogador e o Livro do Mestre. Toda mudança pública precisa aparecer nos dois volumes; toda mudança secreta aparece somente no Mestre."
+        },
+        {
+          "kind": "bullets",
+          "title": "Fechamento editorial",
+          "items": [
+            "Atualizar decisão e status: Cânone, Em teste ou Em construção.",
+            "Regerar PDFs e conferir todas as páginas.",
+            "Validar busca e sigilo no app em Mestre e Jogador.",
+            "Rodar build, smokes e release real quando a UI mudar.",
+            "Registrar data do workspace usado no Compêndio."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Texto autoral e referências",
+          "text": "As regras e a campanha FUSHI são material autoral do projeto. Referências externas servem apenas para comparação editorial e tradição de design; nenhum texto de outro livro deve ser copiado."
+        }
+      ]
+    }
+  ]
+}

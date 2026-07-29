@@ -26,10 +26,12 @@ export function createCombatRollConfig(input: {
   bonusPericia?: number
   modo?: RollMode
 }): RollConfig {
+  const attribute = Math.max(0, Math.round(input.atributo))
+
   return createAttributeRollConfig(
-    Math.max(1, input.atributo),
+    attribute === 0 ? 2 : attribute,
     input.bonusPericia ?? 0,
-    input.modo ?? 'highest',
+    input.modo ?? (attribute === 0 ? 'lowest' : 'highest'),
   )
 }
 

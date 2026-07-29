@@ -1,0 +1,343 @@
+{
+  "generatedAt": "2026-07-23T00:39:21.567Z",
+  "plan": [
+    {
+      "changes": [],
+      "id": "npc-e1",
+      "name": "Eiran",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-6c77da3a-dd78-4489-8b0d-656bd852b76e",
+      "name": "Fragmentado",
+      "type": "player"
+    },
+    {
+      "changes": [],
+      "id": "character-317d37b0-0ef8-43cc-89cb-48383d0edc72",
+      "name": "Aureon",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-52a4bd61-9a98-4526-ad01-a40c52787230",
+      "name": "Kael",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-63f669b8-e592-4335-b255-4ec5b4b5c732",
+      "name": "Lux",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-073b29d3-5f70-4e41-95d0-e26f4a519da8",
+      "name": "Gorin",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-29c41ff7-5811-48a3-9a02-0201dab0c35a",
+      "name": "Musashi",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "name": "Yanzik",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "name": "Seraph",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-21db1e04-ce97-47d9-91ac-1765d98f8c01",
+      "name": "Velkar",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+      "name": "Ryoku",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-c2ec2518-b254-4ef3-8b63-7a5dfb9eb909",
+      "name": "Jaxir",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-d363865a-77b1-4415-97d6-3dad86744a40",
+      "name": "Lyssara",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-038258c8-aea8-4b52-97b6-112b21b4ad2f",
+      "name": "Kairo",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-19595965-a972-4ff9-af7e-c2d58bcd3857",
+      "name": "Elion",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-36ce8cc9-8621-48fb-9206-925e6126c5c6",
+      "name": "Arven",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-f4b53e99-7640-4a1d-852b-16951ff3b86e",
+      "name": "Varek",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-0204b270-a761-4248-9110-724c76155792",
+      "name": "Aeron",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-d2d4a2a0-7cfb-4157-b012-b10b55639dc5",
+      "name": "Sélian Velan",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-c95a36cd-4dbd-4909-a703-44408b2cf0a4",
+      "name": "Kaíros",
+      "type": "player"
+    },
+    {
+      "changes": [],
+      "id": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+      "name": "Yor",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-dcffbf0f-fe93-4e2d-83b2-7799dfc06c03",
+      "name": "Maelra",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-3ed3206c-769e-4475-96d3-9002d6b7d8ba",
+      "name": "Veyra",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-6a172a0f-5f32-4529-b5e8-e83dbe450849",
+      "name": "Liryssa",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-c924a24e-a2e8-4227-8a51-ee815d0b0b2b",
+      "name": "Varden",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+      "name": "Nyx",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-3bb5c7d5-f6f2-410c-8934-2f2caa58c0f1",
+      "name": "Bront",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "name": "Morghast",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "name": "Euryaleth",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "name": "Vorashk",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "name": "Aeronyx",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "name": "Thal’Zhyr",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "name": "Astrael",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "player-davi-paixao",
+      "name": "Davi",
+      "type": "player"
+    },
+    {
+      "changes": [],
+      "id": "player-connor-mayweather",
+      "name": "Connor",
+      "type": "player"
+    },
+    {
+      "changes": [],
+      "id": "player-keal-lebranc",
+      "name": "Kael",
+      "type": "player"
+    },
+    {
+      "changes": [],
+      "id": "player-ruiz-sem-nome",
+      "name": "Grim",
+      "type": "player"
+    },
+    {
+      "changes": [],
+      "id": "npc-vila-elara-vonn",
+      "name": "Elara",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "npc-vila-orian-vonn",
+      "name": "Orian",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "npc-vila-nilo-arven",
+      "name": "Nilo",
+      "type": "npc"
+    },
+    {
+      "changes": [
+        "Maira Velan: Bloqueio 8 -> 0 por Fortitude"
+      ],
+      "id": "npc-d1",
+      "name": "Maira Velan",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "npc-vila-dalvo-seren",
+      "name": "Dalvo",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "npc-vila-elias-norem",
+      "name": "Elias",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "npc-vila-nayr-velcaris",
+      "name": "Nayr",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "npc-vila-renji-akimura",
+      "name": "Renji",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "npc-vila-kazuo-kato",
+      "name": "Kazuo",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "mob-lobo-cinzento-basico",
+      "name": "Lobo Cinzento",
+      "type": "mob"
+    },
+    {
+      "changes": [],
+      "id": "mob-lobo-fushi-marcado",
+      "name": "Lobo Marcado por FUSHI",
+      "type": "mob"
+    },
+    {
+      "changes": [],
+      "id": "mob-eco-liora-riacho",
+      "name": "Eco de Liora",
+      "type": "mob"
+    },
+    {
+      "changes": [],
+      "id": "character-dc758c81-53f2-4cea-953e-ee205f8586a2",
+      "name": "Teste",
+      "type": "player"
+    },
+    {
+      "changes": [],
+      "id": "npc-lore-vhazaryon",
+      "name": "Vhazaryon",
+      "type": "npc"
+    },
+    {
+      "changes": [],
+      "id": "mob-eco-kael-interno",
+      "name": "Eco de Kael",
+      "type": "mob"
+    },
+    {
+      "changes": [],
+      "id": "mob-eco-kairos-interno",
+      "name": "Eco de Kairos",
+      "type": "mob"
+    },
+    {
+      "changes": [],
+      "id": "mob-eco-davi-interno",
+      "name": "Eco de Davi",
+      "type": "mob"
+    },
+    {
+      "changes": [],
+      "id": "mob-eco-grim-interno",
+      "name": "Eco de Grim",
+      "type": "mob"
+    },
+    {
+      "changes": [],
+      "id": "mob-eco-connor-interno",
+      "name": "Eco de Connor",
+      "type": "mob"
+    }
+  ]
+}

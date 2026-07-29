@@ -656,6 +656,13 @@ function getProductionClass(character, loreRecord) {
   return 'FICHA BASICA'
 }
 
+function isDerivedMemoryEchoMob(character) {
+  return (
+    character?.faccao === 'ecos-memoria' ||
+    String(character?.id || '').startsWith('mob-eco-')
+  )
+}
+
 function getCampaignGroup(row) {
   if (String(row.status).includes('placeholder')) return 'Placeholder/Teste'
   if (row.tipo === 'player') return 'Protagonista'
@@ -923,7 +930,9 @@ async function main() {
     const factionNameById = new Map(factions.map((faction) => [faction.id, faction.nome]))
     const characterThemeSlots = audioModule.TABLETOP_CHARACTER_THEME_SLOTS || []
     const workspaceCharacters = getCharactersFromWorkspace()
-    const characters = workspaceCharacters.characters
+    const characters = workspaceCharacters.characters.filter(
+      (character) => normalizeText(String(character?.nome || '')) !== 'teste',
+    )
     const munAudit = readJson(path.join(outputRoot, 'mun-interludes-audit.json'), {})
     const baseManifest = readJson(
       path.join(publicAssetRoot, 'maps', 'base-upgrades', 'base-upgrades-manifest.json'),
@@ -972,19 +981,23 @@ async function main() {
     const loreFolders = scanLoreFolders()
     const premiseLore = scanPremiseLore()
     const npcMechanicsRows = characters.map((character) => {
+      const isDerivedEchoMob = isDerivedMemoryEchoMob(character)
       const protagonistLinks = character.tipo === 'player'
         ? getProtagonistLinks(character, loreFolders, premiseLore)
         : { realBody: null, villageBody: null, premiseRecords: [] }
-      const loreRecord = protagonistLinks.realBody || protagonistLinks.villageBody || findLoreRecord(character, loreFolders)
+      const loreRecord = isDerivedEchoMob
+        ? null
+        : protagonistLinks.realBody || protagonistLinks.villageBody || findLoreRecord(character, loreFolders)
       const abilities = Array.isArray(character.habilidades) ? character.habilidades : []
       const detailedAbilities = Array.isArray(character.habilidadesDetalhadas)
         ? character.habilidadesDetalhadas
         : []
       const attacks = Array.isArray(character.ataques) ? character.ataques : []
       const skills = Array.isArray(character.pericias) ? character.pericias : []
-      const hasPlaceholderAbility = abilities.some((ability) =>
-        /placeholder|pendente|todo/i.test(String(ability)),
-      )
+      const hasPlaceholderAbility = abilities.some((ability) => {
+        const text = String(ability)
+        return /\bplaceholder\b|\bpendente\b/i.test(text) || /\bTODO\b/.test(text)
+      })
       const hasPlaceholderName = /placeholder|teste|exemplo/i.test(String(character.nome || character.id || ''))
       const hasAppLore = textLength(character.notas, character.resumo, character.descricao) >= 80
       const hasAppHistory = textLength(character.descricao?.historia) >= 80

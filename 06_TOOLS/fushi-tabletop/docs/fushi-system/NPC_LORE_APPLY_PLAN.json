@@ -1,0 +1,567 @@
+[
+  {
+    "action": "update",
+    "appCharacterId": "character-317d37b0-0ef8-43cc-89cb-48383d0edc72",
+    "appCharacterName": "Aureon",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 3"
+    ],
+    "name": "Aureon",
+    "sourcePath": "01_LORE/npcs/Facções/(A) Monges (Montanhas)(.)/Aureon (Android 16)/Lore + Ficha Aureon.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "npc-e1",
+    "appCharacterName": "Eiran",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 3"
+    ],
+    "name": "Eiran",
+    "sourcePath": "01_LORE/npcs/Facções/(A) Monges (Montanhas)(.)/Eiran (Thorfinn)/Lore+Ficha Eiran.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-52a4bd61-9a98-4526-ad01-a40c52787230",
+    "appCharacterName": "Kael",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Avancado"
+    },
+    "changes": [
+      "acoes automatizadas: 6"
+    ],
+    "name": "Kael",
+    "sourcePath": "01_LORE/npcs/Facções/(A) Monges (Montanhas)(.)/Kael (Aang)/Lore+Ficha Kael.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-63f669b8-e592-4335-b255-4ec5b4b5c732",
+    "appCharacterName": "Lux",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Avancado"
+    },
+    "changes": [
+      "acoes automatizadas: 6"
+    ],
+    "name": "Lux",
+    "sourcePath": "01_LORE/npcs/Facções/(A) Monges (Montanhas)(.)/Lux (Satoru Gojou)/Lore + Ficha Lux.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-29c41ff7-5811-48a3-9a02-0201dab0c35a",
+    "appCharacterName": "Musashi",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 3"
+    ],
+    "name": "Musashi",
+    "sourcePath": "01_LORE/npcs/Facções/(A) Monges (Montanhas)(.)/Musashi (Musashi)/Lore + Ficha Musashi.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-c2ec2518-b254-4ef3-8b63-7a5dfb9eb909",
+    "appCharacterName": "Jaxir",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Avancado"
+    },
+    "changes": [
+      "acoes automatizadas: 6"
+    ],
+    "name": "Jaxir",
+    "sourcePath": "01_LORE/npcs/Facções/(B) FUSHI escuro (Andarilho)(.)/Jaxir (Hisoka)/Lore + Ficha Jaxir.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-d363865a-77b1-4415-97d6-3dad86744a40",
+    "appCharacterName": "Lyssara",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 5"
+    ],
+    "name": "Lyssara",
+    "sourcePath": "01_LORE/npcs/Facções/(B) FUSHI escuro (Andarilho)(.)/Lyssara (Succubus humana)/Lore + Ficha Lyssara.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+    "appCharacterName": "Ryoku",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Cataclisma"
+    },
+    "changes": [
+      "acoes automatizadas: 3"
+    ],
+    "name": "Ryoku",
+    "sourcePath": "01_LORE/npcs/Facções/(B) FUSHI escuro (Andarilho)(.)/Ryoku (Sukuna)/Lore + Ficha Ryoku.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+    "appCharacterName": "Seraph",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 5"
+    ],
+    "name": "Seraph",
+    "sourcePath": "01_LORE/npcs/Facções/(B) FUSHI escuro (Andarilho)(.)/Seraph (Griffith)/Lore + Ficha Seraph.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-21db1e04-ce97-47d9-91ac-1765d98f8c01",
+    "appCharacterName": "Velkar",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Avancado"
+    },
+    "changes": [
+      "acoes automatizadas: 6"
+    ],
+    "name": "Velkar",
+    "sourcePath": "01_LORE/npcs/Facções/(B) FUSHI escuro (Andarilho)(.)/Velkar ( Mahito)/Lore + Ficha Velkar.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+    "appCharacterName": "Yanzik",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 4"
+    ],
+    "name": "Yanzik",
+    "sourcePath": "01_LORE/npcs/Facções/(B) FUSHI escuro (Andarilho)(.)/Yanzik (Guts)/Lore + Ficha Yanzik.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-0204b270-a761-4248-9110-724c76155792",
+    "appCharacterName": "Aeron",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 4"
+    ],
+    "name": "Aeron",
+    "sourcePath": "01_LORE/npcs/Facções/(C) Detetives (Véu cinzento)(.)/Aeron (Loid)/Lore + Ficha Aeron.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-36ce8cc9-8621-48fb-9206-925e6126c5c6",
+    "appCharacterName": "Arven",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 4"
+    ],
+    "name": "Arven",
+    "sourcePath": "01_LORE/npcs/Facções/(C) Detetives (Véu cinzento)(.)/Arven (Erwin)/Lore + Ficha Arven.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-19595965-a972-4ff9-af7e-c2d58bcd3857",
+    "appCharacterName": "Elion",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 4"
+    ],
+    "name": "Elion",
+    "sourcePath": "01_LORE/npcs/Facções/(C) Detetives (Véu cinzento)(.)/Elion (L)/Lore + Ficha Elion.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-038258c8-aea8-4b52-97b6-112b21b4ad2f",
+    "appCharacterName": "Kairo",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Avancado"
+    },
+    "changes": [
+      "acoes automatizadas: 5"
+    ],
+    "name": "Kairo",
+    "sourcePath": "01_LORE/npcs/Facções/(C) Detetives (Véu cinzento)(.)/Kairo (Ayanokoji)/Lore + Ficha Kairo.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-f4b53e99-7640-4a1d-852b-16951ff3b86e",
+    "appCharacterName": "Varek",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Ascensao"
+    },
+    "changes": [
+      "acoes automatizadas: 5"
+    ],
+    "name": "Varek",
+    "sourcePath": "01_LORE/npcs/Facções/(C) Detetives (Véu cinzento)(.)/Varek (Levi)/Ficha + Lore Varek.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "npc-vila-dalvo-seren",
+    "appCharacterName": "Dalvo",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "nome: Dalvo -> Dalvo Seren",
+      "acoes automatizadas: 4"
+    ],
+    "name": "Dalvo Seren",
+    "sourcePath": "01_LORE/npcs/Facções/(D) Villa (Planicie) (Protagonistas)/Dalvo (Protagonista ... ; Ruiz)/Lore + Ficha Dalvo.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "npc-vila-elara-vonn",
+    "appCharacterName": "Elara",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "nome: Elara -> Elara Vonn",
+      "acoes automatizadas: 3"
+    ],
+    "name": "Elara Vonn",
+    "sourcePath": "01_LORE/npcs/Facções/(D) Villa (Planicie) (Protagonistas)/Elara (Lider da Vila)/Lore + Ficha Elara.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "npc-vila-elias-norem",
+    "appCharacterName": "Elias",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "nome: Elias -> Elias Norem",
+      "acoes automatizadas: 4"
+    ],
+    "name": "Elias Norem",
+    "sourcePath": "01_LORE/npcs/Facções/(D) Villa (Planicie) (Protagonistas)/Elias (Protagonista Davi; Davi)/Lore + Ficha Elias.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "npc-vila-kazuo-kato",
+    "appCharacterName": "Kazuo",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 4"
+    ],
+    "name": "Kazuo",
+    "sourcePath": "01_LORE/npcs/Facções/(D) Villa (Planicie) (Protagonistas)/Kazuo (Mestre de Renji)/Lore + Ficha Kazuo.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "npc-d1",
+    "appCharacterName": "Maira Velan",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "protecao: Roupas grossas e xale reforcado -> roupas grossas e xale reforçado",
+      "acoes automatizadas: 4"
+    ],
+    "name": "Maira Velan",
+    "sourcePath": "01_LORE/npcs/Facções/(D) Villa (Planicie) (Protagonistas)/Maira (Mãe de Sélian)/Lore + Ficha Maira.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "npc-vila-nayr-velcaris",
+    "appCharacterName": "Nayr",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "nome: Nayr -> Nayr Velcaris",
+      "acoes automatizadas: 5"
+    ],
+    "name": "Nayr Velcaris",
+    "sourcePath": "01_LORE/npcs/Facções/(D) Villa (Planicie) (Protagonistas)/Nayr (Protagonista Kael; Pyetro)/Lore + Ficha Nayr.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "npc-vila-nilo-arven",
+    "appCharacterName": "Nilo",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "nome: Nilo -> Nilo Arven",
+      "acoes automatizadas: 4"
+    ],
+    "name": "Nilo Arven",
+    "sourcePath": "01_LORE/npcs/Facções/(D) Villa (Planicie) (Protagonistas)/Nilo (Inspirado Ekko)/Lore + Ficha Nilo.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "npc-vila-orian-vonn",
+    "appCharacterName": "Orian",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "nome: Orian -> Orian Vonn",
+      "acoes automatizadas: 4"
+    ],
+    "name": "Orian Vonn",
+    "sourcePath": "01_LORE/npcs/Facções/(D) Villa (Planicie) (Protagonistas)/Orian (Marido Cartografo)/Lore + Ficha Orian.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "npc-vila-renji-akimura",
+    "appCharacterName": "Renji",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "nome: Renji -> Renji Akimura",
+      "acoes automatizadas: 4"
+    ],
+    "name": "Renji Akimura",
+    "sourcePath": "01_LORE/npcs/Facções/(D) Villa (Planicie) (Protagonistas)/Renji (Protagonista Connor; Emanuel)/Lore + Ficha Renji.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-d2d4a2a0-7cfb-4157-b012-b10b55639dc5",
+    "appCharacterName": "Sélian Velan",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 3"
+    ],
+    "name": "Sélian Velan",
+    "sourcePath": "01_LORE/npcs/Facções/(D) Villa (Planicie) (Protagonistas)/Sélian (Protagonista Kairos ; Kuster)/Lore + Ficha Sélian.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-3bb5c7d5-f6f2-410c-8934-2f2caa58c0f1",
+    "appCharacterName": "Bront",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 3"
+    ],
+    "name": "Bront",
+    "sourcePath": "01_LORE/npcs/Facções/(E) Aventureiros Maré (Mar)/Bront (Cozinheiro Naval)/Lore + Ficha Bront.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-6a172a0f-5f32-4529-b5e8-e83dbe450849",
+    "appCharacterName": "Liryssa",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Avancado"
+    },
+    "changes": [
+      "habilidades: 3 -> 4",
+      "acoes automatizadas: 3"
+    ],
+    "name": "Liryssa",
+    "sourcePath": "01_LORE/npcs/Facções/(E) Aventureiros Maré (Mar)/Lyrissa (Capitã)/Lore + Ficha Lyrissa.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-dcffbf0f-fe93-4e2d-83b2-7799dfc06c03",
+    "appCharacterName": "Maelra",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Avancado"
+    },
+    "changes": [
+      "acoes automatizadas: 6"
+    ],
+    "name": "Maelra",
+    "sourcePath": "01_LORE/npcs/Facções/(E) Aventureiros Maré (Mar)/Maelra (Cura)/Lore + Ficha Maelra.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+    "appCharacterName": "Nyx",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Avancado"
+    },
+    "changes": [
+      "acoes automatizadas: 6"
+    ],
+    "name": "Nyx",
+    "sourcePath": "01_LORE/npcs/Facções/(E) Aventureiros Maré (Mar)/Nyx (Cyber Punk Gamer)/Lore + Ficha Nyx.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-c924a24e-a2e8-4227-8a51-ee815d0b0b2b",
+    "appCharacterName": "Varden",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Basico"
+    },
+    "changes": [
+      "acoes automatizadas: 3"
+    ],
+    "name": "Varden",
+    "sourcePath": "01_LORE/npcs/Facções/(E) Aventureiros Maré (Mar)/Varden (Frankstain)/Lore + Ficha Varden.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-3ed3206c-769e-4475-96d3-9002d6b7d8ba",
+    "appCharacterName": "Veyra",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Avancado"
+    },
+    "changes": [
+      "habilidades: 3 -> 4",
+      "acoes automatizadas: 4"
+    ],
+    "name": "Veyra",
+    "sourcePath": "01_LORE/npcs/Facções/(E) Aventureiros Maré (Mar)/Veyra (Yumeko)/Lore + Ficha Veyra.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+    "appCharacterName": "Aeronyx",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Ascensao"
+    },
+    "changes": [
+      "acoes automatizadas: 6"
+    ],
+    "name": "Aeronyx",
+    "sourcePath": "01_LORE/npcs/Facções/(F) Guardiões (Vulcão)/Aeronyx (Guardião 4)/Lore + Ficha Aeronyx.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+    "appCharacterName": "Astrael",
+    "balance": {
+      "notes": [
+        "Cataclisma com CA abaixo de 30; conferir regra de fase."
+      ],
+      "powerLevel": "Cataclisma"
+    },
+    "changes": [
+      "defesa: 30 -> 26",
+      "acoes automatizadas: 10"
+    ],
+    "name": "Astrael",
+    "sourcePath": "01_LORE/npcs/Facções/(F) Guardiões (Vulcão)/Astrael (Guardião 6)/Lore + Ficha Astrael.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+    "appCharacterName": "Euryaleth",
+    "balance": {
+      "notes": [
+        "Ascensao com CA abaixo de 25; conferir fase/item defensivo."
+      ],
+      "powerLevel": "Ascensao"
+    },
+    "changes": [
+      "defesa: 25 -> 24",
+      "acoes automatizadas: 4"
+    ],
+    "name": "Euryaleth",
+    "sourcePath": "01_LORE/npcs/Facções/(F) Guardiões (Vulcão)/Euryaleth (Guardião 2)/Lore + Ficha Euryaleth.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+    "appCharacterName": "Morghast",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Ascensao"
+    },
+    "changes": [
+      "acoes automatizadas: 5"
+    ],
+    "name": "Morghast",
+    "sourcePath": "01_LORE/npcs/Facções/(F) Guardiões (Vulcão)/Morghast (Guardião 1)/Lore + Ficha Morghast.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+    "appCharacterName": "Thal’Zhyr",
+    "balance": {
+      "notes": [
+        "Cataclisma com CA abaixo de 30; conferir regra de fase."
+      ],
+      "powerLevel": "Cataclisma"
+    },
+    "changes": [
+      "defesa: 30 -> 25",
+      "acoes automatizadas: 3"
+    ],
+    "name": "Thal’Zhyr",
+    "sourcePath": "01_LORE/npcs/Facções/(F) Guardiões (Vulcão)/Thal’Zhyr (Guardião 5)/Lore + Ficha Thal’Zhyr.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "npc-lore-vhazaryon",
+    "appCharacterName": "Vhazaryon",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Cataclisma"
+    },
+    "changes": [
+      "acoes automatizadas: 9"
+    ],
+    "name": "Vhazaryon",
+    "sourcePath": "01_LORE/npcs/Facções/(F) Guardiões (Vulcão)/Vhazaryon (Dragão FUSHI)/Lore + Ficha Dragão.txt"
+  },
+  {
+    "action": "update",
+    "appCharacterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+    "appCharacterName": "Vorashk",
+    "balance": {
+      "notes": [],
+      "powerLevel": "Ascensao"
+    },
+    "changes": [
+      "acoes automatizadas: 4"
+    ],
+    "name": "Vorashk",
+    "sourcePath": "01_LORE/npcs/Facções/(F) Guardiões (Vulcão)/Vorashk (Guardião 3)/Lore +Ficha Vorashk.txt"
+  }
+]

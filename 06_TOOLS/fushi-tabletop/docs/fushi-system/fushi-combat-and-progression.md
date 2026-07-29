@@ -24,8 +24,8 @@
 ## Defesa e reacao
 
 - CA base = valor da ficha/equipamento/Nivel de Poder.
-- Esquiva = CA base + Agilidade + Reflexos.
-- Bloqueio reduz metade da CA base do dano recebido.
+- Esquiva = CA atual + Agilidade + Reflexos; e fixa e gasta Reacao.
+- Bloqueio reduz o dano pelo bonus de Fortitude, com teto normal 15.
 - Contra-ataque usa CA base; se o ataque inimigo nao alcancar a CA base, o defensor contra-ataca.
 - Cada consciencia pode escolher apenas 1 reacao por turno: Bloqueio, Esquiva ou Contra-ataque.
 - A reacao volta quando a iniciativa retorna para aquela consciencia.

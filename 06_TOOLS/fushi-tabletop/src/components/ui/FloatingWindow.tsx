@@ -110,6 +110,10 @@ export function FloatingWindow({
   const dragStateRef = useRef<DragState | null>(null)
   const resizeStateRef = useRef<ResizeState | null>(null)
   const lastMinimizeSignalRef = useRef(minimizeSignal)
+  const lastRestoreSignalRef = useRef(restoreSignal)
+  const isMinimizedRef = useRef(false)
+  const minimizedByGlobalRollRef = useRef(false)
+  const minimizedBySignalRef = useRef(false)
   const [position, setPosition] = useState(() => ({
     x: initialPosition?.x ?? 96,
     y: initialPosition?.y ?? 96,
@@ -124,6 +128,10 @@ export function FloatingWindow({
   const [isExpanded, setIsExpanded] = useState(Boolean(defaultExpanded))
   const [isCompact, setIsCompact] = useState(false)
 
+  useEffect(() => {
+    isMinimizedRef.current = isMinimized
+  }, [isMinimized])
+
   const classes = useMemo(
     () =>
       `floating-window${isExpanded ? ' floating-window--expanded' : ''}${
@@ -136,19 +144,21 @@ export function FloatingWindow({
 
   useEffect(() => {
     if (restoreSignal === undefined) {
+      lastRestoreSignalRef.current = restoreSignal
       return
     }
 
+    if (lastRestoreSignalRef.current === restoreSignal) {
+      return
+    }
+
+    lastRestoreSignalRef.current = restoreSignal
+
+    minimizedBySignalRef.current = false
+    minimizedByGlobalRollRef.current = false
     dragStateRef.current = null
     resizeStateRef.current = null
-
-    const timeoutId = window.setTimeout(() => {
-      setIsMinimized(false)
-    }, 0)
-
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
+    setIsMinimized(false)
   }, [restoreSignal])
 
   useEffect(() => {
@@ -164,8 +174,42 @@ export function FloatingWindow({
     lastMinimizeSignalRef.current = minimizeSignal
     dragStateRef.current = null
     resizeStateRef.current = null
-    setIsMinimized(true)
+
+    if (!isMinimizedRef.current) {
+      minimizedBySignalRef.current = true
+      setIsMinimized(true)
+    }
   }, [minimizeSignal])
+
+  useEffect(() => {
+    const handleGlobalMinimize = () => {
+      dragStateRef.current = null
+      resizeStateRef.current = null
+
+      if (!isMinimizedRef.current) {
+        minimizedByGlobalRollRef.current = true
+        setIsMinimized(true)
+      }
+    }
+    const handleGlobalRestore = () => {
+      if (!minimizedByGlobalRollRef.current) {
+        return
+      }
+
+      minimizedByGlobalRollRef.current = false
+      dragStateRef.current = null
+      resizeStateRef.current = null
+      setIsMinimized(false)
+    }
+
+    window.addEventListener('fushi:tabletop-windows-minimize', handleGlobalMinimize)
+    window.addEventListener('fushi:tabletop-windows-restore', handleGlobalRestore)
+
+    return () => {
+      window.removeEventListener('fushi:tabletop-windows-minimize', handleGlobalMinimize)
+      window.removeEventListener('fushi:tabletop-windows-restore', handleGlobalRestore)
+    }
+  }, [])
 
   useEffect(() => {
     function handlePointerMove(event: PointerEvent) {
@@ -278,6 +322,8 @@ export function FloatingWindow({
   function toggleMinimized() {
     dragStateRef.current = null
     resizeStateRef.current = null
+    minimizedByGlobalRollRef.current = false
+    minimizedBySignalRef.current = false
     setIsMinimized((currentState) => !currentState)
   }
 

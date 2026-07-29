@@ -221,6 +221,13 @@ async function rollDie(send, diceType, randomValue, expectedValue) {
     24,
     250,
   )
+  await delay(1_100)
+  if (settled) {
+    settled.minimized = await evaluate(
+      send,
+      `Boolean(document.querySelector('.floating-window--log.floating-window--minimized'))`,
+    )
+  }
 
   return {
     ...clickResult,
@@ -307,7 +314,7 @@ async function main() {
       settled.total !== String(result.expectedValue) ||
       settled.outcome !== result.expectedOutcome ||
       settled.notation !== result.expectedNotation ||
-      !settled.minimized
+      settled.minimized !== false
     )
   })
 

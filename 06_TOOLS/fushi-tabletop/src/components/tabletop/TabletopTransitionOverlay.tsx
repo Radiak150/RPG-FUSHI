@@ -8,11 +8,13 @@ const ENTER_DURATION_MS = 260
 const EXIT_DURATION_MS = 320
 const PLAYBACK_BROADCAST_INTERVAL_MS = 220
 const VIDEO_END_EPSILON_SECONDS = 0.08
+const VIDEO_READY_TIMEOUT_MS = 2200
 
 interface TabletopTransitionOverlayProps {
   transition: TabletopTransitionAsset
   scenePreviewUrl?: string | null
   isGm: boolean
+  preferStillMedia?: boolean
   playbackState?: SharedTransitionPlaybackState | null
   onPlaybackStateChange?: (state: SharedTransitionPlaybackState) => void
   onConfirm: () => void
@@ -97,6 +99,7 @@ export function TabletopTransitionOverlay({
   transition,
   scenePreviewUrl,
   isGm,
+  preferStillMedia = false,
   playbackState,
   onPlaybackStateChange,
   onConfirm,
@@ -115,11 +118,15 @@ export function TabletopTransitionOverlay({
   const [scrubProgress, setScrubProgress] = useState<number | null>(null)
   const [videoDuration, setVideoDuration] = useState(0)
   const [mediaFailureKey, setMediaFailureKey] = useState('')
+  const [videoReadyKey, setVideoReadyKey] = useState('')
   const lastBroadcastAtRef = useRef(0)
   const mediaKind = useMemo(() => resolveTransitionMediaKind(transition), [transition])
   const transitionMediaKey = `${transition.id}:${transition.assetUrl}`
   const mediaFailed = mediaFailureKey === transitionMediaKey
-  const playbackMediaKind: TransitionMediaKind = mediaFailed ? 'image' : mediaKind
+  const shouldUseStillMedia = preferStillMedia && mediaKind === 'video'
+  const playbackMediaKind: TransitionMediaKind =
+    mediaFailed || shouldUseStillMedia ? 'image' : mediaKind
+  const videoReady = videoReadyKey === transitionMediaKey
   const displayedProgress = scrubProgress ?? progress
   const timelineMaxSeconds =
     playbackMediaKind === 'video'
@@ -201,6 +208,45 @@ export function TabletopTransitionOverlay({
     },
     [isGm, onPlaybackStateChange, transition.id, transition.toMapId],
   )
+
+  const handleMediaError = useCallback(() => {
+    const video = videoRef.current
+
+    if (video) {
+      video.pause()
+      video.removeAttribute('src')
+      video.load()
+    }
+
+    setMediaFailureKey(transitionMediaKey)
+    setScrubProgress(null)
+    pendingVideoSeekProgressRef.current = null
+    imageProgressRef.current = 0
+    imageTimestampRef.current = null
+    setProgress(0)
+    setIsPlaying(true)
+
+    if (isGm) {
+      emitPlaybackState({
+        currentTime: 0,
+        paused: false,
+      })
+    }
+  }, [emitPlaybackState, isGm, transitionMediaKey])
+
+  useEffect(() => {
+    const video = videoRef.current
+
+    return () => {
+      if (!video) {
+        return
+      }
+
+      video.pause()
+      video.removeAttribute('src')
+      video.load()
+    }
+  }, [transitionMediaKey])
 
   useEffect(() => {
     if (
@@ -322,14 +368,23 @@ export function TabletopTransitionOverlay({
   ])
 
   useEffect(() => {
-    if (mediaKind !== 'video' || !videoRef.current || mediaFailed) {
+    if (
+      mediaKind !== 'video' ||
+      playbackMediaKind !== 'video' ||
+      !videoRef.current ||
+      mediaFailed
+    ) {
       return
     }
 
     videoRef.current.muted = isReadOnly
     videoRef.current.volume = isReadOnly ? 0 : 1
 
-    if (phase === 'exiting' || !playbackIsPlaying || scrubProgress !== null) {
+    if (
+      phase === 'exiting' ||
+      !playbackIsPlaying ||
+      scrubProgress !== null
+    ) {
       videoRef.current.pause()
       return
     }
@@ -337,11 +392,20 @@ export function TabletopTransitionOverlay({
     void videoRef.current.play().catch(() => {
       return
     })
-  }, [isReadOnly, mediaFailed, mediaKind, phase, playbackIsPlaying, scrubProgress])
+  }, [
+    isReadOnly,
+    mediaFailed,
+    mediaKind,
+    phase,
+    playbackIsPlaying,
+    playbackMediaKind,
+    scrubProgress,
+  ])
 
   useEffect(() => {
     if (
       mediaKind !== 'video' ||
+      playbackMediaKind !== 'video' ||
       isReadOnly ||
       mediaFailed ||
       phase === 'exiting' ||
@@ -378,7 +442,30 @@ export function TabletopTransitionOverlay({
     mediaKind,
     phase,
     playbackIsPlaying,
+    playbackMediaKind,
     scrubProgress,
+  ])
+
+  useEffect(() => {
+    if (playbackMediaKind !== 'video' || mediaFailed) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      if (videoReadyKey !== transitionMediaKey) {
+        handleMediaError()
+      }
+    }, VIDEO_READY_TIMEOUT_MS)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [
+    handleMediaError,
+    mediaFailed,
+    playbackMediaKind,
+    transitionMediaKey,
+    videoReadyKey,
   ])
 
   useEffect(() => {
@@ -437,20 +524,11 @@ export function TabletopTransitionOverlay({
     }
   }
 
-  function handleMediaError() {
-    setMediaFailureKey(transitionMediaKey)
-    setScrubProgress(null)
-    pendingVideoSeekProgressRef.current = null
-    imageProgressRef.current = 0
-    imageTimestampRef.current = null
-    setProgress(0)
-    setIsPlaying(true)
+  function handleVideoReady() {
+    setVideoReadyKey(transitionMediaKey)
 
-    if (isGm) {
-      emitPlaybackState({
-        currentTime: 0,
-        paused: false,
-      })
+    if (videoRef.current) {
+      setVideoDuration(getVideoDuration(videoRef.current))
     }
   }
 
@@ -653,31 +731,48 @@ export function TabletopTransitionOverlay({
                   </p>
                 </div>
               </div>
-            ) : mediaKind === 'video' ? (
-              <video
-                className="tabletop-transition-overlay__video"
-                onEnded={() => {
-                  setIsPlaying(false)
-                  setScrubProgress(null)
-                  pendingVideoSeekProgressRef.current = null
-                  setProgress(1)
+            ) : playbackMediaKind === 'video' ? (
+              <>
+                <TransitionFallbackImage
+                  scenePreviewUrl={scenePreviewUrl}
+                  thumbnailUrl={transition.thumbnailUrl}
+                />
+                <video
+                  className={`tabletop-transition-overlay__video${
+                    videoReady ? ' tabletop-transition-overlay__video--ready' : ''
+                  }`}
+                  onCanPlay={handleVideoReady}
+                  onLoadedData={handleVideoReady}
+                  onEnded={() => {
+                    setIsPlaying(false)
+                    setScrubProgress(null)
+                    pendingVideoSeekProgressRef.current = null
+                    setProgress(1)
 
-                  if (isGm) {
-                    emitPlaybackState({
-                      currentTime: getVideoDuration(videoRef.current),
-                      paused: true,
-                    })
-                  }
-                }}
-                onLoadedMetadata={handleVideoMetadataLoaded}
-                onError={handleMediaError}
-                onTimeUpdate={handleVideoTimeUpdate}
-                playsInline
-                poster={resolveRuntimeAssetUrl(transition.thumbnailUrl)}
-                preload="auto"
-                ref={videoRef}
-                src={resolveRuntimeAssetUrl(transition.assetUrl)}
-              />
+                    if (isGm) {
+                      emitPlaybackState({
+                        currentTime: getVideoDuration(videoRef.current),
+                        paused: true,
+                      })
+                    }
+                  }}
+                  onLoadedMetadata={handleVideoMetadataLoaded}
+                  onError={handleMediaError}
+                  onTimeUpdate={handleVideoTimeUpdate}
+                  playsInline
+                  poster={resolveRuntimeAssetUrl(transition.thumbnailUrl)}
+                  preload="metadata"
+                  ref={videoRef}
+                  src={resolveRuntimeAssetUrl(transition.assetUrl)}
+                />
+              </>
+            ) : mediaKind === 'video' ? (
+              <div className="tabletop-transition-overlay__fallback tabletop-transition-overlay__fallback--still">
+                <TransitionFallbackImage
+                  scenePreviewUrl={scenePreviewUrl}
+                  thumbnailUrl={transition.thumbnailUrl}
+                />
+              </div>
             ) : (
               <img
                 alt={transition.name}

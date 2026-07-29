@@ -14,6 +14,25 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
+function normalizeVisualQuality(value: unknown): VisualQualityMode | null {
+  return value === 'low' || value === 'balanced' || value === 'ultra' ? value : null
+}
+
+function readLaunchVisualQuality(): VisualQualityMode | null {
+  try {
+    const params = new URLSearchParams(window.location.search)
+    const forcedQuality = normalizeVisualQuality(params.get('fushiQuality'))
+
+    if (forcedQuality) {
+      return forcedQuality
+    }
+
+    return params.get('fushiTvLite') === '1' ? 'low' : null
+  } catch {
+    return null
+  }
+}
+
 function readStorageItem(key: string) {
   try {
     return window.localStorage.getItem(key)
@@ -41,9 +60,13 @@ export function getDefaultProductPreferences(): ProductPreferences {
 
 export function readProductPreferences(): ProductPreferences {
   const rawValue = readStorageItem(PRODUCT_PREFERENCES_STORAGE_KEY)
+  const launchVisualQuality = readLaunchVisualQuality()
 
   if (!rawValue) {
-    return getDefaultProductPreferences()
+    return {
+      ...getDefaultProductPreferences(),
+      visualQuality: launchVisualQuality ?? getDefaultProductPreferences().visualQuality,
+    }
   }
 
   try {
@@ -55,11 +78,7 @@ export function readProductPreferences(): ProductPreferences {
 
     return {
       theme: parsedValue.theme === 'mist' ? 'mist' : 'obsidian',
-      visualQuality:
-        parsedValue.visualQuality === 'low' ||
-        parsedValue.visualQuality === 'ultra'
-          ? parsedValue.visualQuality
-          : 'balanced',
+      visualQuality: launchVisualQuality ?? normalizeVisualQuality(parsedValue.visualQuality) ?? 'balanced',
       showModuleDescriptions:
         typeof parsedValue.showModuleDescriptions === 'boolean'
           ? parsedValue.showModuleDescriptions
@@ -70,7 +89,10 @@ export function readProductPreferences(): ProductPreferences {
           : false,
     }
   } catch {
-    return getDefaultProductPreferences()
+    return {
+      ...getDefaultProductPreferences(),
+      visualQuality: launchVisualQuality ?? getDefaultProductPreferences().visualQuality,
+    }
   }
 }
 

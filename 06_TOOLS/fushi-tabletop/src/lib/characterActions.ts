@@ -1,4 +1,5 @@
 import type {
+  CharacterActionCheckOption,
   CharacterAttack,
   CharacterActionCost,
   CharacterActionEffect,
@@ -10,7 +11,8 @@ import type {
   CharacterSheet,
   RollConfig,
 } from '../data/types'
-import { formatRollFormula } from './rolls'
+import { getCharacterSkillRollBonus } from './combatV2'
+import { createCombatRollConfig, formatRollFormula } from './rolls'
 
 const resourceCurrentKeyByActionResource = {
   vida: 'vidaAtual',
@@ -177,8 +179,12 @@ export function getCharacterActionEffectsLabel(feature: CharacterFeatureDetail) 
     : ''
 }
 
-export function getCharacterActionRollLabel(feature: CharacterFeatureDetail) {
-  const roll = feature.automation?.roll
+export function getCharacterActionRollLabel(
+  feature: CharacterFeatureDetail,
+  character?: CharacterSheet,
+  checkOptionId?: string,
+) {
+  const roll = getCharacterActionRollConfig(feature, character, checkOptionId)
 
   return roll ? formatRollFormula(roll) : ''
 }
@@ -278,10 +284,136 @@ export function applyCharacterActionEffects(
   }
 }
 
+export function getCharacterActionCheckOptions(feature: CharacterFeatureDetail) {
+  const structuredOptions = feature.automation?.combat?.teste?.opcoes ?? []
+
+  if (structuredOptions.length > 0) {
+    return structuredOptions
+  }
+
+  const structuredCheck = feature.automation?.combat?.teste
+
+  if (structuredCheck?.atributo) {
+    return [
+      {
+        atributo: structuredCheck.atributo,
+        id: 'structured-combat-check',
+        label: `${structuredCheck.atributo.toUpperCase()}${
+          structuredCheck.pericia ? ` + ${structuredCheck.pericia}` : ''
+        }`,
+        pericia: structuredCheck.pericia,
+      } satisfies CharacterActionCheckOption,
+    ]
+  }
+
+  const legacyOption = getLegacyCombatCheckOption(feature)
+
+  return legacyOption ? [legacyOption] : []
+}
+
+export function getCharacterActionCheckOption(
+  feature: CharacterFeatureDetail,
+  checkOptionId?: string,
+) {
+  const options = getCharacterActionCheckOptions(feature)
+
+  return (
+    options.find((option) => option.id === checkOptionId) ??
+    options[0] ??
+    null
+  )
+}
+
+function normalizeSkillName(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR')
+    .replace(/[^a-z0-9]/g, '')
+}
+
+const legacyAttributeByName: Record<string, CharacterActionCheckOption['atributo']> = {
+  agilidade: 'agilidade',
+  forca: 'forca',
+  intelecto: 'intelecto',
+  presenca: 'presenca',
+  vigor: 'vigor',
+}
+
+function getLegacyCombatCheckOption(feature: CharacterFeatureDetail) {
+  const descriptor = [
+    feature.automation?.activation,
+    ...(feature.automation?.tags ?? []),
+    feature.descricao,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR')
+  const match =
+    /\b(forca|agilidade|intelecto|presenca|vigor)\s*\+\s*([a-z0-9]+(?:\s+[a-z0-9]+){0,2})\s+vs\b/.exec(
+      descriptor,
+    )
+
+  if (!match) {
+    return null
+  }
+
+  const atributo = legacyAttributeByName[match[1]]
+  const pericia = match[2].trim()
+
+  if (!atributo || !pericia) {
+    return null
+  }
+
+  return {
+    atributo,
+    id: 'legacy-combat-check',
+    label: `${atributo.toUpperCase()} + ${pericia}`,
+    pericia,
+  } satisfies CharacterActionCheckOption
+}
+
+function getActionSkillBonus(
+  character: CharacterSheet,
+  skillName: string | undefined,
+  fallback: number,
+) {
+  if (!skillName) {
+    return fallback
+  }
+
+  const target = normalizeSkillName(skillName)
+  const hasSkill = character.pericias.some(
+    (skill) => normalizeSkillName(skill.nome) === target,
+  )
+
+  return hasSkill
+    ? getCharacterSkillRollBonus(character, skillName)
+    : fallback
+}
+
 export function getCharacterActionRollConfig(
   feature: CharacterFeatureDetail,
+  character?: CharacterSheet,
+  checkOptionId?: string,
 ): RollConfig | null {
   const roll = feature.automation?.roll
+  const check = feature.automation?.combat?.teste
+  const option = getCharacterActionCheckOption(feature, checkOptionId)
+
+  if (character && (option?.atributo || check?.atributo)) {
+    const attribute = option?.atributo ?? check?.atributo
+    const skill = option?.pericia ?? check?.pericia
+
+    if (attribute) {
+      return createCombatRollConfig({
+        atributo: character.atributos[attribute] ?? 0,
+        bonusPericia: getActionSkillBonus(character, skill, roll?.bonus ?? 0),
+      })
+    }
+  }
 
   if (!roll) {
     return null
@@ -295,18 +427,106 @@ export function getCharacterActionRollConfig(
   }
 }
 
+function inferAttackSkill(attack: CharacterAttack) {
+  const descriptor = `${attack.nome} ${attack.alcance} ${attack.resumo}`.toLocaleLowerCase('pt-BR')
+
+  return /arco|besta|disparo|pistola|rifle|tiro|pontaria|proj[eé]til|dist[aâ]ncia/.test(
+    descriptor,
+  )
+    ? 'Pontaria'
+    : 'Luta'
+}
+
+function getDefaultAttackCheckOptions(attack: CharacterAttack): CharacterActionCheckOption[] {
+  const descriptor = `${attack.nome} ${attack.alcance} ${attack.resumo}`
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR')
+  const canBeThrown = /\b(adaga|faca|punhal|dardo)\b/.test(descriptor)
+
+  if (canBeThrown) {
+    return [
+      {
+        atributo: 'forca',
+        damageContext: 'melee',
+        id: 'melee',
+        label: 'Corpo a corpo - FOR + Luta',
+        pericia: 'Luta',
+      },
+      {
+        atributo: 'agilidade',
+        damageContext: 'ranged',
+        id: 'ranged',
+        label: 'Arremesso - AGI + Pontaria',
+        pericia: 'Pontaria',
+      },
+    ]
+  }
+
+  return []
+}
+
 export function buildAttackActionFeature(
   character: CharacterSheet,
   attack: CharacterAttack,
 ): CharacterFeatureDetail {
-  const quantidadeDados = Math.max(1, character.atributos[attack.atributoBase] ?? 1)
   const damageLabel = attack.dano.trim()
   const rangeLabel = attack.alcance.trim()
   const summary = attack.resumo.trim()
+  const inferredSkill = inferAttackSkill(attack)
+  const inferredOptions = getDefaultAttackCheckOptions(attack)
+  const defaultCheckOption = inferredOptions[0]
+  const defaultAttribute = defaultCheckOption?.atributo ?? attack.atributoBase
+  const defaultSkill = defaultCheckOption?.pericia ?? inferredSkill
+  const defaultRollConfig = createCombatRollConfig({
+    atributo: character.atributos[defaultAttribute] ?? 0,
+    bonusPericia: getActionSkillBonus(
+      character,
+      defaultSkill,
+      attack.bonusPericia,
+    ),
+  })
   const tags = [
     damageLabel ? `Dano: ${damageLabel}` : '',
     rangeLabel ? `Alcance: ${rangeLabel}` : '',
   ].filter(Boolean)
+  const defaultRoll = {
+    ...defaultRollConfig,
+    contexto: attack.nome,
+    visibility: 'public' as const,
+    visualColor: '#e5743d',
+  }
+  const defaultDamage = damageLabel
+    ? {
+        formula: damageLabel,
+        critico: 'dados' as const,
+        gatilho: 'acerto' as const,
+      }
+    : undefined
+  const defaultCombat = {
+    acao: 'principal' as const,
+    teste: {
+      atributo: defaultAttribute,
+      pericia: defaultSkill,
+      alvo: 'ca' as const,
+      opcoes: inferredOptions.length > 0 ? inferredOptions : undefined,
+    },
+    dano: defaultDamage,
+    efeitoRapido: summary || (damageLabel ? 'Aplica dano se acertar.' : ''),
+    falha: 'Sem dano; a Acao Principal foi usada.',
+    reacao: 'O alvo pode gastar a Reacao para Bloquear ou Esquivar.',
+  }
+  const previousAutomation = attack.automation
+  const previousCombat = previousAutomation?.combat
+  const previousCheck = previousCombat?.teste
+  const mergedCheck = {
+    ...defaultCombat.teste,
+    ...previousCheck,
+    opcoes:
+      previousCheck?.opcoes && previousCheck.opcoes.length > 0
+        ? previousCheck.opcoes
+        : defaultCombat.teste.opcoes,
+  }
 
   return {
     id: `attack-action-${attack.id}`,
@@ -317,23 +537,29 @@ export function buildAttackActionFeature(
         .filter(Boolean)
         .join(' | '),
     tipo: 'ataque',
-    automation: attack.automation ?? {
+    automation: {
       kind: 'ataque',
-      activation: 'Acao padrao',
+      activation: 'Acao Principal',
       range: rangeLabel || undefined,
       tags,
-      roll: {
-        quantidadeDados,
-        tipoDado: 20,
-        bonus: attack.bonusPericia,
-        modo: 'highest',
-        contexto: attack.nome,
-        visibility: 'public',
-        visualColor: '#e5743d',
-      },
+      roll: defaultRoll,
       publicText: `${character.nome} atacou com ${attack.nome}.`,
       gmText: `${character.nome} atacou com ${attack.nome}.${damageLabel ? ` Dano: ${damageLabel}.` : ''}${rangeLabel ? ` Alcance: ${rangeLabel}.` : ''}`,
       visualColor: '#e5743d',
+      ...previousAutomation,
+      combat: {
+        ...defaultCombat,
+        ...previousCombat,
+        teste: {
+          ...mergedCheck,
+        },
+        dano: previousCombat?.dano
+          ? {
+              ...defaultDamage,
+              ...previousCombat.dano,
+            }
+          : defaultDamage,
+      },
     },
   }
 }

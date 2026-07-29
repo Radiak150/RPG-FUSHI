@@ -4,17 +4,41 @@ Objetivo: transformar teoria de lore em regra jogavel, com matematica simples, m
 
 Este documento e fonte de verdade de sistema contra qualquer documento feito antes desta data de atualizacao. Mecanicas novas criadas depois dele so viram verdade quando forem consolidadas aqui ou em documento explicitamente mais novo.
 
-## 0. Correcoes canonicas do mestre - 2026-05-27
+## 0. Correcoes canonicas do mestre - historico V1
 
-- Bloqueio nao e "metade do dano bruto": Bloqueio reduz metade da CA base do dano recebido.
-- Esquiva nao e rolagem solta: Esquiva usa CA base + Agilidade + pericia Reflexos.
-- Contra-ataque usa CA base: se o ataque inimigo nao alcancar a CA base, o defensor contra-ataca.
-- Cada consciencia so pode escolher 1 reacao por turno: Bloqueio, Esquiva ou Contra-ataque.
-- Atributo 0 rola 2d20 e pega o pior.
-- Vida nao escala por Vigor. Vida vem dos Niveis de Poder + itens + buffs.
-- FUSHI nao usa formula derivada neste momento. Usar o valor da ficha/Nivel de Poder.
-- Determinacao tambem e gasto de habilidades; rerrolagem so existe quando habilidade/item/regra permitir.
-- Coreografia de luta e a regra oficial de multi-hit/dano: sacrificar dados de acerto para ganhar dados de dano.
+Defesas V1 foram arquivadas. Nao usar formulas antigas de Bloqueio por CA ou
+Esquiva estatica. Defesa, critico, manobras e escala de encontro agora seguem
+`FUSHI_COMBAT_V2.md`, que prevalece quando houver conflito.
+
+## 0.2 Combat V2 - decisao ativa em 2026-07-11
+
+- CA e defesa passiva: ataque acerta com total maior ou igual a CA.
+- Bloqueio e Reacao e reduz dano pelo bonus de Fortitude, com faixa 0/5/10/15
+  e teto normal 15.
+- Esquiva e Reacao de valor fixo: CA atual + AGI + Reflexos contra o total do
+  ataque; nao rola dados e empate evita dano.
+- Contra-ataque so ocorre se o ataque nao alcancar a CA passiva e consome a
+  mesma Reacao.
+- Critico: 20 natural no dado escolhido; dobra somente os dados de dano.
+- Dano de referencia: 1d2 desarmado, 1d6 arma leve e 1d8 arma maior. Acima
+  disso exige regra nomeada.
+- Antes de alterar Vida, dano, Bloqueio ou item, rodar os simuladores offline
+  da Mesa e registrar uma simulacao de 500 iteracoes.
+
+## 0.1 Correcoes canonicas do mestre - 2026-07-10
+
+- Dano fisico direto usa apenas Forca + Luta no corpo a corpo ou Agilidade +
+  Pontaria a distancia. Outro Atributo/Pericia cria vantagem, posicao, condicao
+  ou oportunidade, salvo efeito que declare dano.
+- Vida 0 causa desmaio completo e inicia a estabilizacao operacional descrita
+  em `FUSHI_RULEBOOK_CANON_V1.md`.
+- FUSHI 0 causa paralisia; a pessoa ainda percebe e fala.
+- Determinacao 0 transfere o controle temporario ao Mestre.
+- Depois de 3 falhas de estabilizacao, a busca de reencarnacao segue para outro
+  corpo. Reacender o proprio corpo fica suspenso salvo excecao aprovada.
+- Builds surgem por integracao permanente de itens. O objeto permanece no
+  mundo e pode servir a varias identidades; cada identidade integra o mesmo item
+  uma vez e nao remove beneficio/downside depois.
 
 ## 1. Rolagem central
 
@@ -113,7 +137,7 @@ Nota de balanceamento:
 
 - Se uma pericia tem +15, DT 20 nao deve ser chamada de dificil.
 - Se algo precisa parecer dificil para especialista, usar DT 25 ou 30.
-- Se algo precisa desafiar CA/Esquiva Cataclisma, precisa de bonus especial, item, ritual, terreno ou condicao.
+- Se algo precisa desafiar uma CA Cataclisma, precisa de bonus especial, item, ritual, terreno ou condicao.
 
 ## 4. Combate pratico
 
@@ -134,7 +158,7 @@ dano = dado_da_arma_ou_mob + coreografia + FUSHI_imbuido + bonus
 
 Dano base:
 
-- Punho normal: 1d4.
+- Punho normal: 1d2.
 - Lamina curta: 1d6.
 - Arma afiada/maior: 1d8.
 - Dano acima de 1d8 entra como habilidade, item forte, fase de boss ou mecanica de Nivel de Poder. Nao tratar como "arma comum" sem custo.
@@ -151,22 +175,23 @@ CA base:
 Bloqueio:
 
 ```text
-dano_final = dano_recebido - floor(CA_base / 2)
+dano_final = max(0, dano_recebido - min(15, Fortitude + bonus_de_item))
 ```
 
 - Usa a reacao do turno.
+- Fortitude normalmente fica em 0, +5, +10 ou +15. O teto normal e 15.
 - Nao evita efeito narrativo que nao dependa de dano, salvo item/habilidade dizer.
 - Se reduzir abaixo de 0, vira 0.
 
 Esquiva:
 
 ```text
-CA_esquiva = CA_base + Agilidade + Reflexos
+esquiva = CA_atual + AGI + Reflexos contra total_do_ataque
 ```
 
 - Usa a reacao do turno.
-- Se ataque inimigo nao alcancar a CA_esquiva, evita o dano.
-- Em ficha Cataclisma, esquiva pode chegar perto de 50; isso e intencional e exige contador especial para acertar.
+- Empate ou resultado maior evita o dano e permite o deslocamento seguro previsto pela regra.
+- AGI continua usando a rolagem central: atributo define os d20 e escolhe o maior; nao cria CA estatica.
 
 Contra-ataque:
 
@@ -188,7 +213,7 @@ bonus_dano = FUSHI_gasto
 
 Exemplo:
 
-- Punho 1d4 + 1 FUSHI = 1d4+1.
+- Punho 1d2 + 1 FUSHI = 1d2+1.
 - Lamina 1d6 + 5 FUSHI = 1d6+5.
 
 Regra:
@@ -319,7 +344,7 @@ Usar sempre o termo **Niveis de Poder** para evitar confusao com ato, nivel de p
 
 - Atributos comuns: 1 a 3.
 - Pericias: +5, alguns +10.
-- Dano comum: 1d4 a 1d6.
+- Dano comum: 1d2 desarmado ou 1d6 com arma leve.
 - Vida comum: 20 a 30.
 - CA comum: 16+ contando armadura leve/defesa.
 - DT dificil: 20.
@@ -352,7 +377,7 @@ Usar sempre o termo **Niveis de Poder** para evitar confusao com ato, nivel de p
 - Dano comum: 3d12+10, dano automatico, ignorar CA, dominio ou mecanica de fase.
 - Vida comum: 450+ ou vida por fase.
 - CA comum: 30+.
-- Esquiva pode chegar em 50.
+- Esquiva continua sendo Reacao: CA atual + AGI + Reflexos; nao usa dados.
 - DT dificil: 30+; DT extrema 35+; DT impossivel comum 40+.
 - Cataclisma sozinho deve ser quase impossivel para apenas 5 Fichas Avancadas sem preparo. O alvo de balanceamento e: 8 Fichas Avancadas dao trabalho, 10 Fichas Avancadas ficam pareo a pareo.
 

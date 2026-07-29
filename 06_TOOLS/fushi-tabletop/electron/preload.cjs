@@ -65,6 +65,12 @@ contextBridge.exposeInMainWorld('fushiDesktop', {
   runOllamaChat(request) {
     return ipcRenderer.invoke('fushi-desktop:ai-run-ollama-chat', request)
   },
+  inspectRenderedRegion(rect) {
+    return ipcRenderer.invoke('fushi-desktop:inspect-rendered-region', rect)
+  },
+  reloadRenderer() {
+    return ipcRenderer.invoke('fushi-desktop:reload-renderer')
+  },
   assetExists(url) {
     return sendSync('fushi-desktop:asset-exists', url)
   },

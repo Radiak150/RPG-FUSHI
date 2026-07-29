@@ -22,6 +22,11 @@ import type {
   TabletopTokenVisibility,
 } from '../../data/types'
 import type { VisualQualityMode } from '../../lib/productPreferences'
+import type {
+  TabletopCombatImpact,
+  TabletopCombatMark,
+  TabletopPlayerDeathState,
+} from '../../lib/tabletopSession'
 import {
   resolveRuntimeAssetUrl,
   resolveRuntimeAssetVariantUrl,
@@ -39,6 +44,15 @@ import {
   resolveBiomeCinematicAsset,
   resolveBiomeCinematicBackdrop,
 } from '../../rendering/biomeCinematicAssets'
+import { TabletopTokenStatusCluster } from './TabletopTokenStatusCluster'
+
+function appendRenderEpoch(url: string, renderEpoch: number) {
+  if (!url || /^(?:data|blob):/i.test(url)) {
+    return url
+  }
+
+  return `${url}${url.includes('?') ? '&' : '?'}fushiRenderEpoch=${renderEpoch}`
+}
 
 interface BoardTokenView {
   id: string
@@ -57,6 +71,9 @@ interface BoardTokenView {
   isControllable: boolean
   isMovable: boolean
   isStealthed?: boolean
+  combatImpact?: TabletopCombatImpact
+  combatMarks: TabletopCombatMark[]
+  deathState?: TabletopPlayerDeathState
 }
 
 interface BoardObjectView {
@@ -117,9 +134,13 @@ function TokenArtwork({ token }: { token: BoardTokenView }) {
 
 function MapArtwork({
   map,
+  onRenderedBlank,
+  renderEpoch,
   visualQuality,
 }: {
   map: TabletopMap
+  onRenderedBlank?: () => void
+  renderEpoch: number
   visualQuality: VisualQualityMode
 }) {
   const imageUrls = [
@@ -151,6 +172,8 @@ function MapArtwork({
           loaded: false,
         }
   const currentImageUrl = imageUrls[activeState.index] ?? ''
+  const renderedImageUrl = appendRenderEpoch(currentImageUrl, renderEpoch)
+  const imageRef = useRef<HTMLImageElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [videoState, setVideoState] = useState<{
     key: string
@@ -175,6 +198,37 @@ function MapArtwork({
   const animatedKey = `${map.id}:${animatedSource}`
   const videoStatus =
     videoState.key === animatedKey ? videoState.status : 'loading'
+
+  useEffect(() => {
+    if (!currentImageUrl || activeState.loaded) {
+      return
+    }
+
+    const expectedIndex = activeState.index
+    const timeoutId = window.setTimeout(() => {
+      setImageState((currentState) => {
+        const currentActiveState =
+          currentState.key === imageKey
+            ? currentState
+            : { index: 0, key: imageKey, loaded: false }
+
+        if (
+          currentActiveState.loaded ||
+          currentActiveState.index !== expectedIndex
+        ) {
+          return currentState
+        }
+
+        return {
+          index: expectedIndex + 1,
+          key: imageKey,
+          loaded: false,
+        }
+      })
+    }, 12000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [activeState.index, activeState.loaded, currentImageUrl, imageKey])
 
   useEffect(() => {
     const video = videoRef.current
@@ -210,6 +264,65 @@ function MapArtwork({
     }
   }, [animatedKey, animatedSource])
 
+  useEffect(() => {
+    const image = imageRef.current
+    const inspector = window.fushiDesktop?.inspectRenderedRegion
+
+    if (!activeState.loaded || !image || !inspector || !onRenderedBlank) {
+      return
+    }
+
+    let firstFrame = 0
+    let secondFrame = 0
+    let timeoutId = 0
+    let cancelled = false
+
+    firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        timeoutId = window.setTimeout(() => {
+          const rect = image.getBoundingClientRect()
+          const visibleLeft = Math.max(0, rect.left)
+          const visibleTop = Math.max(0, rect.top)
+          const visibleRight = Math.min(window.innerWidth, rect.right)
+          const visibleBottom = Math.min(window.innerHeight, rect.bottom)
+          const visibleWidth = visibleRight - visibleLeft
+          const visibleHeight = visibleBottom - visibleTop
+
+          if (visibleWidth < 120 || visibleHeight < 120) {
+            return
+          }
+
+          const horizontalInset = Math.min(80, visibleWidth * 0.12)
+          const verticalInset = Math.min(80, visibleHeight * 0.12)
+
+          void inspector({
+            height: Math.max(1, visibleHeight - verticalInset * 2),
+            width: Math.max(1, visibleWidth - horizontalInset * 2),
+            x: visibleLeft + horizontalInset,
+            y: visibleTop + verticalInset,
+          }).then((result) => {
+            if (!cancelled && result.ok && result.blank) {
+              onRenderedBlank()
+            }
+          })
+        }, 420)
+      })
+    })
+
+    return () => {
+      cancelled = true
+      window.cancelAnimationFrame(firstFrame)
+      window.cancelAnimationFrame(secondFrame)
+      window.clearTimeout(timeoutId)
+    }
+  }, [
+    activeState.loaded,
+    activeState.index,
+    imageKey,
+    onRenderedBlank,
+    renderEpoch,
+  ])
+
   if (!currentImageUrl) {
     return (
       <div
@@ -238,7 +351,9 @@ function MapArtwork({
         className="tabletop-board__image"
         data-map-image-index={activeState.index}
         data-map-image-status={activeState.loaded ? 'ready' : 'loading'}
+        decoding="async"
         draggable={false}
+        key={`${imageKey}:${activeState.index}`}
         onError={() =>
           setImageState({
             index: activeState.index + 1,
@@ -262,7 +377,8 @@ function MapArtwork({
             loaded: true,
           })
         }}
-        src={currentImageUrl}
+        ref={imageRef}
+        src={renderedImageUrl}
       />
       {animatedSource && videoStatus !== 'failed' ? (
         <video
@@ -302,6 +418,9 @@ function MapArtwork({
 interface TabletopBoardProps {
   map: TabletopMap
   cellSize: number
+  isArtworkSuspended?: boolean
+  onArtworkBlank?: () => void
+  renderEpoch?: number
   tokens: BoardTokenView[]
   objects?: BoardObjectView[]
   pings: Array<{
@@ -416,6 +535,9 @@ function isSameCell(first: TabletopCell, second: TabletopCell) {
 export function TabletopBoard({
   map,
   cellSize,
+  isArtworkSuspended = false,
+  onArtworkBlank,
+  renderEpoch = 0,
   tokens,
   objects = [],
   pings,
@@ -479,6 +601,7 @@ export function TabletopBoard({
   const [isPanning, setIsPanning] = useState(false)
   const [draggingTokenId, setDraggingTokenId] = useState('')
   const [draggingObjectId, setDraggingObjectId] = useState('')
+  const [hoveredTokenId, setHoveredTokenId] = useState('')
   const [measurement, setMeasurement] = useState<MeasurementState | null>(null)
 
   const resolveCellFromPoint = useCallback(
@@ -1024,10 +1147,11 @@ export function TabletopBoard({
       input.end.column - input.start.column,
       input.end.row - input.start.row,
     )
-    const metersText = Number.isInteger(gridDistance)
-      ? `${gridDistance} m`
-      : `${gridDistance.toFixed(1)} m`
-    const feetText = `${Math.round(gridDistance * 3.28084)} ft`
+    const metersDistance = gridDistance * 1.5
+    const metersText = Number.isInteger(metersDistance)
+      ? `${metersDistance} m`
+      : `${metersDistance.toFixed(1)} m`
+    const feetText = `${Math.round(metersDistance * 3.28084)} ft`
 
     return {
       endX,
@@ -1089,6 +1213,7 @@ export function TabletopBoard({
       tokens={tokens}
     />
   )
+  const tokenNameById = new Map(tokens.map((token) => [token.id, token.name]))
 
   return (
     <div
@@ -1096,6 +1221,7 @@ export function TabletopBoard({
         is3dFreeCameraVisible ? ' tabletop-board--3d-free-camera' : ''
       }`}
       data-biome={map.biomeId ?? 'neutral'}
+      data-board-render-epoch={renderEpoch}
       data-visual-quality={visualQuality}
       style={boardStyle}
     >
@@ -1149,7 +1275,23 @@ export function TabletopBoard({
               transform: `scale(${zoom})`,
             }}
           >
-            <MapArtwork map={map} visualQuality={visualQuality} />
+            {isArtworkSuspended ? (
+              <div
+                className="tabletop-board__image-fallback"
+                data-map-image-status="recovering"
+              >
+                <strong>{map.name}</strong>
+                <span>Recuperando a renderizacao da mesa...</span>
+              </div>
+            ) : (
+              <MapArtwork
+                key={`${map.id}:${renderEpoch}`}
+                map={map}
+                onRenderedBlank={onArtworkBlank}
+                renderEpoch={renderEpoch}
+                visualQuality={visualQuality}
+              />
+            )}
 
             {isGridVisible ? (
               <div
@@ -1354,7 +1496,7 @@ export function TabletopBoard({
                   }${token.isStealthed ? ' tabletop-token--stealthed' : ''
                   }${draggingTokenId === token.id ? ' tabletop-token--dragging' : ''}${
                     tokenSpan.preset === 'custom' ? ' tabletop-token--custom' : ''
-                  }`}
+                  }${token.deathState?.status === 'dead' ? ' tabletop-token--dead' : ''}`}
                   data-state-label={token.isStealthed ? 'furtivo' : undefined}
                   key={token.id}
                   onPointerDown={(event) => {
@@ -1417,6 +1559,12 @@ export function TabletopBoard({
                     event.stopPropagation()
                     onTokenOpen(token.id)
                   }}
+                  onPointerEnter={() => setHoveredTokenId(token.id)}
+                  onPointerLeave={() =>
+                    setHoveredTokenId((currentTokenId) =>
+                      currentTokenId === token.id ? '' : currentTokenId,
+                    )
+                  }
                   style={{
                     left: `${(token.cell.column / map.gridColumns) * 100}%`,
                     top: `${(token.cell.row / map.gridRows) * 100}%`,
@@ -1428,18 +1576,41 @@ export function TabletopBoard({
                     ['--token-width' as string]: `${tokenSpan.columns}`,
                     ['--token-height' as string]: `${tokenSpan.rows}`,
                   }}
-                  title={
-                    [
-                      token.name,
-                      token.visibility === 'gm' ? 'visivel so para o mestre' : '',
-                      token.isStealthed ? 'furtivo' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' - ')
-                  }
                   type="button"
                 >
                   <TokenArtwork token={token} />
+                  {token.combatImpact ? (
+                    <span
+                      className={`tabletop-token__combat-impact tabletop-token__combat-impact--${token.combatImpact.type}`}
+                      key={token.combatImpact.id}
+                    >
+                      {token.combatImpact.type === 'damage'
+                        ? `-${token.combatImpact.amount ?? 0}`
+                        : token.combatImpact.type === 'heal'
+                          ? `+${token.combatImpact.amount ?? 0}`
+                          : ''}
+                    </span>
+                  ) : null}
+                  <TabletopTokenStatusCluster
+                    detailSide={
+                      token.cell.column / map.gridColumns < 0.35 ? 'right' : 'left'
+                    }
+                    isExpanded={hoveredTokenId === token.id}
+                    marks={token.combatMarks}
+                    sourceNameByTokenId={tokenNameById}
+                    tokenName={token.name}
+                  />
+                  {token.deathState ? (
+                    <span
+                      aria-label="Desmaiado"
+                      className="tabletop-token__death-state"
+                      title="Desmaiado. Abra a ficha para controlar a estabilizacao."
+                    >
+                      <span className="tabletop-token__death-skull" aria-hidden="true">
+                        ☠
+                      </span>
+                    </span>
+                  ) : null}
                 </button>
               )
             })}

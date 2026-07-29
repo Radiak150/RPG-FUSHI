@@ -1,5 +1,10 @@
 const fs = require('node:fs')
 const path = require('node:path')
+const {
+  getCombatV2Block,
+  getCombatV2Dodge,
+  getCombatV2Profile,
+} = require('./lib/combat-v2.cjs')
 const { normalizeText } = require('./lib/lore-npc-parser.cjs')
 const {
   getDefaultAutosavePath,
@@ -316,24 +321,22 @@ function applyCharacterMath(character) {
     nextCharacter.defesa = rule.minimumCa
   }
 
-  if (!isMob) {
-    const expectedBlock = Math.floor((Number(nextCharacter.defesa ?? 0) || 0) / 2)
-    if (Number(nextCharacter.bloqueio ?? 0) !== expectedBlock) {
-      changes.push(`Bloqueio ${nextCharacter.bloqueio ?? 0} -> ${expectedBlock}`)
-      nextCharacter.bloqueio = expectedBlock
-    }
+  const nextCombatProfile = getCombatV2Profile(nextCharacter)
+  if (JSON.stringify(nextCharacter.combatProfile ?? {}) !== JSON.stringify(nextCombatProfile)) {
+    changes.push('Perfil de combate atualizado para V2')
+    nextCharacter.combatProfile = nextCombatProfile
   }
 
-  if (!isMob || Number(nextCharacter.esquiva ?? 0) > 0) {
-    const reflexos = findSkillBonus(nextCharacter, 'Reflexos')
-    const expectedDodge =
-      (Number(nextCharacter.defesa ?? 0) || 0) +
-      (Number(nextCharacter.atributos?.agilidade ?? 0) || 0) +
-      reflexos
-    if (Number(nextCharacter.esquiva ?? 0) !== expectedDodge) {
-      changes.push(`Esquiva ${nextCharacter.esquiva ?? 0} -> ${expectedDodge}`)
-      nextCharacter.esquiva = expectedDodge
-    }
+  const expectedBlock = getCombatV2Block(nextCharacter)
+  if (Number(nextCharacter.bloqueio ?? 0) !== expectedBlock) {
+    changes.push(`Bloqueio ${nextCharacter.bloqueio ?? 0} -> ${expectedBlock} por Fortitude`)
+    nextCharacter.bloqueio = expectedBlock
+  }
+
+  const expectedDodge = getCombatV2Dodge(nextCharacter) ?? 0
+  if (Number(nextCharacter.esquiva ?? 0) !== expectedDodge) {
+    changes.push(`Esquiva ${nextCharacter.esquiva ?? 0} -> ${expectedDodge}; usa CA + AGI + Reflexos`)
+    nextCharacter.esquiva = expectedDodge
   }
 
   nextCharacter.habilidadesDetalhadas = (nextCharacter.habilidadesDetalhadas ?? []).map((feature) =>
@@ -369,7 +372,7 @@ function renderReport(plan, input) {
     '## Regras de seguranca',
     '',
     '- Nao altera nome, conceito, lore, imagem, permissao, vinculo ou identidade do poder.',
-    '- Aplica apenas matematica: CA minima por escala, Bloqueio derivado, Esquiva derivada, DT minima por escala e rolagem atributo/pericia.',
+    '- Aplica apenas matematica: CA minima por escala, Bloqueio por Fortitude, Esquiva fixa em CA + AGI + Reflexos, DT minima por escala e rolagem atributo/pericia.',
     '- Atributo define quantidade de d20; pericia entra como bonus fixo.',
     '- Dano Cataclisma direto com dado abaixo da base `3d12 + 10` sobe para essa base sem mudar o conceito do poder.',
     '- Vida/FUSHI/Determinacao abaixo da faixa ficam apenas como aviso para nao reescrever personagem autoral sem revisao individual.',

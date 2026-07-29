@@ -1,5 +1,6 @@
 const fs = require('node:fs')
 const path = require('node:path')
+const { getCombatV2Block, getCombatV2Dodge } = require('./lib/combat-v2.cjs')
 const {
   normalizeText,
   parseLoreNpcDirectory,
@@ -152,11 +153,16 @@ function buildBalancedExpectedStatus(record) {
 
   if (typeof expected.defesa === 'number') {
     expected.defesa = Math.max(expected.defesa, rule.minimumCa)
-    expected.bloqueio = Math.floor(expected.defesa / 2)
-    expected.esquiva =
-      expected.defesa +
-      (Number(record.attributes?.agilidade ?? 0) || 0) +
-      getRecordSkillBonus(record, 'Reflexos')
+    expected.bloqueio = getCombatV2Block({
+      combatProfile: { versao: 2 },
+      pericias: record.skills ?? [],
+    })
+    expected.esquiva = getCombatV2Dodge({
+      atributos: record.attributes ?? {},
+      combatProfile: { versao: 2 },
+      defesa: expected.defesa,
+      pericias: record.skills ?? [],
+    }) ?? 0
   }
 
   return expected

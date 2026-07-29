@@ -1,6 +1,7 @@
 import {
   lazy,
   Suspense,
+  useCallback,
   useEffect,
   useEffectEvent,
   useLayoutEffect,
@@ -31,18 +32,30 @@ import { TabletopReadinessGate } from '../components/tabletop/TabletopReadinessG
 import { SceneIntroCard } from '../components/tabletop/SceneIntroCard'
 import { TabletopAudioPanel } from '../components/tabletop/TabletopAudioPanel'
 import { TabletopBoard } from '../components/tabletop/TabletopBoard'
+import { TabletopBuildManager } from '../components/tabletop/TabletopBuildManager'
+import { TabletopCombatRangeOverlay } from '../components/tabletop/TabletopCombatRangeOverlay'
+import { TabletopCombatRoller } from '../components/tabletop/TabletopCombatRoller'
+import { TabletopEventManager } from '../components/tabletop/TabletopEventManager'
+import { TabletopEventPresentation } from '../components/tabletop/TabletopEventPresentation'
+import { TabletopTrainingArc } from '../components/tabletop/TabletopTrainingArc'
 import { TabletopHelpPanel } from '../components/tabletop/TabletopHelpPanel'
 import { TabletopHud } from '../components/tabletop/TabletopHud'
 import { TabletopHudPanel } from '../components/tabletop/TabletopHudPanel'
+import { RulebookQuickReference } from '../components/product/RulebookContent'
 import {
   TabletopSessionLog,
   type TabletopRollDraft,
 } from '../components/tabletop/TabletopSessionLog'
+import {
+  TabletopStatusManager,
+  type TabletopStatusParticipant,
+} from '../components/tabletop/TabletopStatusManager'
 import { TabletopTransitionOverlay } from '../components/tabletop/TabletopTransitionOverlay'
 import {
   TabletopTurnOverlay,
   TabletopTurnSetupPanel,
   type TabletopTurnCandidate,
+  type TabletopTurnFeatureAction,
   type TabletopTurnParticipantView,
 } from '../components/tabletop/TabletopTurnTracker'
 import { TabletopWeatherOverlay } from '../components/tabletop/TabletopWeatherOverlay'
@@ -52,6 +65,14 @@ import type {
 import { TokenInspector } from '../components/tabletop/TokenInspector'
 import { FloatingWindow } from '../components/ui/FloatingWindow'
 import type {
+  CharacterSheetEffectView,
+  CharacterSheetFocusRequest,
+} from '../components/characters/CharacterProfileCard'
+import type {
+  AttributeKey,
+  CharacterActionCost,
+  CharacterActionResolutionRule,
+  CharacterActionStatusEffect,
   CharacterFeatureActivationRequest,
   CharacterSheet,
   TabletopBoardObject,
@@ -66,12 +87,24 @@ import type {
   TabletopTokenSizePreset,
   TabletopTransitionAsset,
 } from '../data/types'
+import { getCharacterGrant } from '../data/grants/characterGrantCatalog'
+import { getInitialTrainingReward } from '../data/training/initialTrainingRewards'
+import { getBuildItems } from '../data/combatCatalog'
+import {
+  findTabletopStatusDefinition,
+  getTabletopStatusDefinition,
+  type TabletopStatusId,
+} from '../data/statusCatalog'
 import { useMasterData } from '../hooks/useMasterData'
 import { useMultiplayer } from '../hooks/useMultiplayer'
 import { useProductPreferences } from '../hooks/useProductPreferences'
 import { useTabletopReadiness, type TabletopReadinessAsset } from '../hooks/useTabletopReadiness'
 import { useViewMode } from '../hooks/useViewMode'
 import { normalizeCharacterSheet } from '../lib/characterSheet'
+import {
+  formatInventoryMovement,
+  getInventoryCapacitySummary,
+} from '../lib/inventoryCapacity'
 import {
   applyCharacterActionCosts,
   applyCharacterActionEffects,
@@ -81,6 +114,28 @@ import {
   getCharacterActionCostsLabel,
   getCharacterActionRollConfig,
 } from '../lib/characterActions'
+import {
+  applyCombatBlock,
+  getCombatBlockValue,
+  getCombatCaPenetration,
+  getCombatCriticalDamageBonus,
+  getCombatDodgeSummary,
+  getCombatDodgeValue,
+  getCharacterSkillRollBonus,
+  getCriticalDamageFormula,
+  isCriticalAttackRoll,
+  resolveCombatAction,
+} from '../lib/combatV2'
+import {
+  applyCombatDicePoolModifier,
+  calculateCombatAction,
+  getCharacterCombatActions,
+  getCombatRollDicePenalty,
+  getTabletopDistanceSquares,
+  resolveCombatCheckOption,
+  resolveCombatDamageSequence,
+  validateCombatRange,
+} from '../lib/combatRolls'
 import type { FushiAccessProfile, FushiAccessProfileId } from '../lib/playerAccess'
 import { resolveRuntimeAssetUrl, resolveRuntimeAssetVariantUrl } from '../lib/runtimeAssets'
 import {
@@ -127,6 +182,28 @@ import {
   type TabletopAudioTransportState,
 } from '../lib/tabletopAudio'
 import {
+  clearTabletopRarityDraw,
+  clearTabletopRarityHistory,
+  createTabletopEventSystemState,
+  isTabletopEventActive,
+  setTabletopEventActive,
+  startTabletopRarityDraw,
+  type TabletopEventId,
+} from '../lib/tabletopEvents'
+import {
+  applyTrainingFinalOutcome,
+  applyTrainingParticipantOutcome,
+  createTabletopTrainingState,
+  setTrainingArcActive,
+  setTrainingParticipantStation,
+  unlockTrainingFinalTrial,
+  VILLAGE_TRAINING_ARC,
+  type TabletopTrainingFinalOutcome,
+  type TabletopTrainingOutcome,
+  type TabletopTrainingParticipantInput,
+  type TabletopTrainingState,
+} from '../lib/tabletopTraining'
+import {
   getSceneCameraTarget,
   getSceneCameraZoom,
   resolveTabletopSceneRuntime,
@@ -145,14 +222,21 @@ import {
   TABLETOP_SESSION_STORAGE_KEY,
   TABLETOP_TRANSITION_OVERRIDES_STORAGE_KEY,
   TABLETOP_TRANSITION_SYNC_STORAGE_KEY,
+  type PersistedTabletopSession,
   type TabletopBroadcastEvent,
+  type TabletopCharacterEditLock,
   type PersistedTransitionOverride,
+  type TabletopCombatMark,
   type TabletopCombatLogPayload,
+  type TabletopCombatReceipt,
+  type TabletopCombatResourceChange,
+  type TabletopCombatPreview,
   type SharedTransitionPlaybackState,
   type TabletopLogEntry,
   type TabletopMeasurement,
   type TabletopPing,
   type TabletopTurnActionId,
+  type TabletopTurnActionRequest,
   type TabletopTurnParticipant,
   type TabletopTurnState,
   writePersistedTransitionOverrides,
@@ -197,7 +281,12 @@ const DICE_ROLL_ACTOR_COOLDOWN_MS = 16000
 const DICE_ROLL_MAX_PENDING_QUEUE = 6
 const DICE_ROLL_MAX_TOTAL_QUEUE = DICE_ROLL_MAX_PENDING_QUEUE + 1
 import { DiceIcon } from '../components/ui/DiceIcon'
-import { createRollRecord, formatRollFormula, getRollOutcome } from '../lib/rolls'
+import {
+  createCombatRollConfig,
+  createRollRecord,
+  formatRollFormula,
+  getRollOutcome,
+} from '../lib/rolls'
 
 const loadCinematicsLibrary = () =>
   import('../components/tabletop/TabletopCinematicsLibrary')
@@ -281,6 +370,9 @@ function DeferredTabletopTool({ children }: { children: ReactNode }) {
 
 type HudPanelId =
   | 'npcs'
+  | 'builds'
+  | 'statuses'
+  | 'events'
   | 'maps'
   | 'music'
   | 'objects'
@@ -290,8 +382,17 @@ type HudPanelId =
   | 'diagnostics'
   | 'settings'
   | 'turns'
+  | 'combat'
 
-type UtilityWindowId = 'audio' | 'log' | 'notes' | 'access' | 'help' | 'world' | null
+type UtilityWindowId =
+  | 'audio'
+  | 'log'
+  | 'notes'
+  | 'book'
+  | 'access'
+  | 'help'
+  | 'world'
+  | null
 
 type DiceRollGuardNoticeTone = 'danger' | 'warning'
 
@@ -315,32 +416,61 @@ interface PendingCombatResolution {
   attackerName: string
   attackerTokenId: string
   attackName: string
+  baseDamageFormula: string
+  buildDamageBonus: number
+  checkDifficulty?: number
+  checkTarget: 'ca' | 'dt' | 'resistido'
+  costs: CharacterActionCost[]
+  damageContexts: Array<'ability' | 'adjacent' | 'melee' | 'ranged'>
   damageFormula: string
+  distanceMeters: number | null
+  distanceSquares: number | null
+  sourceCell?: TabletopToken['cell']
+  targetCell?: TabletopToken['cell']
   id: string
+  isCritical: boolean
+  manualDamage?: number
+  outcome?: CombatResolutionOutcome
   rawDamage: number
   rollText?: string
   rollTotal?: number
+  opposedAttribute?: string
+  opposedRollEntryId?: string
+  opposedRollTotal?: number
+  opposedSkill?: string
+  damageRollEntryId?: string
+  healingTargetTokenId?: string
+  sourceFeatureId?: string
+  sourceFeatureResolution?: CharacterActionResolutionRule
+  stage: 'defense' | 'damage' | 'result'
   targetTokenId: string
+  turnActionId?: TabletopTurnActionId
+}
+
+interface CombatFocusRequest {
+  featureId: string
+  id: number
+  sourceTokenId: string
 }
 
 function sanitizeCombatDamage(value: number) {
   return Math.max(0, Math.floor(Number.isFinite(value) ? value : 0))
 }
 
-function getDamageFormulaFromActionFeature(
+function getTurnActionIdForFeature(
   feature: CharacterFeatureActivationRequest['feature'],
-) {
-  const tagFormula = feature.automation?.tags
-    ?.map((tag) => /^dano\s*:\s*(.+)$/i.exec(tag.trim())?.[1]?.trim() ?? '')
-    .find(Boolean)
+): TabletopTurnActionId | undefined {
+  const timing = resolveCombatAction(feature).action
 
-  if (tagFormula) {
-    return tagFormula
-  }
-
-  const descriptionMatch = /dano\s*[:=-]\s*([^.;\n]+)/i.exec(feature.descricao)
-
-  return descriptionMatch?.[1]?.trim() ?? ''
+  return timing === 'principal'
+    ? 'padrao'
+    : timing === 'curta'
+      ? 'bonus'
+      : timing === 'movimento'
+        ? 'movimento'
+        : timing === 'reacao'
+          ? 'reacao'
+          : undefined
 }
 
 function parseDamageRollFormula(formula: string) {
@@ -364,6 +494,52 @@ function parseDamageRollFormula(formula: string) {
     modo: 'sum' as const,
     quantidadeDados,
     tipoDado,
+  }
+}
+
+function applyDamageDicePenaltyToFormula(formula: string, penalty: number) {
+  if (penalty <= 0) {
+    return formula
+  }
+
+  const match = /(\d*)d(\d+)(?:\s*([+-])\s*(\d+))?/i.exec(formula)
+
+  if (!match) {
+    return formula
+  }
+
+  const dice = Math.max(0, Number(match[1] || '1') - penalty)
+  const sides = Math.max(2, Number(match[2]))
+  const modifier = match[3] && match[4]
+    ? ` ${match[3]} ${match[4]}`
+    : ''
+
+  return dice > 0 ? `${dice}d${sides}${modifier}` : '0'
+}
+
+function createStatusFormulaRoll(
+  formula: string,
+  context: string,
+  visualColor: string,
+) {
+  const config = parseDamageRollFormula(formula)
+
+  if (!config) {
+    const fixedValue = Number(formula.trim())
+
+    return {
+      roll: null,
+      total: Number.isFinite(fixedValue)
+        ? Math.max(0, Math.floor(fixedValue))
+        : 0,
+    }
+  }
+
+  const roll = createRollRecord(config, context, { visualColor })
+
+  return {
+    roll,
+    total: Math.max(0, roll.total),
   }
 }
 
@@ -657,6 +833,7 @@ const TABLETOP_OBJECT_COLOR_SWATCHES = [
 const HUD_ICON_ASSETS = {
   log: '/assets/ui/icons/hud-log-d20.svg',
   notes: '/assets/ui/icons/hud-not-scroll.svg',
+  book: '/assets/ui/icons/hud-book.svg',
   world: '/assets/ui/icons/hud-mun-compass.svg',
   access: '/assets/ui/icons/hud-key.svg',
   help: '/assets/ui/icons/hud-help.svg',
@@ -762,6 +939,45 @@ function getPlayerTokenStealthAccent(playerId: string) {
     : '#4e5964'
 }
 
+function buildVillageTrainingParticipants(
+  scene: TabletopScene | null | undefined,
+  characters: CharacterSheet[],
+): TabletopTrainingParticipantInput[] {
+  if (!scene) {
+    return []
+  }
+
+  const characterById = new Map(characters.map((character) => [character.id, character]))
+  const participantByPlayerId = new Map<string, TabletopTrainingParticipantInput>()
+
+  scene.tokens.forEach((token) => {
+    const playerId = inferIdentityResourceProfileId(
+      token.controladoPorJogadorId ?? token.persistentControl?.playerId ?? '',
+    )
+
+    if (!playerId || participantByPlayerId.has(playerId)) {
+      return
+    }
+
+    const character = characterById.get(token.characterId)
+    const playerNumber = playerId.replace('player', '')
+
+    participantByPlayerId.set(playerId, {
+      characterId: token.characterId,
+      color: getPlayerTokenAccent(playerId),
+      id: playerId,
+      label: `J${playerNumber}`,
+      name: character?.nome ?? token.label,
+      playerId,
+      tokenId: token.id,
+    })
+  })
+
+  return Array.from(participantByPlayerId.values()).sort((left, right) =>
+    left.playerId.localeCompare(right.playerId),
+  )
+}
+
 function inferIdentityResourceProfileId(value?: string | null): IdentityResourceProfileId | '' {
   const normalizedValue = value?.trim().toLowerCase() ?? ''
 
@@ -777,6 +993,25 @@ function inferIdentityResourceProfileId(value?: string | null): IdentityResource
     /fragmentop?0?([1-5])/.exec(compactValue)
 
   return match ? (`player${match[1]}` as IdentityResourceProfileId) : ''
+}
+
+function getTokenPlayerIds(token: TabletopToken | null | undefined) {
+  if (!token) {
+    return []
+  }
+
+  return Array.from(
+    new Set(
+      [
+        token.controladoPorJogadorId,
+        token.persistentControl?.playerId,
+        token.control?.primaryControllerId,
+        ...(token.control?.controlledByPlayerIds ?? []),
+      ]
+        .map((playerId) => inferIdentityResourceProfileId(playerId))
+        .filter(isIdentityResourceProfileId),
+    ),
+  )
 }
 
 function normalizeIdentityResourcePool(value: unknown): IdentityResourcePool | null {
@@ -1167,6 +1402,20 @@ function resolveTabletopRuntimeAssetUrl(value: string | null | undefined, remote
 }
 
 const AUTOMATIC_MUN_TRANSITION_PREFIX = 'interlude-map-'
+
+const MUN_AUTOMATIC_ARRIVAL_MEDIA_BY_MAP_ID: Record<
+  string,
+  { assetUrl: string; description: string; name: string; summary: string; thumbnailUrl: string }
+> = {
+  planicie_armazem_comunitario_topdown: {
+    assetUrl: '/assets/mundi/locations/loc_armazem_comunitario.png',
+    thumbnailUrl: '/assets/mundi/locations/loc_armazem_comunitario.png',
+    name: 'Chegada - Armazem Comunitario',
+    summary: 'Interludio da cabana do Armazem antes de abrir o topdown interno.',
+    description:
+      'Chegada externa ao Armazem Comunitario antes da troca para o topdown interno.',
+  },
+}
 
 function getAutomaticMundiTransitionId(mapId: string) {
   return `${AUTOMATIC_MUN_TRANSITION_PREFIX}${mapId}`
@@ -1672,6 +1921,7 @@ export function TablePage() {
   const { showPerformanceOverlay, visualQuality } = useProductPreferences()
   const {
     addLogEntry: addRemoteLogEntry,
+    cancelCombatEffect: cancelRemoteCombatEffect,
     clientConfig: multiplayerClientConfig,
     connectedPlayers: multiplayerConnectedPlayers,
     connectionStatus: multiplayerConnectionStatus,
@@ -1681,7 +1931,9 @@ export function TablePage() {
     moveToken: moveRemoteToken,
     networkLatencyMs: multiplayerNetworkLatencyMs,
     publicState: multiplayerPublicState,
+    requestTurnAction,
     remoteActiveProfile: multiplayerRemoteActiveProfile,
+    setCharacterEditLock,
     updateCharacter: updateRemoteCharacter,
     updateMeasurement: updateRemoteMeasurement,
   } = useMultiplayer()
@@ -1722,6 +1974,7 @@ export function TablePage() {
   const mixerAudioElementsRef = useRef<Record<string, HTMLAudioElement>>({})
   const lastAudioSceneKeyRef = useRef('')
   const rollToastTimeoutRef = useRef<number | null>(null)
+  const rollWindowRestoreTimeoutRef = useRef<number | null>(null)
   const diceQueueAdvanceTimeoutRef = useRef<number | null>(null)
   const boardImpactTimeoutRef = useRef<number | null>(null)
   const lastRollToastIdRef = useRef('')
@@ -1730,6 +1983,7 @@ export function TablePage() {
   const pendingDiceRollEntriesRef = useRef<TabletopLogEntry[]>([])
   const queuedDiceRollIdsRef = useRef(new Set<string>())
   const settledDiceRollIdsRef = useRef(new Set<string>())
+  const turnActionRequestCooldownRef = useRef<Record<string, number>>({})
   const diceRollCooldownUntilRef = useRef<Record<string, number>>({})
   const diceRollGuardNoticeTimeoutRef = useRef<number | null>(null)
   const processedCombatLogEntryIdsRef = useRef(new Set<string>())
@@ -1743,6 +1997,8 @@ export function TablePage() {
   const [session, setSession] = useState(() =>
     readPersistedTabletopSession(activeCampaignId),
   )
+  const emptyEventState = useMemo(() => createTabletopEventSystemState(), [])
+  const eventState = session?.eventState ?? emptyEventState
   const [personalNotesByOwner, setPersonalNotesByOwner] = useState(() =>
     readPersistedTabletopNotes(),
   )
@@ -1756,6 +2012,7 @@ export function TablePage() {
     readPersistedWorldMundiState(activeCampaignId),
   )
   const [activeHudPanel, setActiveHudPanel] = useState<HudPanelId | null>(null)
+  const [trainingOpenRequestId, setTrainingOpenRequestId] = useState(0)
   const [turnDraftActiveTokenId, setTurnDraftActiveTokenId] = useState('')
   const [turnDraftTokenIds, setTurnDraftTokenIds] = useState<string[]>([])
   const [activeUtilityWindow, setActiveUtilityWindow] =
@@ -1764,6 +2021,8 @@ export function TablePage() {
   const [isHudExpanded, setIsHudExpanded] = useState(false)
   const [isUtilityExpanded, setIsUtilityExpanded] = useState(false)
   const [inspectedTokenId, setInspectedTokenId] = useState('')
+  const [sheetFocusRequest, setSheetFocusRequest] =
+    useState<CharacterSheetFocusRequest | undefined>(undefined)
   const [sharedBodySheetProfileByToken, setSharedBodySheetProfileByToken] =
     useState<Record<string, string>>({})
   const [identityResourceProfileByToken, setIdentityResourceProfileByToken] =
@@ -1783,6 +2042,18 @@ export function TablePage() {
   const playersCanMeasure = true
   const [preparedSceneIdOverride, setPreparedSceneIdOverride] = useState('')
   const [sceneEntryId, setSceneEntryId] = useState(0)
+  const [boardRenderEpoch, setBoardRenderEpoch] = useState(0)
+  const [isBoardArtworkSuspended, setIsBoardArtworkSuspended] = useState(false)
+  const boardRecoveryTimerRef = useRef<number | null>(null)
+  const boardAutoRecoveryRef = useRef({
+    attempts: 0,
+    mapId: '',
+    startedAt: 0,
+  })
+  const boardManualRecoveryRef = useRef({
+    hardRecoveryStarted: false,
+    requestedAt: 0,
+  })
   const [introOverlayState, setIntroOverlayState] =
     useState<TabletopIntroOverlayState | null>(null)
   const [transitionOverlayState, setTransitionOverlayState] =
@@ -1801,6 +2072,12 @@ export function TablePage() {
   const [tableFeedbackMessage, setTableFeedbackMessage] = useState('')
   const [pendingCombatResolution, setPendingCombatResolution] =
     useState<PendingCombatResolution | null>(null)
+  const [combatFocusRequest, setCombatFocusRequest] =
+    useState<CombatFocusRequest | null>(null)
+  const [dismissedCombatReceiptId, setDismissedCombatReceiptId] = useState('')
+  const [localCombatPreview, setLocalCombatPreview] =
+    useState<TabletopCombatPreview | null>(null)
+  const [dismissedCombatPreviewId, setDismissedCombatPreviewId] = useState('')
   const [activeDiceRollEntry, setActiveDiceRollEntry] = useState<TabletopLogEntry | null>(null)
   const [pendingDiceRollEntries, setPendingDiceRollEntries] = useState<TabletopLogEntry[]>([])
   const [diceRollGuardNotice, setDiceRollGuardNotice] = useState<{
@@ -1815,9 +2092,7 @@ export function TablePage() {
     quantidadeDados: 1,
     tipoDado: 20,
   })
-  const [rollWindowMinimizeSignal, setRollWindowMinimizeSignal] = useState<number | null>(
-    null,
-  )
+  const [consumedCombatPassives, setConsumedCombatPassives] = useState<Record<string, true>>({})
   const [boardImpactEvent, setBoardImpactEvent] =
     useState<Tabletop3DBoardImpact | null>(null)
   const [rollToastEntry, setRollToastEntry] = useState<TabletopLogEntry | null>(null)
@@ -2078,20 +2353,7 @@ export function TablePage() {
           typeof (character as CharacterSheet).id === 'string',
       )
       .map((character) => normalizeCharacterSheet(character))
-    const syncKey = JSON.stringify(
-      remoteCharacters.map((character) => [
-        character.id,
-        character.nome,
-        character.avatarUrl,
-        character.tokenImageUrl,
-        character.recursos,
-        character.atributos,
-        character.pericias,
-        character.inventario,
-        character.inventarioDetalhado,
-        character.status,
-      ]),
-    )
+    const syncKey = JSON.stringify(remoteCharacters)
 
     if (remoteCharacterSyncKeyRef.current === syncKey) {
       return
@@ -2358,6 +2620,9 @@ export function TablePage() {
       { id: 'music', label: 'Musicas', shortLabel: 'MSC' },
       { id: 'objects', label: 'Objetos', shortLabel: 'OBJ' },
       { id: 'npcs', label: 'NPCs', shortLabel: 'NPC' },
+      { id: 'builds', label: 'Builds absorvidas', shortLabel: 'BUI' },
+      { id: 'statuses', label: 'Buffs e debuffs', shortLabel: 'BUF' },
+      { id: 'events', label: 'Eventos da mesa', shortLabel: 'EVE' },
       { id: 'world', label: 'Mapa Mundi', shortLabel: 'MUN' },
       { id: 'turns', label: 'Turnos', shortLabel: 'TRN' },
       { id: 'diagnostics', label: 'Diagnostico multiplayer', shortLabel: 'NET' },
@@ -2373,6 +2638,9 @@ export function TablePage() {
       }
       if (rollToastTimeoutRef.current !== null) {
         window.clearTimeout(rollToastTimeoutRef.current)
+      }
+      if (rollWindowRestoreTimeoutRef.current !== null) {
+        window.clearTimeout(rollWindowRestoreTimeoutRef.current)
       }
       if (diceQueueAdvanceTimeoutRef.current !== null) {
         window.clearTimeout(diceQueueAdvanceTimeoutRef.current)
@@ -2590,39 +2858,6 @@ export function TablePage() {
 
     nextRollEntries.forEach((entry) => requestDiceRollPlaybackFromEffect(entry))
   }, [logEntries, viewMode])
-
-  const createPendingCombatResolutionFromEffect = useEffectEvent(
-    createPendingCombatResolutionFromLogEntry,
-  )
-
-  useEffect(() => {
-    if (viewMode !== 'gm' || pendingCombatResolution) {
-      return
-    }
-
-    const nextCombatEntry = logEntries.find(
-      (entry) =>
-        entry.combat?.kind === 'attack' &&
-        getLogEntryTimestamp(entry) >= tableMountedAtRef.current - 1000 &&
-        !processedCombatLogEntryIdsRef.current.has(entry.id),
-    )
-
-    if (!nextCombatEntry) {
-      return
-    }
-
-    const nextResolution = createPendingCombatResolutionFromEffect(nextCombatEntry)
-    processedCombatLogEntryIdsRef.current.add(nextCombatEntry.id)
-
-    if (!nextResolution) {
-      return
-    }
-
-    setPendingCombatResolution(nextResolution)
-    setTableFeedbackMessage(
-      `Ataque recebido: ${nextResolution.attackerName} usou ${nextResolution.attackName}.`,
-    )
-  }, [logEntries, pendingCombatResolution, viewMode])
 
   const ensureMixerAudioElementFromEffect = useEffectEvent(ensureMixerAudioElement)
   const pauseMixerTrackFromEffect = useEffectEvent(pauseMixerTrack)
@@ -2850,11 +3085,13 @@ export function TablePage() {
 
       const transitionId = getAutomaticMundiTransitionId(map.id)
       const persistedTransition = persistedTransitions.get(transitionId)
+      const configuredArrival = MUN_AUTOMATIC_ARRIVAL_MEDIA_BY_MAP_ID[map.id]
       const previewAsset =
-        map.thumbnailUrl ||
-        map.previewImage ||
+        configuredArrival?.assetUrl ||
         linkedLocation?.previewImageUrl ||
         linkedLocation?.imagemLocalUrl ||
+        map.thumbnailUrl ||
+        map.previewImage ||
         map.imageUrl ||
         map.image
 
@@ -2866,18 +3103,22 @@ export function TablePage() {
         {
           ...persistedTransition,
           id: transitionId,
-          name: persistedTransition?.name?.trim() || `Chegada - ${map.name}`,
+          name:
+            persistedTransition?.name?.trim() || configuredArrival?.name || `Chegada - ${map.name}`,
           summary:
             persistedTransition?.summary?.trim() ||
+            configuredArrival?.summary ||
             `Interludio de chegada antes de abrir ${map.name}.`,
           category: 'MUN',
           biomeId: map.biomeId ?? linkedLocation?.biomaId ?? 'custom',
           toMapId: map.id,
-          type: persistedTransition?.type ?? 'image',
-          assetUrl: persistedTransition?.assetUrl || previewAsset,
-          thumbnailUrl: persistedTransition?.thumbnailUrl || previewAsset,
+          type: 'image',
+          assetUrl: previewAsset,
+          thumbnailUrl:
+            configuredArrival?.thumbnailUrl || previewAsset,
           description:
             persistedTransition?.description?.trim() ||
+            configuredArrival?.description ||
             `Chegada de ${linkedSubmap?.nome ?? linkedLocation?.nome ?? map.name} antes da troca para o mapa.`,
         },
       ]
@@ -2900,20 +3141,28 @@ export function TablePage() {
         .filter((transition) => !libraryState.hiddenItems.transitions[transition.id])
         .map((transition) => {
           const override = transitionOverrides[transition.id]
+          const isAutomaticMundiTransition =
+            isAutomaticMundiTransitionId(transition.id)
           const overrideHasToMap = override
             ? Object.prototype.hasOwnProperty.call(override, 'toMapId')
             : false
           const mergedTransition = override
             ? {
                 ...transition,
-                assetUrl: override.assetUrl ?? transition.assetUrl,
-                thumbnailUrl: override.thumbnailUrl ?? transition.thumbnailUrl,
+                assetUrl: isAutomaticMundiTransition
+                  ? transition.assetUrl
+                  : override.assetUrl ?? transition.assetUrl,
+                thumbnailUrl: isAutomaticMundiTransition
+                  ? transition.thumbnailUrl
+                  : override.thumbnailUrl ?? transition.thumbnailUrl,
                 toMapId: override.keepCurrentMap
                   ? ''
                   : overrideHasToMap
                     ? override.toMapId
                     : transition.toMapId,
-                type: override.type ?? transition.type,
+                type: isAutomaticMundiTransition
+                  ? transition.type
+                  : override.type ?? transition.type,
               }
             : transition
 
@@ -3082,6 +3331,9 @@ export function TablePage() {
           (asset) => asset.id === transitionOverlayState.transitionId,
         ) ?? null
       : null
+  const hasTransitionOverlay = Boolean(activeTransitionOverlay)
+  const boardVisualQuality =
+    hasTransitionOverlay && visualQuality === 'ultra' ? 'balanced' : visualQuality
   const configurableTransition =
     configureTransitionId
       ? availableTransitions.find((transition) => transition.id === configureTransitionId) ??
@@ -3473,6 +3725,81 @@ export function TablePage() {
   const activeCharacter = tokenResourceCharacter
     ? applyIdentityResourcePool(tokenResourceCharacter, activeIdentityResourcePool)
     : null
+  const activeCharacterEffects = activeToken
+    ? session?.publicCombatMarks ?? []
+    : []
+
+  function buildCharacterSheetEffectView(
+    mark: TabletopCombatMark,
+  ): CharacterSheetEffectView {
+    const sourceToken =
+      tokens.find((token) => token.id === mark.sourceTokenId) ?? null
+    const targetToken =
+      tokens.find((token) => token.id === mark.targetTokenId) ?? null
+    const sourceCharacter = resolveTokenCharacterForCombat(sourceToken)
+    const targetCharacter = resolveTokenCharacterForCombat(targetToken)
+    const sourceName = sourceCharacter?.nome ?? sourceToken?.label ?? 'Origem'
+    const targetName = targetCharacter?.nome ?? targetToken?.label ?? 'Alvo'
+    const sourceCanCancel =
+      (mark.cancelableBySource === true &&
+        (mark.statusId === 'especial-buff' ||
+          mark.statusId === 'especial-debuff')) ||
+      mark.label === 'Analise Cirurgica'
+    const statusDefinition = findTabletopStatusDefinition(
+      mark.statusId ?? mark.label,
+    )
+
+    return {
+      canCancel:
+        viewMode === 'gm' ||
+        Boolean(
+          sourceCanCancel &&
+          sourceToken &&
+          canActivePlayerControlToken(sourceToken),
+        ),
+      color: statusDefinition?.color ?? mark.color,
+      description:
+        mark.description ||
+        statusDefinition?.effect ||
+        `${sourceName} aplicou ${mark.label} em ${targetName}.`,
+      durationRounds: mark.durationRounds,
+      icon: mark.icon ?? statusDefinition?.icon ?? (
+        mark.label === 'Analise Cirurgica' ? 'science' : 'custom'
+      ),
+      id: mark.id,
+      kind: mark.kind ?? 'mark',
+      label: mark.label,
+      sourceName,
+      stacks: mark.stacks,
+      statusId: mark.statusId ?? statusDefinition?.id,
+      targetName,
+    }
+  }
+
+  function handleOpenStatusGuide(statusId?: string) {
+    const query = new URLSearchParams({
+      audience: 'player',
+      section: 'recursos',
+    })
+
+    if (statusId) {
+      query.set('status', statusId)
+    }
+
+    navigate(`/livro?${query.toString()}`)
+  }
+
+  const effectsAppliedByActiveCharacter = activeToken
+    ? activeCharacterEffects
+        .filter((mark) => mark.sourceTokenId === activeToken.id)
+        .map(buildCharacterSheetEffectView)
+    : []
+  const effectsAppliedToActiveCharacter = activeToken
+    ? activeCharacterEffects
+        .filter((mark) => mark.targetTokenId === activeToken.id)
+        .map(buildCharacterSheetEffectView)
+    : []
+
   function resolveTokenCharacterForCombat(token: TabletopToken | null | undefined) {
     if (!data || !token) {
       return null
@@ -3495,6 +3822,155 @@ export function TablePage() {
       : tokenCharacter
   }
 
+  const statusParticipants: TabletopStatusParticipant[] = visibleTokens
+    .map((token) => {
+      const character = resolveTokenCharacterForCombat(token)
+
+      return {
+        characterId: character?.id,
+        id: token.id,
+        label: token.label,
+        name: character?.nome ?? token.label,
+      }
+    })
+    .sort((first, second) => first.name.localeCompare(second.name, 'pt-BR'))
+  const statusParticipantIds = new Set(
+    statusParticipants.map((participant) => participant.id),
+  )
+  const currentSceneStatusMarks = (session?.publicCombatMarks ?? []).filter(
+    (mark) =>
+      statusParticipantIds.has(mark.sourceTokenId) ||
+      statusParticipantIds.has(mark.targetTokenId),
+  )
+
+  function handleApplyTabletopStatus(input: {
+    cancelableBySource: boolean
+    durationRounds?: number
+    notes?: string
+    sourceTokenId: string
+    stacks: number
+    statusId: TabletopStatusId
+    targetTokenId: string
+  }) {
+    if (viewMode !== 'gm') {
+      return
+    }
+
+    const definition = getTabletopStatusDefinition(input.statusId)
+    const sourceToken =
+      visibleTokens.find((token) => token.id === input.sourceTokenId) ?? null
+    const targetToken =
+      visibleTokens.find((token) => token.id === input.targetTokenId) ?? null
+
+    if (!definition || !sourceToken || !targetToken) {
+      setTableFeedbackMessage('Origem, alvo ou estado nao esta disponivel nesta cena.')
+      return
+    }
+
+    const sourceCharacter = resolveTokenCharacterForCombat(sourceToken)
+    const targetCharacter = resolveTokenCharacterForCombat(targetToken)
+    const existingMarks = session?.publicCombatMarks ?? []
+    const targetHasVaccine = existingMarks.some(
+      (mark) =>
+        mark.targetTokenId === targetToken.id &&
+        mark.statusId === 'vacina',
+    )
+
+    if (targetHasVaccine && input.statusId !== 'vacina') {
+      setTableFeedbackMessage(
+        `${targetCharacter?.nome ?? targetToken.label} esta sob Vacina e nao recebe estados.`,
+      )
+      return
+    }
+
+    const nextMark: TabletopCombatMark = {
+      cancelableBySource:
+        input.cancelableBySource &&
+        (definition.id === 'especial-buff' ||
+          definition.id === 'especial-debuff'),
+      color: definition.color,
+      createdAt: Date.now(),
+      description: definition.effect,
+      durationRounds: input.durationRounds,
+      icon: definition.icon,
+      id: buildRuntimeEventId(`combat-status-${definition.id}`),
+      kind: definition.kind,
+      label: definition.label,
+      notes: input.notes,
+      sourceCharacterId: sourceCharacter?.id,
+      sourceTokenId: sourceToken.id,
+      stacks: Math.min(
+        definition.rules.maxStacks ?? 99,
+        Math.max(1, input.stacks),
+      ),
+      statusId: definition.id,
+      targetCharacterId: targetCharacter?.id,
+      targetTokenId: targetToken.id,
+    }
+
+    updateSession((currentSession) =>
+      createPersistedTabletopSession({
+        ...currentSession,
+        publicCombatMarks: [
+          ...currentSession.publicCombatMarks.filter((mark) => {
+            if (mark.targetTokenId !== targetToken.id) {
+              return true
+            }
+
+            if (
+              mark.notes === 'automatic:frozen-stack' &&
+              definition.id === 'congelado' &&
+              input.stacks < (definition.rules.maxStacks ?? 3)
+            ) {
+              return false
+            }
+
+            if (definition.id === 'vacina' && mark.statusId) {
+              return false
+            }
+
+            return !(
+              mark.statusId === definition.id &&
+              mark.sourceTokenId === sourceToken.id
+            )
+          }),
+          nextMark,
+        ],
+      }),
+    )
+    setTableFeedbackMessage(
+      `${definition.label} aplicado em ${targetCharacter?.nome ?? targetToken.label}.`,
+    )
+  }
+
+  function handleRemoveTabletopStatus(markId: string) {
+    if (viewMode !== 'gm') {
+      return
+    }
+
+    const targetMark =
+      session?.publicCombatMarks.find((mark) => mark.id === markId) ?? null
+
+    if (targetMark?.statusId === 'congelado') {
+      updateSession((currentSession) =>
+        createPersistedTabletopSession({
+          ...currentSession,
+          publicCombatMarks: currentSession.publicCombatMarks.filter(
+            (mark) =>
+              mark.id !== markId &&
+              !(
+                mark.notes === 'automatic:frozen-stack' &&
+                mark.targetTokenId === targetMark.targetTokenId
+              ),
+          ),
+        }),
+      )
+      return
+    }
+
+    handleCancelCombatEffect(markId)
+  }
+
   const combatTargetTokens = pendingCombatResolution
     ? visibleTokens.filter((token) => token.id !== pendingCombatResolution.attackerTokenId)
     : []
@@ -3502,45 +3978,276 @@ export function TablePage() {
     pendingCombatResolution?.targetTokenId
       ? visibleTokens.find((token) => token.id === pendingCombatResolution.targetTokenId) ?? null
       : null
+  const pendingCombatAttackerToken = pendingCombatResolution
+    ? visibleTokens.find((token) => token.id === pendingCombatResolution.attackerTokenId) ?? null
+    : null
+  const pendingCombatAttackerCharacter = resolveTokenCharacterForCombat(
+    pendingCombatAttackerToken,
+  )
   const pendingCombatTargetCharacter = resolveTokenCharacterForCombat(
     pendingCombatTargetToken,
   )
-  const pendingCombatDamageRollConfig = pendingCombatResolution
-    ? parseDamageRollFormula(pendingCombatResolution.damageFormula)
+  const pendingCombatAttackerStatusDefinitions = pendingCombatAttackerToken
+    ? (session?.publicCombatMarks ?? [])
+        .filter((mark) => mark.targetTokenId === pendingCombatAttackerToken.id)
+        .map((mark) => findTabletopStatusDefinition(mark.statusId ?? mark.label))
+        .filter((definition) => Boolean(definition))
+    : []
+  const pendingCombatTargetStatusDefinitions = pendingCombatTargetToken
+    ? (session?.publicCombatMarks ?? [])
+        .filter((mark) => mark.targetTokenId === pendingCombatTargetToken.id)
+        .map((mark) => findTabletopStatusDefinition(mark.statusId ?? mark.label))
+        .filter((definition) => Boolean(definition))
+    : []
+  const pendingCombatDamageDicePenalty =
+    pendingCombatAttackerStatusDefinitions.reduce(
+      (total, definition) =>
+        total + (definition?.rules.damageDicePenalty ?? 0),
+      0,
+    )
+  const pendingCombatBaseDamageFormula = pendingCombatResolution
+    ? pendingCombatResolution.isCritical
+      ? getCriticalDamageFormula(
+          pendingCombatResolution.baseDamageFormula,
+          pendingCombatAttackerCharacter
+            ? getCombatCriticalDamageBonus(pendingCombatAttackerCharacter)
+            : 0,
+        )
+      : pendingCombatResolution.baseDamageFormula
+    : ''
+  const pendingCombatDamageFormula = applyDamageDicePenaltyToFormula(
+    pendingCombatBaseDamageFormula,
+    pendingCombatDamageDicePenalty,
+  )
+  const pendingCombatDamageRollConfig = pendingCombatDamageFormula
+    ? parseDamageRollFormula(pendingCombatDamageFormula)
     : null
   const pendingCombatRawDamage = pendingCombatResolution
     ? sanitizeCombatDamage(pendingCombatResolution.rawDamage)
     : 0
+  const pendingCombatSurgicalStatus =
+    pendingCombatResolution?.targetTokenId && pendingCombatAttackerCharacter
+      ? `combat:analise-cirurgica:${pendingCombatResolution.targetTokenId}`
+      : ''
+  const pendingCombatUsesSurgicalAnalysis = Boolean(
+    pendingCombatSurgicalStatus &&
+      pendingCombatAttackerCharacter?.status.includes(pendingCombatSurgicalStatus),
+  )
+  const pendingCombatDamageMultiplier = pendingCombatUsesSurgicalAnalysis ? 2 : 1
+  const pendingCombatDamageBeforeTargetEffects = resolveCombatDamageSequence({
+    buildModifier: pendingCombatResolution?.buildDamageBonus ?? 0,
+    multiplier: pendingCombatDamageMultiplier,
+    rolledDamage: pendingCombatRawDamage,
+  })
+  const pendingCombatGuardianPassiveKey =
+    pendingCombatTargetToken && currentSceneId
+      ? `${currentSceneId}:${pendingCombatTargetToken.id}:planicie-tank-casca-vigia`
+      : ''
+  const pendingCombatHasGuardianShell = Boolean(
+    pendingCombatTargetCharacter &&
+      getBuildItems(pendingCombatTargetCharacter.combatProfile?.build).some(
+        (item) => item.catalogItemId === 'planicie-tank-casca-vigia',
+      ),
+  )
+  const pendingCombatGuardianReduction =
+    pendingCombatHasGuardianShell &&
+    pendingCombatGuardianPassiveKey &&
+    !consumedCombatPassives[pendingCombatGuardianPassiveKey] &&
+    pendingCombatDamageBeforeTargetEffects.afterBuild > 0
+      ? 1
+      : 0
+  const pendingCombatDamageSequence = resolveCombatDamageSequence({
+    buildModifier: pendingCombatResolution?.buildDamageBonus ?? 0,
+    multiplier: pendingCombatDamageMultiplier,
+    reduction: pendingCombatGuardianReduction,
+    rolledDamage: pendingCombatRawDamage,
+  })
+  const pendingCombatDamageBeforeDefense =
+    pendingCombatDamageSequence.finalDamage
   const pendingCombatBlockValue = pendingCombatTargetCharacter
-    ? Math.max(0, Math.round(pendingCombatTargetCharacter.bloqueio ?? 0))
+    ? getCombatBlockValue(pendingCombatTargetCharacter)
     : 0
+  const pendingCombatDodgeValue = pendingCombatTargetCharacter
+    ? getCombatDodgeValue(pendingCombatTargetCharacter)
+    : null
+  const pendingCombatCaPenetration = pendingCombatAttackerCharacter
+    ? getCombatCaPenetration(pendingCombatAttackerCharacter)
+    : 0
+  const pendingCombatStatusCaBonus =
+    pendingCombatTargetStatusDefinitions.reduce(
+      (total, definition) =>
+        total + (definition?.rules.armorClassBonus ?? 0),
+      0,
+    )
+  const pendingCombatEffectiveCa = pendingCombatTargetCharacter
+    ? Math.max(
+        1,
+        pendingCombatTargetCharacter.defesa +
+          pendingCombatStatusCaBonus -
+          pendingCombatCaPenetration,
+      )
+    : 0
+  const pendingCombatTargetReactionUsed = Boolean(
+    pendingCombatTargetToken && session?.turnState?.usedActions[pendingCombatTargetToken.id]?.reacao,
+  )
+  const pendingCombatVulnerabilityMultiplier =
+    pendingCombatTargetStatusDefinitions.some(
+      (definition) => definition?.rules.doublesIncomingDamage,
+    )
+      ? 2
+      : 1
   const pendingCombatHitDamage = pendingCombatTargetCharacter
-    ? pendingCombatRawDamage
+    ? pendingCombatDamageBeforeDefense * pendingCombatVulnerabilityMultiplier
     : 0
   const pendingCombatBlockedDamage = pendingCombatTargetCharacter
-    ? Math.max(0, pendingCombatRawDamage - pendingCombatBlockValue)
+    ? applyCombatBlock(
+        pendingCombatDamageBeforeDefense,
+        pendingCombatBlockValue,
+      ) * pendingCombatVulnerabilityMultiplier
     : 0
+  const pendingCombatSuggestedDamage =
+    pendingCombatResolution?.outcome === 'hit'
+      ? pendingCombatHitDamage
+      : pendingCombatResolution?.outcome === 'block'
+        ? pendingCombatBlockedDamage
+        : 0
+  const pendingCombatFinalAmount =
+    pendingCombatResolution?.outcome === 'hit' ||
+    pendingCombatResolution?.outcome === 'block'
+      ? sanitizeCombatDamage(
+          pendingCombatResolution?.manualDamage ?? pendingCombatSuggestedDamage,
+        )
+      : 0
+  const pendingCombatResolutionMode =
+    pendingCombatResolution?.sourceFeatureResolution?.mode ?? 'damage'
+  const pendingCombatFinalDamage =
+    pendingCombatResolutionMode === 'heal' ? 0 : pendingCombatFinalAmount
+  const pendingCombatEffectiveDamage = pendingCombatTargetCharacter
+    ? Math.min(
+        pendingCombatTargetCharacter.recursos.vidaAtual,
+        pendingCombatFinalDamage,
+      )
+    : 0
+  const pendingCombatHealingTargetToken =
+    pendingCombatResolution?.healingTargetTokenId
+      ? visibleTokens.find(
+          (token) => token.id === pendingCombatResolution.healingTargetTokenId,
+        ) ?? null
+      : pendingCombatResolutionMode === 'heal'
+        ? pendingCombatTargetToken
+        : null
+  const pendingCombatHealingTargetCharacter = resolveTokenCharacterForCombat(
+    pendingCombatHealingTargetToken,
+  )
+  const pendingCombatHealingTargetTokens =
+    pendingCombatAttackerToken && pendingCombatResolutionMode === 'drain-transfer'
+      ? visibleTokens.filter(
+          (token) =>
+            Boolean(resolveTokenCharacterForCombat(token)) &&
+            getTabletopDistanceSquares(
+              pendingCombatAttackerToken.cell,
+              token.cell,
+            ) <= 6,
+        )
+      : visibleTokens.filter((token) =>
+          Boolean(resolveTokenCharacterForCombat(token)),
+        )
+  const pendingCombatHealingAmount =
+    pendingCombatResolutionMode === 'drain-transfer'
+      ? pendingCombatEffectiveDamage
+      : pendingCombatResolutionMode === 'heal'
+        ? pendingCombatFinalAmount
+        : 0
+  const pendingCombatEffectiveHealing = pendingCombatHealingTargetCharacter
+    ? Math.min(
+        Math.max(
+          0,
+          pendingCombatHealingTargetCharacter.recursos.vidaMaxima -
+            pendingCombatHealingTargetCharacter.recursos.vidaAtual,
+        ),
+        pendingCombatHealingAmount,
+      )
+    : 0
+  const pendingCombatDefenseThreshold =
+    pendingCombatResolution?.checkTarget === 'dt'
+      ? pendingCombatResolution.checkDifficulty
+      : pendingCombatResolution?.checkTarget === 'resistido'
+        ? pendingCombatResolution.opposedRollTotal
+        : pendingCombatEffectiveCa
+  const pendingCombatCheckLabel =
+    pendingCombatResolution?.checkTarget === 'dt'
+      ? `DT ${pendingCombatResolution.checkDifficulty ?? '--'}`
+      : pendingCombatResolution?.checkTarget === 'resistido'
+        ? `Teste resistido${pendingCombatResolution.opposedSkill ? ` contra ${pendingCombatResolution.opposedSkill}` : ''}`
+        : `CA efetiva ${pendingCombatEffectiveCa}`
+  const pendingCombatDamageContextLabel =
+    pendingCombatResolution?.damageContexts
+      .map((context) =>
+        context === 'ability'
+          ? 'habilidade'
+          : context === 'adjacent'
+            ? 'adjacente'
+            : context === 'ranged'
+              ? 'distancia'
+              : 'corpo a corpo',
+      )
+      .join(' + ') ?? ''
   const pendingCombatSuggestedOutcome: CombatResolutionOutcome | null =
     pendingCombatResolution &&
     pendingCombatTargetCharacter &&
-    typeof pendingCombatResolution.rollTotal === 'number'
-      ? pendingCombatResolution.rollTotal >= pendingCombatTargetCharacter.defesa
+    typeof pendingCombatResolution.rollTotal === 'number' &&
+    typeof pendingCombatDefenseThreshold === 'number'
+      ? pendingCombatResolution.checkTarget === 'resistido'
+        ? pendingCombatResolution.rollTotal > pendingCombatDefenseThreshold
+          ? 'hit'
+          : 'miss'
+        : pendingCombatResolution.rollTotal >= pendingCombatDefenseThreshold
         ? 'hit'
         : 'miss'
       : null
+  const pendingCombatDefenseReady =
+    pendingCombatResolution?.checkTarget !== 'resistido' ||
+    typeof pendingCombatResolution.opposedRollTotal === 'number'
   const pendingCombatSuggestionLabel =
     pendingCombatResolution &&
     pendingCombatTargetCharacter &&
-    typeof pendingCombatResolution.rollTotal === 'number'
+    typeof pendingCombatResolution.rollTotal === 'number' &&
+    typeof pendingCombatDefenseThreshold === 'number'
       ? pendingCombatSuggestedOutcome === 'hit'
-        ? `Provavel acerto: ${pendingCombatResolution.rollTotal} >= CA ${pendingCombatTargetCharacter.defesa}.`
-        : `Provavel erro: ${pendingCombatResolution.rollTotal} < CA ${pendingCombatTargetCharacter.defesa}.`
+        ? `Provavel acerto: ${pendingCombatResolution.rollTotal} ${pendingCombatResolution.checkTarget === 'resistido' ? '>' : '>='} defesa ${pendingCombatDefenseThreshold}${pendingCombatResolution.checkTarget === 'ca' && pendingCombatCaPenetration ? ` (perfuracao ${pendingCombatCaPenetration})` : ''}.`
+        : `Provavel erro: ${pendingCombatResolution.rollTotal} ${pendingCombatResolution.checkTarget === 'resistido' ? '<=' : '<'} defesa ${pendingCombatDefenseThreshold}${pendingCombatResolution.checkTarget === 'ca' && pendingCombatCaPenetration ? ` (perfuracao ${pendingCombatCaPenetration})` : ''}.`
+      : ''
+  const pendingCombatDodgeSucceeded =
+    pendingCombatResolution &&
+    typeof pendingCombatResolution.rollTotal === 'number' &&
+    typeof pendingCombatDodgeValue === 'number'
+      ? pendingCombatDodgeValue >= pendingCombatResolution.rollTotal
+      : null
+  const pendingCombatDodgeSuggestionLabel =
+    pendingCombatResolution &&
+    typeof pendingCombatResolution.rollTotal === 'number' &&
+    typeof pendingCombatDodgeValue === 'number'
+      ? pendingCombatDodgeSucceeded
+        ? `Esquiva disponivel: ${pendingCombatDodgeValue} >= ataque ${pendingCombatResolution.rollTotal}.`
+        : `Esquiva insuficiente: ${pendingCombatDodgeValue} < ataque ${pendingCombatResolution.rollTotal}.`
       : ''
   const pendingCombatLifeAfterHit = pendingCombatTargetCharacter
-    ? Math.max(0, pendingCombatTargetCharacter.recursos.vidaAtual - pendingCombatHitDamage)
+    ? Math.max(
+        0,
+        pendingCombatTargetCharacter.recursos.vidaAtual -
+          (pendingCombatResolution?.outcome === 'hit'
+            ? pendingCombatFinalDamage
+            : pendingCombatHitDamage),
+      )
     : 0
   const pendingCombatLifeAfterBlock = pendingCombatTargetCharacter
-    ? Math.max(0, pendingCombatTargetCharacter.recursos.vidaAtual - pendingCombatBlockedDamage)
+    ? Math.max(
+        0,
+        pendingCombatTargetCharacter.recursos.vidaAtual -
+          (pendingCombatResolution?.outcome === 'block'
+            ? pendingCombatFinalDamage
+            : pendingCombatBlockedDamage),
+      )
     : 0
 
   function createPendingCombatResolutionFromLogEntry(
@@ -3553,21 +4260,39 @@ export function TablePage() {
     }
 
     const suggestedTarget =
-      selectedTokens.find((token) => token.id !== combat.attackerTokenId) ??
-      visibleTokens.find((token) => token.id !== combat.attackerTokenId) ??
-      null
+      selectedTokens.find((token) => token.id !== combat.attackerTokenId) ?? null
 
     return {
       attackerCharacterId: combat.attackerCharacterId,
       attackerName: combat.attackerName,
       attackerTokenId: combat.attackerTokenId,
       attackName: combat.attackName,
+      baseDamageFormula: combat.baseDamageFormula ?? combat.damageFormula,
+      buildDamageBonus: combat.buildDamageBonus ?? 0,
+      checkDifficulty: combat.checkDifficulty,
+      checkTarget: combat.checkTarget ?? 'ca',
+      costs: combat.costs ?? [],
+      damageContexts: combat.damageContexts ?? [],
       damageFormula: combat.damageFormula,
+      distanceMeters: combat.distanceMeters ?? null,
+      distanceSquares: combat.distanceSquares ?? null,
       id: entry.id,
+      isCritical: combat.isCritical ?? isCriticalAttackRoll(entry.roll),
       rawDamage: 0,
       rollText: combat.rollText ?? entry.roll?.resultadoTexto,
       rollTotal: combat.rollTotal ?? entry.roll?.total,
-      targetTokenId: suggestedTarget?.id ?? '',
+      opposedAttribute: combat.opposedAttribute,
+      opposedSkill: combat.opposedSkill,
+      sourceCell: combat.sourceCell,
+      sourceFeatureId: combat.sourceFeatureId,
+      sourceFeatureResolution: combat.sourceFeatureResolution,
+      stage: 'defense',
+      targetCell: combat.targetCell,
+      targetTokenId:
+        visibleTokens.find((token) => token.id === combat.targetTokenId)?.id ??
+        suggestedTarget?.id ??
+        '',
+      turnActionId: combat.turnActionId,
     }
   }
 
@@ -3576,8 +4301,22 @@ export function TablePage() {
       ? data.factions.items.find((faction) => faction.id === activeCharacter.faccao) ??
         null
       : null
+  const activeCharacterEditLock =
+    activeCharacter && session?.characterEditLocks
+      ? session.characterEditLocks[activeCharacter.id] ?? null
+      : null
+  const currentEditOwnerId =
+    viewMode === 'gm'
+      ? 'gm'
+      : effectiveActiveAccessProfile?.id || `player:${focusedPlayerCharacter?.id ?? ''}`
+  const activeCharacterEditBlocked = Boolean(
+    activeCharacterEditLock &&
+      activeCharacterEditLock.ownerId !== currentEditOwnerId &&
+      activeCharacterEditLock.expiresAt > Date.now(),
+  )
   const canEditActiveCharacter = Boolean(
     activeCharacter &&
+      !activeCharacterEditBlocked &&
       (viewMode === 'gm' || (activeToken && canActivePlayerControlToken(activeToken))),
   )
   const canEditActiveToken = Boolean(
@@ -3586,6 +4325,26 @@ export function TablePage() {
   )
   const sheetActionTokenId =
     primarySelectedTokenId || playerToken?.id || activeToken?.id || ''
+  const rollBonusCharacter =
+    viewMode === 'player'
+      ? focusedPlayerCharacter
+      : resolveTokenCharacterForCombat(
+          tokens.find((token) => token.id === sheetActionTokenId) ?? activeToken,
+        )
+  const rollBonusOptions =
+    rollBonusCharacter?.pericias
+      .filter((skill) => skill.nome.trim())
+      .map((skill) => {
+        const bonus = getCharacterSkillRollBonus(rollBonusCharacter, skill.nome)
+
+        return {
+          bonus,
+          id: skill.id,
+          label: skill.nome,
+        }
+      })
+      .filter((skill) => skill.bonus !== 0)
+      .sort((left, right) => left.label.localeCompare(right.label, 'pt-BR')) ?? []
   const boardPings = pings.map((ping) => ({
     id: ping.id,
     cell: ping.cell,
@@ -3606,6 +4365,43 @@ export function TablePage() {
             (session.activeMeasurement.authorView === 'gm' ? 'M' : 'J'),
         }
       : null
+  const currentCombatPreview =
+    localCombatPreview?.sceneId === currentSceneId
+      ? localCombatPreview
+      : session?.publicCombatPreview ?? null
+  const activeCombatPreview =
+    currentCombatPreview?.sceneId === currentSceneId &&
+    currentCombatPreview.expiresAt > Date.now() &&
+    currentCombatPreview.id !== dismissedCombatPreviewId
+      ? currentCombatPreview
+      : null
+
+  const expireCombatPreviewFromEffect = useEffectEvent((previewId: string) => {
+    setLocalCombatPreview((preview) =>
+      preview?.id === previewId ? null : preview,
+    )
+
+    if (viewMode === 'gm' && session?.publicCombatPreview?.id === previewId) {
+      updateSession((currentSession) =>
+        createPersistedTabletopSession({
+          ...currentSession,
+          publicCombatPreview: null,
+        }),
+      )
+    }
+  })
+
+  useEffect(() => {
+    if (!currentCombatPreview) return
+
+    const delay = Math.max(0, currentCombatPreview.expiresAt - Date.now())
+    const timeoutId = window.setTimeout(
+      () => expireCombatPreviewFromEffect(currentCombatPreview.id),
+      delay + 20,
+    )
+
+    return () => window.clearTimeout(timeoutId)
+  }, [currentCombatPreview])
 
   const npcLibraryCharacters = useMemo(
     () =>
@@ -3828,6 +4624,14 @@ export function TablePage() {
           const borderColor = isStealthed
             ? getPlayerTokenStealthAccent(ownerPlayerId)
             : getPlayerTokenAccent(ownerPlayerId)
+          const now = Date.now()
+          const combatImpact = session?.publicCombatImpacts
+            .filter((impact) => impact.tokenId === token.id && impact.expiresAt > now)
+            .at(-1)
+          const combatMarks = (session?.publicCombatMarks ?? [])
+            .filter((mark) => mark.targetTokenId === token.id)
+            .sort((first, second) => first.createdAt - second.createdAt)
+          const deathState = session?.playerDeathStates[token.id]
 
           if (!displayCharacter && !tokenImage) {
             return null
@@ -3858,10 +4662,207 @@ export function TablePage() {
             isControllable: canActivePlayerControlToken(token),
             isMovable: canActivePlayerMoveTokens(),
             isStealthed,
+            combatImpact,
+            combatMarks,
+            deathState,
           }
         })
         .filter((token): token is NonNullable<typeof token> => Boolean(token))
     : []
+  const playerTokenLifeSnapshot = visibleTokens
+    .filter((token) => getTokenPlayerIds(token).length > 0)
+    .map((token) => ({
+      life: resolveTokenCharacterForCombat(token)?.recursos.vidaAtual ?? 0,
+      tokenId: token.id,
+    }))
+  const playerTokenLifeSignature = playerTokenLifeSnapshot
+    .map((entry) => `${entry.tokenId}:${entry.life}`)
+    .join('|')
+  const visibleTokenResourceSnapshot = visibleTokens
+    .map((token) => {
+      const character = resolveTokenCharacterForCombat(token)
+
+      return character
+        ? {
+            determination: character.recursos.determinacaoAtual,
+            fushi: character.recursos.fushiAtual,
+            life: character.recursos.vidaAtual,
+            tokenId: token.id,
+          }
+        : null
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+  const visibleTokenResourceSignature = visibleTokenResourceSnapshot
+    .map(
+      (entry) =>
+        `${entry.tokenId}:${entry.life}:${entry.fushi}:${entry.determination}`,
+    )
+    .join('|')
+
+  useEffect(() => {
+    if (viewMode !== 'gm') {
+      return
+    }
+
+    const currentLifeEntries = playerTokenLifeSignature
+      .split('|')
+      .filter(Boolean)
+      .map((entry) => {
+        const separatorIndex = entry.lastIndexOf(':')
+
+        return {
+          life: Number(entry.slice(separatorIndex + 1)),
+          tokenId: entry.slice(0, separatorIndex),
+        }
+      })
+
+    updateSession((currentSession) => {
+      const nextDeathStates = { ...currentSession.playerDeathStates }
+      let changed = false
+
+      currentLifeEntries.forEach(({ life, tokenId }) => {
+        const currentState = nextDeathStates[tokenId]
+
+        if (life <= 0 && !currentState) {
+          nextDeathStates[tokenId] = {
+            failures: 0,
+            results: [null, null, null],
+            status: 'down',
+            successes: 0,
+            tokenId,
+            updatedAt: Date.now(),
+          }
+          changed = true
+        } else if (life >= 2 && currentState) {
+          delete nextDeathStates[tokenId]
+          changed = true
+        }
+      })
+
+      return changed
+        ? createPersistedTabletopSession({
+            ...currentSession,
+            playerDeathStates: nextDeathStates,
+          })
+        : currentSession
+    })
+    // updateSession is intentionally excluded: this reconciliation is keyed by life changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerTokenLifeSignature, viewMode])
+
+  useEffect(() => {
+    if (viewMode !== 'gm') {
+      return
+    }
+
+    const automaticStatusByResource = [
+      {
+        active: (
+          entry: (typeof visibleTokenResourceSnapshot)[number],
+          existing: TabletopCombatMark | undefined,
+        ) => entry.life <= 0 || Boolean(existing && entry.life < 2),
+        id: 'desmaiado' as const,
+      },
+      {
+        active: (entry: (typeof visibleTokenResourceSnapshot)[number]) =>
+          entry.fushi <= 0,
+        id: 'exausto' as const,
+      },
+      {
+        active: (entry: (typeof visibleTokenResourceSnapshot)[number]) =>
+          entry.determination <= 0,
+        id: 'descontrolado' as const,
+      },
+    ]
+
+    updateSession((currentSession) => {
+      const currentMarks = currentSession.publicCombatMarks
+      const nextMarks = currentMarks.filter(
+        (mark) => mark.notes !== 'automatic:zero-resource',
+      )
+
+      visibleTokenResourceSnapshot.forEach((entry) => {
+        automaticStatusByResource.forEach((automaticStatus) => {
+          const definition = getTabletopStatusDefinition(automaticStatus.id)
+
+          if (!definition) {
+            return
+          }
+
+          const existingMark = currentMarks.find(
+            (mark) =>
+              mark.notes === 'automatic:zero-resource' &&
+              mark.statusId === definition.id &&
+              mark.targetTokenId === entry.tokenId,
+          )
+
+          if (!automaticStatus.active(entry, existingMark)) {
+            return
+          }
+
+          nextMarks.push(
+            existingMark ?? {
+              cancelableBySource: false,
+              color: definition.color,
+              createdAt: Date.now(),
+              description: definition.effect,
+              icon: definition.icon,
+              id: `automatic-resource-${definition.id}-${entry.tokenId}`,
+              kind: definition.kind,
+              label: definition.label,
+              notes: 'automatic:zero-resource',
+              sourceTokenId: entry.tokenId,
+              statusId: definition.id,
+              targetTokenId: entry.tokenId,
+            },
+          )
+        })
+      })
+
+      const unchanged =
+        nextMarks.length === currentMarks.length &&
+        nextMarks.every((mark, index) => mark === currentMarks[index])
+
+      return unchanged
+        ? currentSession
+        : createPersistedTabletopSession({
+            ...currentSession,
+            publicCombatMarks: nextMarks,
+          })
+    })
+    // Resource changes are the only trigger; session writes must not loop this reconciliation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleTokenResourceSignature, viewMode])
+
+  const activeAbilityImpact =
+    session?.publicCombatImpacts
+      .filter(
+        (impact) =>
+          impact.expiresAt > Date.now() &&
+          (impact.type === 'ability-success' ||
+            impact.type === 'ability-failure'),
+      )
+      .at(-1) ?? null
+  const activeAbilityImpactToken = activeAbilityImpact
+    ? visibleTokens.find((token) => token.id === activeAbilityImpact.tokenId) ?? null
+    : null
+  const activeAbilityImpactMap = boardMap ?? data?.tabletop.map ?? null
+  const activeAbilityImpactStyle =
+    activeAbilityImpactToken && activeAbilityImpactMap
+      ? ({
+          '--ability-origin-x': `${
+            ((activeAbilityImpactToken.cell.column + 0.5) /
+              activeAbilityImpactMap.gridColumns) *
+            100
+          }%`,
+          '--ability-origin-y': `${
+            ((activeAbilityImpactToken.cell.row + 0.5) /
+              activeAbilityImpactMap.gridRows) *
+            100
+          }%`,
+        } as CSSProperties)
+      : undefined
+
   const objectViews = sceneObjects
     .filter((object) => viewMode === 'gm' || object.visibility === 'public')
     .map((object) => ({
@@ -4118,14 +5119,24 @@ export function TablePage() {
         )
         const followingParticipant =
           nextIndex >= 0 ? participants[(nextIndex + 1) % participants.length] : null
+        const participantCharacter = data
+          ? getCharacterById(data, participant.characterId)
+          : null
+        const participantInventorySummary = participantCharacter
+          ? getInventoryCapacitySummary(participantCharacter)
+          : null
 
         participantViews.push({
+          characterId: participant.characterId,
           color: participant.color || token.color,
           id: participant.id,
           imageUrl: participant.imageUrl,
           isActive: participant.id === turnState.activeParticipantId,
           isNext: participant.id === followingParticipant?.id,
           label: participant.label || token.label,
+          movementLabel: participantInventorySummary
+            ? formatInventoryMovement(participantInventorySummary)
+            : undefined,
           name: participant.name || token.label,
           tokenId: participant.tokenId,
         })
@@ -4134,6 +5145,86 @@ export function TablePage() {
       }, []) ?? []
   const activeTurnParticipantView =
     turnParticipantViews.find((participant) => participant.isActive) ?? null
+  const activeTurnToken = activeTurnParticipantView
+    ? (viewMode === 'gm' ? tokens : visibleTokens).find(
+        (token) => token.id === activeTurnParticipantView.tokenId,
+      ) ?? null
+    : null
+  const activeTurnCharacter =
+    viewMode === 'player'
+      ? activeTurnParticipantView?.characterId === focusedPlayerCharacter?.id
+        ? focusedPlayerCharacter
+        : null
+      : resolveTokenCharacterForCombat(activeTurnToken)
+  const canControlActiveTurnParticipant =
+    viewMode === 'gm' ||
+    Boolean(
+      activeTurnParticipantView &&
+        focusedPlayerCharacter &&
+        activeTurnParticipantView.characterId === focusedPlayerCharacter.id &&
+        activeTurnToken &&
+        canActivePlayerControlToken(activeTurnToken),
+    )
+  const activeTurnFeatureActions: TabletopTurnFeatureAction[] = activeTurnCharacter
+    ? [
+        ...(activeTurnCharacter.habilidadesDetalhadas ?? []).map((feature) => ({
+          feature,
+          id: `habilidade:${feature.id}`,
+          label: feature.nome,
+          source: 'habilidade' as const,
+        })),
+        ...(activeTurnCharacter.rituais ?? []).map((feature) => ({
+          feature,
+          id: `ritual:${feature.id}`,
+          label: feature.nome,
+          source: 'ritual' as const,
+        })),
+        ...activeTurnCharacter.ataques.map((attack) => ({
+          feature: {
+            automation: attack.automation,
+            descricao: attack.resumo,
+            id: attack.id,
+            nome: attack.nome,
+            tipo: 'ataque' as const,
+          },
+          id: `ataque:${attack.id}`,
+          label: attack.nome,
+          source: 'ataque' as const,
+        })),
+      ].map((entry) => {
+        const timing =
+          resolveCombatAction(entry.feature).action === 'principal'
+            ? 'padrao'
+            : resolveCombatAction(entry.feature).action === 'curta'
+              ? 'bonus'
+              : resolveCombatAction(entry.feature).action === 'movimento'
+                ? 'movimento'
+                : resolveCombatAction(entry.feature).action === 'reacao'
+                  ? 'reacao'
+                  : 'padrao'
+        const costs = entry.feature.automation?.costs ?? []
+
+        return {
+          ...entry,
+          disabled: !entry.feature.automation || !canPayCharacterActionCosts(activeTurnCharacter, costs).ok,
+          reason: !entry.feature.automation
+            ? 'Esta acao ainda nao tem automacao.'
+            : !canPayCharacterActionCosts(activeTurnCharacter, costs).ok
+              ? 'Recurso insuficiente na ficha.'
+              : undefined,
+          timing,
+        }
+      })
+    : []
+  const pendingTurnActionRequests: TabletopTurnActionRequest[] =
+    viewMode === 'gm'
+      ? logEntries
+          .map((entry) => entry.turnRequest)
+          .filter(
+            (request): request is TabletopTurnActionRequest =>
+              Boolean(request && request.status === 'pending'),
+          )
+      : []
   const turnCandidates: TabletopTurnCandidate[] = tokens.map((token) => {
     const participant = buildTurnParticipantFromToken(token)
 
@@ -4557,6 +5648,153 @@ export function TablePage() {
 
     return () => {
       window.removeEventListener('keydown', handleEscape)
+    }
+  }, [])
+
+  const recoverBoardRendering = useCallback(
+    (origin: 'automatic' | 'manual') => {
+      const mapId = boardMap?.id ?? currentSceneId ?? 'tabletop-map'
+      const now = Date.now()
+      const recoveryState = boardAutoRecoveryRef.current
+
+      if (
+        recoveryState.mapId !== mapId ||
+        now - recoveryState.startedAt > 20000
+      ) {
+        boardAutoRecoveryRef.current = {
+          attempts: 0,
+          mapId,
+          startedAt: now,
+        }
+      }
+
+      if (
+        origin === 'automatic' &&
+        boardAutoRecoveryRef.current.attempts >= 2
+      ) {
+        setTableFeedbackMessage(
+          'A mesa ainda nao respondeu. Use Ctrl+A para forcar uma recuperacao completa.',
+        )
+        return
+      }
+
+      boardAutoRecoveryRef.current.attempts += 1
+
+      if (origin === 'manual') {
+        boardManualRecoveryRef.current = {
+          hardRecoveryStarted: false,
+          requestedAt: now,
+        }
+      }
+
+      if (boardRecoveryTimerRef.current !== null) {
+        window.clearTimeout(boardRecoveryTimerRef.current)
+      }
+
+      setIsBoardArtworkSuspended(true)
+      setTableFeedbackMessage(
+        origin === 'manual'
+          ? 'Recuperando a renderizacao da mesa...'
+          : 'Renderizacao incompleta detectada. Recuperando a mesa...',
+      )
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          boardRecoveryTimerRef.current = window.setTimeout(() => {
+            setBoardRenderEpoch((currentEpoch) => currentEpoch + 1)
+            setIsBoardArtworkSuspended(false)
+            setTableFeedbackMessage(
+              'Mesa renderizada novamente. Estado da sessao preservado.',
+            )
+            boardRecoveryTimerRef.current = null
+          }, 180)
+        })
+      })
+    },
+    [boardMap?.id, currentSceneId],
+  )
+
+  const hardRecoverBoardRenderer = useCallback(() => {
+    if (boardManualRecoveryRef.current.hardRecoveryStarted) {
+      return
+    }
+
+    boardManualRecoveryRef.current.hardRecoveryStarted = true
+    setTableFeedbackMessage(
+      'A imagem continuou branca. Recuperando o renderizador completo...',
+    )
+    window.sessionStorage.setItem(
+      'fushi-tabletop-render-recovery',
+      String(Date.now()),
+    )
+
+    const reloadRenderer = window.fushiDesktop?.reloadRenderer
+
+    if (!reloadRenderer) {
+      setTableFeedbackMessage(
+        'A recuperacao completa so esta disponivel no aplicativo Windows.',
+      )
+      return
+    }
+
+    void reloadRenderer().then((result) => {
+      if (!result.ok) {
+        setTableFeedbackMessage(
+          'O renderizador nao respondeu. Tente Ctrl+A novamente.',
+        )
+      }
+    })
+  }, [])
+
+  const handleBoardArtworkBlank = useCallback(() => {
+    if (
+      Date.now() - boardManualRecoveryRef.current.requestedAt < 4500
+    ) {
+      hardRecoverBoardRenderer()
+      return
+    }
+
+    recoverBoardRendering('automatic')
+  }, [hardRecoverBoardRenderer, recoverBoardRendering])
+
+  useEffect(() => {
+    function handleBoardRenderRefresh(event: KeyboardEvent) {
+      if (
+        !(event.ctrlKey || event.metaKey) ||
+        event.altKey ||
+        event.key.toLowerCase() !== 'a'
+      ) {
+        return
+      }
+
+      const target = event.target
+
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return
+      }
+
+      event.preventDefault()
+      event.stopPropagation()
+      recoverBoardRendering('manual')
+    }
+
+    window.addEventListener('keydown', handleBoardRenderRefresh, true)
+
+    return () => {
+      window.removeEventListener('keydown', handleBoardRenderRefresh, true)
+    }
+  }, [recoverBoardRendering])
+
+  useEffect(() => {
+    return () => {
+      if (boardRecoveryTimerRef.current !== null) {
+        window.clearTimeout(boardRecoveryTimerRef.current)
+      }
     }
   }, [])
 
@@ -5232,6 +6470,338 @@ export function TablePage() {
     }
 
     return nextPreparedSceneId || plannedPreparedSceneId
+  }
+
+  function createVillageTrainingForSession(
+    currentSession: ReturnType<typeof createPersistedTabletopSession>,
+  ): TabletopTrainingState | null {
+    if (!data) {
+      return null
+    }
+
+    const trainingScene =
+      findSceneForExactMap(currentSession.scenes, VILLAGE_TRAINING_ARC.mapId) ??
+      currentSession.scenes.find(
+        (scene) => scene.id === `scene-map-prep-${VILLAGE_TRAINING_ARC.mapId}`,
+      ) ??
+      null
+    const participants = buildVillageTrainingParticipants(
+      trainingScene,
+      data.characters.items,
+    )
+
+    return participants.length > 0 ? createTabletopTrainingState(participants) : null
+  }
+
+  function updateTrainingState(
+    updater: (trainingState: TabletopTrainingState) => TabletopTrainingState,
+  ) {
+    if (viewMode !== 'gm') {
+      return
+    }
+
+    updateSession((currentSession) => {
+      if (!currentSession.trainingState) {
+        return currentSession
+      }
+
+      return createPersistedTabletopSession({
+        ...currentSession,
+        trainingState: updater(currentSession.trainingState),
+      })
+    })
+  }
+
+  function handleActivateVillageTraining(locationId: string) {
+    if (viewMode !== 'gm' || locationId !== VILLAGE_TRAINING_ARC.locationId) {
+      return
+    }
+
+    if (isTabletopEventActive(eventState, 'initial-training')) {
+      setActiveHudPanel('events')
+      setTableFeedbackMessage('Treinamento ja esta ativo. Controle aberto no EVE.')
+      return
+    }
+
+    const restoreMapId =
+      currentScene?.mapId && currentScene.mapId !== VILLAGE_TRAINING_ARC.mapId
+        ? currentScene.mapId
+        : session?.eventState.events['initial-training'].restoreMapId
+
+    activateMapForPlayers(VILLAGE_TRAINING_ARC.mapId)
+    updateSession((currentSession) => {
+      const nextTrainingState = currentSession.trainingState
+        ? setTrainingArcActive(currentSession.trainingState, true)
+        : createVillageTrainingForSession(currentSession)
+
+      if (!nextTrainingState) {
+        setTableFeedbackMessage(
+          'Campo aberto, mas nenhum corpo de jogador vinculado foi encontrado para o treino.',
+        )
+        return currentSession
+      }
+
+      return createPersistedTabletopSession({
+        ...currentSession,
+        eventState: setTabletopEventActive(
+          currentSession.eventState,
+          'initial-training',
+          true,
+          { restoreMapId },
+        ),
+        trainingState: nextTrainingState,
+      })
+    })
+    setActiveHudPanel('events')
+    setTableFeedbackMessage('Treinamento ativado para Mestre e Jogadores.')
+  }
+
+  function handleActivateTabletopEvent(eventId: TabletopEventId) {
+    if (viewMode !== 'gm') return
+
+    if (eventId === 'initial-training') {
+      handleActivateVillageTraining(VILLAGE_TRAINING_ARC.locationId)
+      return
+    }
+
+    updateSession((currentSession) =>
+      createPersistedTabletopSession({
+        ...currentSession,
+        eventState: setTabletopEventActive(currentSession.eventState, eventId, true),
+      }),
+    )
+    setTableFeedbackMessage('Evento visual ativado. Use o EVE para transmitir a apresentacao.')
+  }
+
+  function handleDeactivateTabletopEvent(eventId: TabletopEventId) {
+    if (viewMode !== 'gm') return
+
+    const restoreMapId = session?.eventState.events[eventId].restoreMapId
+    const shouldRestoreTrainingMap =
+      eventId === 'initial-training' &&
+      currentScene?.mapId === VILLAGE_TRAINING_ARC.mapId &&
+      Boolean(restoreMapId) &&
+      restoreMapId !== VILLAGE_TRAINING_ARC.mapId
+
+    updateSession((currentSession) =>
+      createPersistedTabletopSession({
+        ...currentSession,
+        eventState: setTabletopEventActive(currentSession.eventState, eventId, false),
+        trainingState:
+          eventId === 'initial-training' && currentSession.trainingState
+            ? setTrainingArcActive(currentSession.trainingState, false)
+            : currentSession.trainingState,
+      }),
+    )
+
+    if (shouldRestoreTrainingMap && restoreMapId) {
+      window.setTimeout(() => activateMapForPlayers(restoreMapId), 0)
+    }
+
+    setTableFeedbackMessage(
+      eventId === 'initial-training'
+        ? 'Treinamento desativado. Progresso preservado e mesa devolvida ao estado-base.'
+        : 'Evento visual desativado e apresentacao removida de todas as telas.',
+    )
+  }
+
+  function handleOpenTrainingControl() {
+    setTrainingOpenRequestId((current) => current + 1)
+    setActiveHudPanel(null)
+  }
+
+  function handleStartRarityDraw(input: {
+    characterId: string
+    characterName: string
+    itemId: string
+    itemName: string
+  }) {
+    if (viewMode !== 'gm') return
+
+    updateSession((currentSession) =>
+      createPersistedTabletopSession({
+        ...currentSession,
+        eventState: startTabletopRarityDraw(currentSession.eventState, input),
+      }),
+    )
+    setTableFeedbackMessage('Sorteio de raridade transmitido para a mesa.')
+  }
+
+  function handleClearRarityDraw() {
+    if (viewMode !== 'gm') return
+
+    updateSession((currentSession) =>
+      createPersistedTabletopSession({
+        ...currentSession,
+        eventState: clearTabletopRarityDraw(currentSession.eventState),
+      }),
+    )
+  }
+
+  function handleClearRarityHistory() {
+    if (viewMode !== 'gm') return
+
+    updateSession((currentSession) =>
+      createPersistedTabletopSession({
+        ...currentSession,
+        eventState: clearTabletopRarityHistory(currentSession.eventState),
+      }),
+    )
+    setTableFeedbackMessage('Backlog de sorteios limpo. A apresentacao e a ficha permanecem intactas.')
+  }
+
+  function handleTrainingParticipantOutcome(
+    participantId: string,
+    stationId: string,
+    outcome: TabletopTrainingOutcome,
+  ) {
+    updateTrainingState((trainingState) =>
+      applyTrainingParticipantOutcome(trainingState, participantId, stationId, outcome),
+    )
+  }
+
+  function handleTrainingFinalOutcome(
+    participantId: string,
+    detail: string,
+    outcome: TabletopTrainingFinalOutcome,
+  ) {
+    if (viewMode === 'gm' && (outcome === 'body-failure' || outcome === 'stabilize')) {
+      const participant = session?.trainingState?.participants.find(
+        (candidate) => candidate.id === participantId,
+      )
+      const character = participant
+        ? data?.characters.items.find((candidate) => candidate.id === participant.characterId)
+        : null
+
+      if (character) {
+        const delta = outcome === 'body-failure' ? -2 : Math.max(0, Number(detail) || 0)
+        commitCanonicalCharacterUpdate(normalizeCharacterSheet({
+          ...character,
+          recursos: {
+            ...character.recursos,
+            fushiAtual: Math.max(
+              0,
+              Math.min(character.recursos.fushiMaximo, character.recursos.fushiAtual + delta),
+            ),
+          },
+        }))
+      }
+    }
+
+    updateTrainingState((trainingState) =>
+      applyTrainingFinalOutcome(trainingState, participantId, detail, outcome),
+    )
+  }
+
+  function handleAssignCharacterGrant(input: { characterId: string; grantId: string }) {
+    if (viewMode !== 'gm' || !data?.characters.items) return
+
+    const grant = getCharacterGrant(input.grantId)
+    const character = data.characters.items.find(
+      (candidate) => candidate.id === input.characterId,
+    )
+
+    if (!grant || grant.status !== 'ready' || !grant.feature) {
+      setTableFeedbackMessage('Este conteudo ainda esta em construcao e nao pode ser atribuido.')
+      return
+    }
+
+    if (!character || character.tipo !== 'player' || character.isSharedBodyHost === true) {
+      setTableFeedbackMessage('Selecione uma ficha real de Jogador para receber o conteudo.')
+      return
+    }
+
+    if (grant.category === 'outro') {
+      setTableFeedbackMessage('A categoria Outros ainda esta em construcao.')
+      return
+    }
+
+    const currentFeatures =
+      grant.category === 'ritual'
+        ? character.rituais ?? []
+        : character.habilidadesDetalhadas ?? []
+
+    if (currentFeatures.some((feature) => feature.id === grant.feature?.id)) {
+      setTableFeedbackMessage(`${character.nome} ja possui ${grant.feature.nome}.`)
+      return
+    }
+
+    const nextCharacter = normalizeCharacterSheet({
+      ...character,
+      ...(grant.category === 'ritual'
+        ? { rituais: [...currentFeatures, grant.feature] }
+        : { habilidadesDetalhadas: [...currentFeatures, grant.feature] }),
+    })
+    commitCanonicalCharacterUpdate(nextCharacter)
+    setTableFeedbackMessage(`${grant.feature.nome} atribuida a ${character.nome}.`)
+  }
+
+  function handleAssignTrainingRewardAbility(participantId: string) {
+    if (
+      viewMode !== 'gm' ||
+      !data?.characters.items ||
+      !session?.trainingState?.finalTrial.isUnlocked
+    ) {
+      return
+    }
+
+    const participant = session.trainingState.participants.find(
+      (candidate) => candidate.id === participantId,
+    )
+    const reward = participant ? getInitialTrainingReward(participant.playerId) : null
+    if (!participant || !reward) return
+
+    handleAssignCharacterGrant({
+      characterId: participant.characterId,
+      grantId: reward.feature.id,
+    })
+  }
+
+  const assignedRewardCharacterIds = useMemo(
+    () =>
+      session?.trainingState?.participants
+        .filter((participant) => {
+          const reward = getInitialTrainingReward(participant.playerId)
+          const character = data?.characters.items.find(
+            (candidate) => candidate.id === participant.characterId,
+          )
+          return Boolean(
+            reward &&
+              character?.habilidadesDetalhadas?.some(
+                (feature) => feature.id === reward.feature.id,
+              ),
+          )
+        })
+        .map((participant) => participant.characterId) ?? [],
+    [data?.characters.items, session?.trainingState?.participants],
+  )
+
+  function handleRestartVillageTraining() {
+    if (viewMode !== 'gm') {
+      return
+    }
+
+    const shouldRestart = window.confirm(
+      'Iniciar um novo ciclo vai zerar as Marcas e Contratempos do treinamento atual. Continuar?',
+    )
+
+    if (!shouldRestart) {
+      return
+    }
+
+    updateSession((currentSession) => {
+      const nextTrainingState = createVillageTrainingForSession(currentSession)
+
+      if (!nextTrainingState) {
+        setTableFeedbackMessage('Nao foi possivel iniciar o ciclo: jogadores nao encontrados no mapa.')
+        return currentSession
+      }
+
+      return createPersistedTabletopSession({
+        ...currentSession,
+        trainingState: nextTrainingState,
+      })
+    })
   }
 
   function openWorldMundiMap(mapId: string) {
@@ -7228,6 +8798,79 @@ export function TablePage() {
     return true
   }
 
+  function handleCombatRangePreview(input: {
+    featureName: string
+    range: {
+      color: string
+      label: string
+      radiusMeters?: number
+      shape: 'adjacent' | 'map' | 'radius'
+    }
+    sourceTokenId: string
+    targetTokenId?: string
+    visibility: 'local' | 'public'
+  }) {
+    const sourceToken = visibleTokens.find((token) => token.id === input.sourceTokenId)
+
+    if (!sourceToken) {
+      setTableFeedbackMessage('O token de origem nao esta visivel nesta cena.')
+      return
+    }
+
+    const now = Date.now()
+    const preview: TabletopCombatPreview = {
+      color: input.range.color || '#8e6cff',
+      createdAt: now,
+      expiresAt: now + 9000,
+      id: buildRuntimeEventId(`combat-range-${sourceToken.id}`),
+      label: `${input.featureName} | ${input.range.label}`,
+      origin: sourceToken.cell,
+      radiusMeters: input.range.radiusMeters,
+      sceneId: currentSceneId,
+      shape: input.range.shape,
+      sourceTokenId: sourceToken.id,
+      targetTokenId: input.targetTokenId,
+    }
+
+    if (input.visibility === 'public') {
+      if (viewMode !== 'gm') return
+
+      setLocalCombatPreview(null)
+      updateSession((currentSession) =>
+        createPersistedTabletopSession({
+          ...currentSession,
+          publicCombatPreview: preview,
+        }),
+      )
+      setTableFeedbackMessage(`${input.featureName}: area mostrada para todos por 9 segundos.`)
+      return
+    }
+
+    setLocalCombatPreview(preview)
+    setTableFeedbackMessage(`${input.featureName}: previa local por 9 segundos.`)
+  }
+
+  function handleCloseCombatRangePreview() {
+    if (localCombatPreview) {
+      setLocalCombatPreview(null)
+      return
+    }
+
+    if (viewMode === 'gm' && session?.publicCombatPreview) {
+      updateSession((currentSession) =>
+        createPersistedTabletopSession({
+          ...currentSession,
+          publicCombatPreview: null,
+        }),
+      )
+      return
+    }
+
+    if (session?.publicCombatPreview?.id) {
+      setDismissedCombatPreviewId(session.publicCombatPreview.id)
+    }
+  }
+
   function commitCanonicalCharacterUpdate(character: CharacterSheet) {
     if (isRemotePlayerSession) {
       updateRemoteCharacter(character)
@@ -7235,6 +8878,74 @@ export function TablePage() {
     }
 
     updateCharacter(character)
+  }
+
+  function beginCharacterEdit(characterId: string) {
+    const currentLock = session?.characterEditLocks?.[characterId]
+
+    if (
+      currentLock &&
+      currentLock.expiresAt > Date.now() &&
+      currentLock.ownerId !== currentEditOwnerId
+    ) {
+      setTableFeedbackMessage(`Ficha em edicao por ${currentLock.ownerLabel}.`)
+      return false
+    }
+
+    const lock: TabletopCharacterEditLock = {
+      acquiredAt: Date.now(),
+      characterId,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+      mode: 'full',
+      ownerId: currentEditOwnerId,
+      ownerLabel:
+        viewMode === 'gm'
+          ? 'Mestre'
+          : effectiveActiveAccessProfile?.label ?? focusedPlayerCharacter?.nome ?? 'Jogador',
+    }
+
+    if (viewMode === 'gm') {
+      updateSession((currentSession) =>
+        createPersistedTabletopSession({
+          ...currentSession,
+          characterEditLocks: {
+            ...currentSession.characterEditLocks,
+            [characterId]: lock,
+          },
+        }),
+      )
+    } else {
+      setCharacterEditLock({
+        characterId,
+        mode: 'full',
+      })
+    }
+
+    return true
+  }
+
+  function endCharacterEdit(characterId: string) {
+    if (viewMode === 'gm') {
+      updateSession((currentSession) => {
+        const nextLocks = { ...currentSession.characterEditLocks }
+
+        if (nextLocks[characterId]?.ownerId === 'gm') {
+          delete nextLocks[characterId]
+        }
+
+        return createPersistedTabletopSession({
+          ...currentSession,
+          characterEditLocks: nextLocks,
+        })
+      })
+      return
+    }
+
+    setCharacterEditLock({
+      characterId,
+      mode: 'full',
+      release: true,
+    })
   }
 
   function commitCombatCharacterResourceUpdate(
@@ -7308,7 +9019,12 @@ export function TablePage() {
   }
 
   function handleRollSubmitWindowBehavior() {
-    setRollWindowMinimizeSignal((currentSignal) => (currentSignal ?? 0) + 1)
+    if (rollWindowRestoreTimeoutRef.current !== null) {
+      window.clearTimeout(rollWindowRestoreTimeoutRef.current)
+      rollWindowRestoreTimeoutRef.current = null
+    }
+
+    window.dispatchEvent(new Event('fushi:tabletop-windows-minimize'))
   }
 
   function clearRollLogEntries() {
@@ -7428,6 +9144,129 @@ export function TablePage() {
 
     setInspectedTokenId(nextToken.id)
     setTokenInspectorRestoreSignal((currentValue) => currentValue + 1)
+  }
+
+  function handleDeathSaveSlotChange(tokenId: string, slotIndex: number) {
+    if (viewMode !== 'gm' || slotIndex < 0 || slotIndex > 2) {
+      return
+    }
+
+    const token = visibleTokens.find((candidate) => candidate.id === tokenId) ?? null
+    const character = resolveTokenCharacterForCombat(token)
+    const currentState = session?.playerDeathStates[tokenId]
+
+    if (
+      !token ||
+      !character ||
+      !currentState ||
+      getTokenPlayerIds(token).length === 0
+    ) {
+      return
+    }
+
+    const nextResults = [...currentState.results]
+    const currentResult = nextResults[slotIndex]
+    nextResults[slotIndex] =
+      currentResult === null
+        ? 'success'
+        : currentResult === 'success'
+          ? 'failure'
+          : null
+    const successes = nextResults.filter((result) => result === 'success').length
+    const failures = nextResults.filter((result) => result === 'failure').length
+    const stabilized = successes >= 3
+
+    if (stabilized) {
+      commitCombatCharacterResourceUpdate(character, token, {
+        ...character.recursos,
+        vidaAtual: Math.max(1, character.recursos.vidaAtual),
+      })
+      void playTabletopSfx('select', { rate: 1.15 })
+    } else if (failures >= 3) {
+      void playTabletopSfx('error')
+    }
+
+    updateSession((currentSession) => {
+      const nextDeathStates = { ...currentSession.playerDeathStates }
+
+      nextDeathStates[tokenId] = {
+        failures,
+        results: nextResults,
+        status: failures >= 3 ? 'dead' : 'down',
+        successes,
+        tokenId,
+        updatedAt: Date.now(),
+      }
+
+      return createPersistedTabletopSession({
+        ...currentSession,
+        playerDeathStates: nextDeathStates,
+        publicCombatImpacts: stabilized
+          ? [
+              ...currentSession.publicCombatImpacts.filter(
+                (impact) => impact.expiresAt > Date.now(),
+              ),
+              {
+                amount: 1,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + 1800,
+                id: buildRuntimeEventId('death-save-heal'),
+                tokenId,
+                type: 'heal',
+              },
+            ]
+          : currentSession.publicCombatImpacts,
+      })
+    })
+    setTableFeedbackMessage(
+      stabilized
+        ? `${character.nome} estabilizou e recuperou 1 de Vida.`
+        : failures >= 3
+          ? `${character.nome} falhou nas tres tentativas.`
+          : `${character.nome}: ${successes} sucesso(s), ${failures} falha(s).`,
+    )
+  }
+
+  function handleCancelCombatEffect(effectId: string) {
+    const effect =
+      session?.publicCombatMarks.find((mark) => mark.id === effectId) ?? null
+    const sourceToken =
+      effect
+        ? tokens.find((token) => token.id === effect.sourceTokenId) ?? null
+        : null
+    const sourceMayCancel =
+      (effect?.cancelableBySource === true &&
+        (effect.statusId === 'especial-buff' ||
+          effect.statusId === 'especial-debuff')) ||
+      effect?.label === 'Analise Cirurgica'
+    const canCancel =
+      viewMode === 'gm' ||
+      Boolean(
+        sourceMayCancel &&
+        sourceToken &&
+        canActivePlayerControlToken(sourceToken),
+      )
+
+    if (!effect || !canCancel) {
+      setTableFeedbackMessage('Este efeito so pode ser cancelado por sua origem ou pelo Mestre.')
+      return
+    }
+
+    if (isRemotePlayerSession) {
+      cancelRemoteCombatEffect(effectId)
+      setTableFeedbackMessage(`${effect.label}: cancelamento enviado ao Mestre.`)
+      return
+    }
+
+    updateSession((currentSession) =>
+      createPersistedTabletopSession({
+        ...currentSession,
+        publicCombatMarks: currentSession.publicCombatMarks.filter(
+          (mark) => mark.id !== effectId,
+        ),
+      }),
+    )
+    setTableFeedbackMessage(`${effect.label} foi encerrado.`)
   }
 
   function handleWheelZoom(input: {
@@ -7636,21 +9475,6 @@ export function TablePage() {
     setImagePreviewState(null)
     setSceneReturnTransitionActive(false)
 
-    if (window.fushiDesktop) {
-      const platformUrl = `${window.location.href.split('#')[0]}#/`
-
-      window.location.replace(platformUrl)
-      window.setTimeout(() => {
-        if (window.location.hash !== '#/') {
-          window.location.href = platformUrl
-          return
-        }
-
-        window.location.reload()
-      }, 40)
-      return
-    }
-
     navigate('/', { replace: true })
   }
 
@@ -7683,6 +9507,61 @@ export function TablePage() {
     }
 
     revealRollToast(settledEntry)
+    const isCombatRoll =
+      settledEntry.combat?.kind === 'attack' ||
+      pendingCombatResolution?.opposedRollEntryId === settledEntry.id ||
+      pendingCombatResolution?.damageRollEntryId === settledEntry.id
+
+    rollWindowRestoreTimeoutRef.current = window.setTimeout(() => {
+      rollWindowRestoreTimeoutRef.current = null
+
+      if (
+        viewMode === 'gm' &&
+        pendingCombatResolution?.opposedRollEntryId === settledEntry.id
+      ) {
+        setPendingCombatResolution((currentResolution) =>
+          currentResolution?.opposedRollEntryId === settledEntry.id
+            ? {
+                ...currentResolution,
+                opposedRollEntryId: undefined,
+                opposedRollTotal: settledEntry.roll?.total,
+              }
+            : currentResolution,
+        )
+      } else if (
+        viewMode === 'gm' &&
+        pendingCombatResolution?.damageRollEntryId === settledEntry.id
+      ) {
+        setPendingCombatResolution((currentResolution) =>
+          currentResolution?.damageRollEntryId === settledEntry.id
+            ? {
+                ...currentResolution,
+                damageRollEntryId: undefined,
+                rawDamage: sanitizeCombatDamage(settledEntry.roll?.total ?? 0),
+                stage: 'result',
+              }
+            : currentResolution,
+        )
+      } else if (
+        viewMode === 'gm' &&
+        settledEntry.combat?.kind === 'attack' &&
+        !processedCombatLogEntryIdsRef.current.has(settledEntry.id)
+      ) {
+        processedCombatLogEntryIdsRef.current.add(settledEntry.id)
+        const nextResolution = createPendingCombatResolutionFromLogEntry(settledEntry)
+
+        if (nextResolution) {
+          setPendingCombatResolution(nextResolution)
+          setTableFeedbackMessage(
+            `Ataque recebido: ${nextResolution.attackerName} usou ${nextResolution.attackName}.`,
+          )
+        }
+      }
+
+      if (!isCombatRoll) {
+        window.dispatchEvent(new Event('fushi:tabletop-windows-restore'))
+      }
+    }, 900)
 
     const outcome = getRollOutcome(settledEntry.roll)
 
@@ -8835,6 +10714,15 @@ export function TablePage() {
     const activeParticipantId = participantIds.has(turnDraftActiveTokenId)
       ? turnDraftActiveTokenId
       : participants[0].id
+    const activeParticipant =
+      participants.find(
+        (participant) => participant.id === activeParticipantId,
+      ) ?? participants[0]
+    const activeRound = session?.turnState?.round ?? 1
+    const statusTurnStart = resolveStatusTurnStart(
+      activeParticipant,
+      activeRound,
+    )
 
     updateSession((currentSession) => {
       const previousTurnState = currentSession.turnState
@@ -8846,14 +10734,24 @@ export function TablePage() {
 
       return createPersistedTabletopSession({
         ...currentSession,
+        publicCombatImpacts: [
+          ...currentSession.publicCombatImpacts.filter(
+            (impact) => impact.expiresAt > Date.now(),
+          ),
+          ...statusTurnStart.impacts,
+        ].slice(-48),
+        publicCombatMarks: statusTurnStart.marks,
         turnState: {
           activeParticipantId,
           encounterId: previousTurnState?.encounterId ?? buildRuntimeEventId('turn'),
           isActive: true,
           participants,
-          round: previousTurnState?.round ?? 1,
+          round: activeRound,
           updatedAt: Date.now(),
-          usedActions,
+          usedActions: {
+            ...usedActions,
+            [activeParticipantId]: statusTurnStart.usedActions,
+          },
         },
       })
     })
@@ -8892,10 +10790,524 @@ export function TablePage() {
     })
   }
 
+  function handleTurnFeatureAction(action: TabletopTurnFeatureAction) {
+    if (!turnState?.isActive || !activeTurnParticipantView || !activeTurnCharacter) {
+      return
+    }
+
+    const sourceTokenId = activeTurnParticipantView.tokenId
+
+    if (viewMode !== 'gm' && !canControlActiveTurnParticipant) {
+      return
+    }
+
+    handleTokenOpen(sourceTokenId)
+    setSheetFocusRequest({
+      featureId: action.feature.id,
+      id: Date.now(),
+      tab:
+        action.source === 'ataque'
+          ? 'combate'
+          : action.source === 'ritual'
+            ? 'rituais'
+            : action.source === 'item'
+              ? 'inventario'
+              : 'habilidades',
+    })
+    setTableFeedbackMessage(`${action.label} aberta na ficha de ${activeTurnCharacter.nome}.`)
+  }
+
+  function handleTurnManeuverAction(
+    maneuverId: string,
+    label: string,
+    timing: TabletopTurnActionId,
+  ) {
+    if (!turnState?.isActive || !activeTurnParticipantView || !activeTurnCharacter) {
+      return
+    }
+
+    if (viewMode === 'gm') {
+      markActiveTurnActionForToken(activeTurnParticipantView.tokenId, timing)
+      appendLogEntry({
+        author: activeSessionAuthorLabel,
+        createdAt: new Date().toISOString(),
+        id: buildRuntimeEventId(`maneuver-${maneuverId}`),
+        text: `${activeTurnCharacter.nome} usou a manobra ${label}.`,
+        type: 'system',
+        visibility: 'public',
+      })
+      return
+    }
+
+    if (!canControlActiveTurnParticipant) {
+      return
+    }
+
+    const cooldownKey = `maneuver:${maneuverId}`
+    const now = Date.now()
+    const cooldownUntil = turnActionRequestCooldownRef.current[cooldownKey] ?? 0
+
+    if (cooldownUntil > now) {
+      setTableFeedbackMessage('Pedido ja enviado. Aguarde alguns segundos antes de repetir.')
+      return
+    }
+
+    turnActionRequestCooldownRef.current[cooldownKey] = now + 10000
+    requestTurnAction({
+      characterId: activeTurnCharacter.id,
+      kind: 'maneuver',
+      label,
+      maneuverId,
+      timing,
+      tokenId: activeTurnParticipantView.tokenId,
+    })
+    setTableFeedbackMessage(`${label} enviada ao Mestre para aprovacao.`)
+  }
+
+  function handleResolveTurnActionRequest(
+    request: TabletopTurnActionRequest,
+    approve: boolean,
+  ) {
+    if (viewMode !== 'gm') {
+      return
+    }
+
+    const requestEntry = logEntries.find(
+      (entry) => entry.turnRequest?.id === request.id,
+    )
+
+    if (!requestEntry || requestEntry.turnRequest?.status !== 'pending') {
+      return
+    }
+
+    if (approve) {
+      const requestToken = tokens.find((token) => token.id === request.tokenId) ?? null
+      const requestCharacter = requestToken
+        ? resolveTokenCharacterForCombat(requestToken)
+        : data?.characters.items.find((character) => character.id === request.characterId) ?? null
+
+      if (
+        !requestToken ||
+        !requestCharacter ||
+        !turnState?.isActive ||
+        turnState.activeParticipantId !== request.tokenId
+      ) {
+        setTableFeedbackMessage('Pedido recusado: o participante nao esta no turno atual.')
+        approve = false
+      } else if (request.kind === 'feature' && request.featureId) {
+        const feature =
+          requestCharacter.habilidadesDetalhadas?.find(
+            (candidate) => candidate.id === request.featureId,
+          ) ??
+          requestCharacter.rituais?.find(
+            (candidate) => candidate.id === request.featureId,
+          ) ??
+          requestCharacter.ataques
+            .map((attack) => ({
+              automation: attack.automation,
+              descricao: attack.resumo,
+              id: attack.id,
+              nome: attack.nome,
+              tipo: 'ataque' as const,
+            }))
+            .find((candidate) => candidate.id === request.featureId)
+
+        if (!feature) {
+          setTableFeedbackMessage('Pedido recusado: habilidade nao encontrada na ficha canonica.')
+          approve = false
+        } else {
+          const source = requestCharacter.rituais?.some(
+            (candidate) => candidate.id === feature.id,
+          )
+            ? 'ritual'
+            : requestCharacter.ataques.some((candidate) => candidate.id === feature.id)
+              ? 'ataque'
+              : 'habilidade'
+
+          handleActivateCharacterFeature({
+            character: requestCharacter,
+            feature,
+            source,
+            tokenId: request.tokenId,
+          })
+        }
+      } else if (request.kind === 'maneuver') {
+        markActiveTurnActionForToken(request.tokenId, request.timing)
+        appendLogEntry({
+          author: activeSessionAuthorLabel,
+          createdAt: new Date().toISOString(),
+          id: buildRuntimeEventId(`approved-maneuver-${request.id}`),
+          text: `${requestCharacter.nome} usou a manobra ${request.label}.`,
+          type: 'system',
+          visibility: 'public',
+        })
+      }
+    }
+
+    updateSession((currentSession) =>
+      createPersistedTabletopSession({
+        ...currentSession,
+        logEntries: currentSession.logEntries.map((entry) =>
+          entry.turnRequest?.id === request.id
+            ? {
+                ...entry,
+                turnRequest: {
+                  ...entry.turnRequest,
+                  status: approve ? 'approved' : 'rejected',
+                  updatedAt: Date.now(),
+                },
+              }
+            : entry,
+        ),
+      }),
+    )
+  }
+
+  function markActiveTurnActionForToken(
+    tokenId: string,
+    actionId: TabletopTurnActionId,
+  ) {
+    if (viewMode !== 'gm') {
+      return
+    }
+
+    updateSession((currentSession) => {
+      const currentTurnState = currentSession.turnState
+
+      if (
+        !currentTurnState?.isActive ||
+        currentTurnState.activeParticipantId !== tokenId ||
+        currentTurnState.usedActions[tokenId]?.[actionId]
+      ) {
+        return currentSession
+      }
+
+      return createPersistedTabletopSession({
+        ...currentSession,
+        turnState: {
+          ...currentTurnState,
+          updatedAt: Date.now(),
+          usedActions: {
+            ...currentTurnState.usedActions,
+            [tokenId]: {
+              ...currentTurnState.usedActions[tokenId],
+              [actionId]: true,
+            },
+          },
+        },
+      })
+    })
+  }
+
+  function resolveStatusTurnStart(
+    participant: TabletopTurnParticipant,
+    round: number,
+  ) {
+    const targetToken =
+      visibleTokens.find((token) => token.id === participant.tokenId) ?? null
+    const targetCharacter = resolveTokenCharacterForCombat(targetToken)
+    const currentMarks = session?.publicCombatMarks ?? []
+    const targetMarks = currentMarks.filter(
+      (mark) =>
+        mark.targetTokenId === participant.tokenId &&
+        mark.lastProcessedRound !== round,
+    )
+
+    if (!targetToken || !targetCharacter || targetMarks.length === 0) {
+      return {
+        impacts: [] as NonNullable<
+          PersistedTabletopSession['publicCombatImpacts']
+        >,
+        marks: currentMarks,
+        usedActions: {} as Partial<Record<TabletopTurnActionId, boolean>>,
+      }
+    }
+
+    const definitions = targetMarks
+      .map((mark) => ({
+        definition: findTabletopStatusDefinition(mark.statusId ?? mark.label),
+        mark,
+      }))
+      .filter(
+        (
+          entry,
+        ): entry is {
+          definition: NonNullable<
+            ReturnType<typeof findTabletopStatusDefinition>
+          >
+          mark: TabletopCombatMark
+        } => Boolean(entry.definition),
+      )
+    const usedActions: Partial<Record<TabletopTurnActionId, boolean>> = {}
+    const impacts: NonNullable<
+      PersistedTabletopSession['publicCombatImpacts']
+    > = []
+    const statusRollEntries: TabletopLogEntry[] = []
+    let damage = 0
+    let healing = 0
+    let fushi = 0
+    const frozenParalysisSource =
+      definitions.find(
+        ({ definition, mark }) =>
+          definition.id === 'congelado' &&
+          (mark.stacks ?? 1) >= (definition.rules.maxStacks ?? 3),
+      )?.mark ?? null
+
+    definitions.forEach(({ definition, mark }) => {
+      const rules = definition.rules
+
+      if (rules.preventsTurn) {
+        usedActions.fala = true
+        usedActions.padrao = true
+        usedActions.bonus = true
+        usedActions.movimento = true
+        usedActions.reacao = true
+      } else {
+        if (rules.preventsPrimaryAction) {
+          usedActions.padrao = true
+        }
+
+        if (rules.preventsMovement) {
+          usedActions.movimento = true
+        }
+
+        if (definition.id === 'exausto') {
+          usedActions.bonus = true
+          usedActions.reacao = true
+        }
+      }
+
+      if (definition.id === 'quebrado') {
+        const tiredPenalty = definitions.reduce(
+          (total, entry) =>
+            total + (entry.definition.rules.dicePenalty ?? 0),
+          0,
+        )
+        const baseConfig = createCombatRollConfig({
+          atributo: targetCharacter.atributos.vigor,
+          bonusPericia: getCharacterSkillRollBonus(
+            targetCharacter,
+            'Fortitude',
+          ),
+        })
+        const roll = createRollRecord(
+          applyCombatDicePoolModifier(baseConfig, -tiredPenalty),
+          `${targetCharacter.nome} - Quebrado`,
+          { visualColor: definition.color },
+        )
+
+        statusRollEntries.push({
+          author: targetCharacter.nome,
+          createdAt: new Date().toISOString(),
+          id: buildRuntimeEventId(`status-broken-${targetToken.id}`),
+          roll,
+          text: `${definition.label}: ${roll.resultadoTexto}. DT 15.`,
+          type: 'roll',
+          visibility: 'public',
+        })
+
+        if (roll.total < 15) {
+          usedActions.padrao = true
+          usedActions.movimento = true
+        }
+      }
+
+      if (rules.continuousDamage) {
+        const damageFormula =
+          (definition.id === 'queimando' &&
+            (mark.stacks ?? 1) >= (rules.maxStacks ?? 3)) ||
+          (definition.id === 'congelado' &&
+            (mark.stacks ?? 1) >= (rules.maxStacks ?? 3))
+            ? rules.continuousDamage.replace(/^1d/i, '2d')
+            : rules.continuousDamage
+        const result = createStatusFormulaRoll(
+          damageFormula,
+          `${targetCharacter.nome} - ${definition.label}`,
+          definition.color,
+        )
+
+        damage += result.total
+
+        if (result.roll) {
+          statusRollEntries.push({
+            author: targetCharacter.nome,
+            createdAt: new Date().toISOString(),
+            id: buildRuntimeEventId(`status-damage-${mark.id}`),
+            roll: result.roll,
+            text: `${definition.label}: ${result.roll.resultadoTexto}.`,
+            type: 'roll',
+            visibility: 'public',
+          })
+        } else if (result.total > 0) {
+          statusRollEntries.push({
+            author: 'Mesa',
+            createdAt: new Date().toISOString(),
+            id: buildRuntimeEventId(`status-damage-${mark.id}`),
+            text: `${targetCharacter.nome} sofreu ${result.total} de dano por ${definition.label}.`,
+            type: 'system',
+            visibility: 'public',
+          })
+        }
+      }
+
+      if (rules.healingPerTurn) {
+        const result = createStatusFormulaRoll(
+          rules.healingPerTurn,
+          `${targetCharacter.nome} - ${definition.label}`,
+          definition.color,
+        )
+
+        healing += result.total
+
+        if (result.roll) {
+          statusRollEntries.push({
+            author: targetCharacter.nome,
+            createdAt: new Date().toISOString(),
+            id: buildRuntimeEventId(`status-heal-${mark.id}`),
+            roll: result.roll,
+            text: `${definition.label}: ${result.roll.resultadoTexto}.`,
+            type: 'roll',
+            visibility: 'public',
+          })
+        }
+      }
+
+      fushi += rules.fushiPerTurn ?? 0
+
+    })
+
+    const lifeAfterDamage = Math.max(
+      0,
+      targetCharacter.recursos.vidaAtual - damage,
+    )
+    const nextLife = Math.min(
+      targetCharacter.recursos.vidaMaxima,
+      lifeAfterDamage + healing,
+    )
+    const nextFushi = Math.min(
+      targetCharacter.recursos.fushiMaximo,
+      targetCharacter.recursos.fushiAtual + fushi,
+    )
+
+    if (
+      nextLife !== targetCharacter.recursos.vidaAtual ||
+      nextFushi !== targetCharacter.recursos.fushiAtual
+    ) {
+      commitCombatCharacterResourceUpdate(targetCharacter, targetToken, {
+        ...targetCharacter.recursos,
+        fushiAtual: nextFushi,
+        vidaAtual: nextLife,
+      })
+    }
+
+    const now = Date.now()
+
+    if (damage > 0) {
+      impacts.push({
+        amount: Math.min(targetCharacter.recursos.vidaAtual, damage),
+        createdAt: now,
+        expiresAt: now + 1800,
+        id: buildRuntimeEventId(`status-impact-damage-${targetToken.id}`),
+        tokenId: targetToken.id,
+        type: 'damage',
+      })
+    }
+
+    if (healing > 0) {
+      impacts.push({
+        amount: Math.max(0, nextLife - lifeAfterDamage),
+        createdAt: now,
+        expiresAt: now + 1800,
+        id: buildRuntimeEventId(`status-impact-heal-${targetToken.id}`),
+        tokenId: targetToken.id,
+        type: 'heal',
+      })
+    }
+
+    statusRollEntries.forEach((entry) => {
+      appendLogEntry(entry)
+    })
+
+    const processedMarkIds = new Set(targetMarks.map((mark) => mark.id))
+    const nextMarks = currentMarks.flatMap((mark) => {
+      if (!processedMarkIds.has(mark.id)) {
+        return [mark]
+      }
+
+      if (mark.durationRounds === 1) {
+        return []
+      }
+
+      return [
+        {
+          ...mark,
+          durationRounds:
+            typeof mark.durationRounds === 'number'
+              ? mark.durationRounds - 1
+              : undefined,
+          lastProcessedRound: round,
+        },
+      ]
+    })
+    const paralysisDefinition = getTabletopStatusDefinition('paralisado')
+    const frozenParalysisId = `automatic-frozen-paralysis-${targetToken.id}`
+    const marksWithoutOldFrozenParalysis = nextMarks.filter(
+      (mark) => mark.id !== frozenParalysisId,
+    )
+
+    if (
+      frozenParalysisSource &&
+      paralysisDefinition &&
+      !marksWithoutOldFrozenParalysis.some(
+        (mark) =>
+          mark.targetTokenId === targetToken.id &&
+          mark.statusId === 'paralisado',
+      )
+    ) {
+      marksWithoutOldFrozenParalysis.push({
+        cancelableBySource: false,
+        color: paralysisDefinition.color,
+        createdAt: now,
+        description:
+          'Paralisado enquanto Congelado permanecer com 3 Acumulos.',
+        icon: paralysisDefinition.icon,
+        id: frozenParalysisId,
+        kind: paralysisDefinition.kind,
+        label: paralysisDefinition.label,
+        notes: 'automatic:frozen-stack',
+        sourceCharacterId: frozenParalysisSource.sourceCharacterId,
+        sourceTokenId: frozenParalysisSource.sourceTokenId,
+        statusId: paralysisDefinition.id,
+        targetCharacterId: targetCharacter.id,
+        targetTokenId: targetToken.id,
+      })
+      usedActions.padrao = true
+      usedActions.movimento = true
+    }
+
+    return {
+      impacts,
+      marks: marksWithoutOldFrozenParalysis,
+      usedActions,
+    }
+  }
+
   function handleNextTurn() {
     if (viewMode !== 'gm' || !turnState?.isActive || turnState.participants.length === 0) {
       return
     }
+
+    const currentIndex = Math.max(
+      0,
+      turnState.participants.findIndex(
+        (participant) => participant.id === turnState.activeParticipantId,
+      ),
+    )
+    const nextIndex = (currentIndex + 1) % turnState.participants.length
+    const nextParticipant = turnState.participants[nextIndex]
+    const nextRound =
+      nextIndex <= currentIndex ? turnState.round + 1 : turnState.round
+    const statusTurnStart = resolveStatusTurnStart(nextParticipant, nextRound)
 
     updateSession((currentSession) => {
       const currentTurnState = currentSession.turnState
@@ -8904,26 +11316,38 @@ export function TablePage() {
         return currentSession
       }
 
-      const currentIndex = Math.max(
+      const freshCurrentIndex = Math.max(
         0,
         currentTurnState.participants.findIndex(
           (participant) => participant.id === currentTurnState.activeParticipantId,
         ),
       )
-      const nextIndex = (currentIndex + 1) % currentTurnState.participants.length
-      const nextParticipant = currentTurnState.participants[nextIndex]
-      const nextRound = nextIndex <= currentIndex ? currentTurnState.round + 1 : currentTurnState.round
+      const freshNextIndex =
+        (freshCurrentIndex + 1) % currentTurnState.participants.length
+      const freshNextParticipant =
+        currentTurnState.participants[freshNextIndex]
+      const freshNextRound =
+        freshNextIndex <= freshCurrentIndex
+          ? currentTurnState.round + 1
+          : currentTurnState.round
 
       return createPersistedTabletopSession({
         ...currentSession,
+        publicCombatImpacts: [
+          ...currentSession.publicCombatImpacts.filter(
+            (impact) => impact.expiresAt > Date.now(),
+          ),
+          ...statusTurnStart.impacts,
+        ].slice(-48),
+        publicCombatMarks: statusTurnStart.marks,
         turnState: {
           ...currentTurnState,
-          activeParticipantId: nextParticipant.id,
-          round: nextRound,
+          activeParticipantId: freshNextParticipant.id,
+          round: freshNextRound,
           updatedAt: Date.now(),
           usedActions: {
             ...currentTurnState.usedActions,
-            [nextParticipant.id]: {},
+            [freshNextParticipant.id]: statusTurnStart.usedActions,
           },
         },
       })
@@ -9293,7 +11717,46 @@ export function TablePage() {
   function handleInspectorCharacterChange(nextCharacter: CharacterSheet) {
     const normalizedCharacter = normalizeCharacterSheet(nextCharacter)
 
-    if (activeToken && normalizedCharacter.tipo === 'mob') {
+    const currentLock = session?.characterEditLocks?.[normalizedCharacter.id]
+    if (
+      currentLock &&
+      currentLock.expiresAt > Date.now() &&
+      currentLock.ownerId !== currentEditOwnerId
+    ) {
+      setTableFeedbackMessage(`Ficha em edicao por ${currentLock.ownerLabel}.`)
+      return
+    }
+
+    if (!currentLock || currentLock.mode !== 'full') {
+      if (viewMode === 'gm') {
+        updateSession((currentSession) =>
+          createPersistedTabletopSession({
+            ...currentSession,
+            characterEditLocks: {
+              ...currentSession.characterEditLocks,
+              [normalizedCharacter.id]: {
+                acquiredAt: Date.now(),
+                characterId: normalizedCharacter.id,
+                expiresAt: Date.now() + 10000,
+                mode: 'quick',
+                ownerId: 'gm',
+                ownerLabel: 'Mestre',
+              },
+            },
+          }),
+        )
+      } else {
+        setCharacterEditLock({
+          characterId: normalizedCharacter.id,
+          mode: 'quick',
+        })
+      }
+    }
+
+    if (
+      activeToken &&
+      (activeToken.resourceOverride || normalizedCharacter.tipo === 'mob')
+    ) {
       const nextResources = { ...normalizedCharacter.recursos }
 
       updateCurrentScene((scene) => ({
@@ -9307,7 +11770,10 @@ export function TablePage() {
             : token,
         ),
       }))
-      return
+
+      if (normalizedCharacter.tipo === 'mob') {
+        return
+      }
     }
 
     const identityProfileId =
@@ -9387,6 +11853,9 @@ export function TablePage() {
           efeitos: [...item.efeitos],
         }))
       : undefined
+    const sharedInventoryProfile = persistentCharacter.inventarioPerfil
+      ? { ...persistentCharacter.inventarioPerfil }
+      : undefined
 
     data.characters.items
       .filter(
@@ -9403,6 +11872,7 @@ export function TablePage() {
                 ...character,
                 inventario: sharedInventory,
                 inventarioDetalhado: sharedDetailedInventory,
+                inventarioPerfil: sharedInventoryProfile,
                 recursos: {
                   ...character.recursos,
                   ...sharedVida,
@@ -9411,6 +11881,135 @@ export function TablePage() {
 
         commitCanonicalCharacterUpdate(nextSharedCharacter)
       })
+  }
+
+  function consumeCombatReaction(token: TabletopToken) {
+    const currentTurnState = session?.turnState
+    const participant = currentTurnState?.participants.find(
+      (entry) => entry.tokenId === token.id,
+    )
+
+    if (!currentTurnState?.isActive || !participant) {
+      return true
+    }
+
+    if (currentTurnState.usedActions[participant.id]?.reacao) {
+      setTableFeedbackMessage(`${participant.name} ja usou a Reacao neste ciclo.`)
+      return false
+    }
+
+    updateSession((currentSession) => {
+      const turn = currentSession.turnState
+
+      if (!turn?.isActive) {
+        return currentSession
+      }
+
+      const currentParticipant = turn.participants.find(
+        (entry) => entry.tokenId === token.id,
+      )
+
+      if (!currentParticipant) {
+        return currentSession
+      }
+
+      return createPersistedTabletopSession({
+        ...currentSession,
+        turnState: {
+          ...turn,
+          updatedAt: Date.now(),
+          usedActions: {
+            ...turn.usedActions,
+            [currentParticipant.id]: {
+              ...turn.usedActions[currentParticipant.id],
+              reacao: true,
+            },
+          },
+        },
+      })
+    })
+
+    return true
+  }
+
+  function handleRollPendingCombatOpposedDefense() {
+    if (
+      !pendingCombatResolution ||
+      pendingCombatResolution.checkTarget !== 'resistido' ||
+      !pendingCombatTargetCharacter
+    ) {
+      return
+    }
+
+    const explicitAttribute = pendingCombatResolution.opposedAttribute
+    const validAttributes: AttributeKey[] = [
+      'forca',
+      'agilidade',
+      'intelecto',
+      'presenca',
+      'vigor',
+    ]
+    const skill = pendingCombatResolution.opposedSkill
+      ? pendingCombatTargetCharacter.pericias.find(
+          (item) =>
+            item.nome
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^a-z0-9]/gi, '')
+              .toLocaleLowerCase('pt-BR') ===
+            pendingCombatResolution.opposedSkill
+              ?.normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[^a-z0-9]/gi, '')
+              .toLocaleLowerCase('pt-BR'),
+        )
+      : undefined
+    const attribute =
+      validAttributes.find((item) => item === explicitAttribute) ??
+      skill?.atributoBase
+
+    if (!attribute) {
+      setTableFeedbackMessage('A defesa resistida precisa informar atributo ou pericia do alvo.')
+      return
+    }
+
+    const roll = createRollRecord(
+      createCombatRollConfig({
+        atributo: pendingCombatTargetCharacter.atributos[attribute],
+        bonusPericia: skill
+          ? getCharacterSkillRollBonus(pendingCombatTargetCharacter, skill.nome)
+          : 0,
+      }),
+      `Defesa resistida - ${pendingCombatTargetCharacter.nome}`,
+      { visualColor: '#63b5aa' },
+    )
+    const opposedRollEntryId = buildRuntimeEventId(
+      `roll-combat-opposed-${pendingCombatResolution.id}`,
+    )
+
+    if (
+      appendLogEntry({
+        id: opposedRollEntryId,
+        type: 'roll',
+        visibility: 'public',
+        author: pendingCombatTargetCharacter.nome,
+        text: roll.resultadoTexto,
+        createdAt: new Date().toISOString(),
+        roll,
+      }) === false
+    ) {
+      return
+    }
+
+    setPendingCombatResolution((currentResolution) =>
+      currentResolution
+        ? {
+            ...currentResolution,
+            opposedRollEntryId,
+          }
+        : currentResolution,
+    )
+    handleRollSubmitWindowBehavior()
   }
 
   function handleRollPendingCombatDamage() {
@@ -9425,9 +12024,12 @@ export function TablePage() {
         visualColor: '#ca747a',
       },
     )
+    const damageRollEntryId = buildRuntimeEventId(
+      `roll-combat-damage-${pendingCombatResolution.id}`,
+    )
 
     const rollAccepted = appendLogEntry({
-      id: buildRuntimeEventId(`roll-combat-damage-${pendingCombatResolution.id}`),
+      id: damageRollEntryId,
       type: 'roll',
       visibility: 'public',
       author: pendingCombatResolution.attackerName,
@@ -9444,10 +12046,11 @@ export function TablePage() {
       currentResolution
         ? {
             ...currentResolution,
-            rawDamage: sanitizeCombatDamage(roll.total),
+            damageRollEntryId,
           }
         : currentResolution,
     )
+    handleRollSubmitWindowBehavior()
   }
 
   function handleResolvePendingCombat(outcome: CombatResolutionOutcome) {
@@ -9456,20 +12059,226 @@ export function TablePage() {
       return
     }
 
-    const rawDamage = sanitizeCombatDamage(pendingCombatResolution.rawDamage)
-    const blockValue = Math.max(0, Math.round(pendingCombatTargetCharacter.bloqueio ?? 0))
-    const appliedDamage =
-      outcome === 'hit'
-        ? rawDamage
-        : outcome === 'block'
-          ? Math.max(0, rawDamage - blockValue)
-          : 0
+    if (
+      pendingCombatResolution.checkTarget === 'resistido' &&
+      typeof pendingCombatResolution.opposedRollTotal !== 'number'
+    ) {
+      setTableFeedbackMessage('Role a defesa resistida do alvo antes de resolver o ataque.')
+      return
+    }
+
+    if (outcome === 'dodge') {
+      if (pendingCombatResolution.checkTarget !== 'ca') {
+        setTableFeedbackMessage('Esquiva e Bloqueio reagem apenas a ataques contra CA.')
+        return
+      }
+
+      if (
+        typeof pendingCombatResolution.rollTotal !== 'number' ||
+        typeof pendingCombatDodgeValue !== 'number'
+      ) {
+        setTableFeedbackMessage('Este alvo nao possui uma Esquiva fixa valida.')
+        return
+      }
+
+      if (pendingCombatDodgeValue < pendingCombatResolution.rollTotal) {
+        setTableFeedbackMessage('A Esquiva nao superou o total do ataque.')
+        return
+      }
+    }
+
+    if (outcome === 'block' && pendingCombatResolution.checkTarget !== 'ca') {
+      setTableFeedbackMessage('Esquiva e Bloqueio reagem apenas a ataques contra CA.')
+      return
+    }
+
+    if (
+      (outcome === 'block' || outcome === 'dodge') &&
+      pendingCombatTargetReactionUsed
+    ) {
+      setTableFeedbackMessage(
+        `${pendingCombatTargetCharacter.nome} ja usou a Reacao neste ciclo.`,
+      )
+      return
+    }
+
+    setPendingCombatResolution((currentResolution) =>
+      currentResolution
+        ? {
+            ...currentResolution,
+            outcome,
+            stage:
+              (outcome === 'hit' || outcome === 'block') &&
+              pendingCombatDamageRollConfig
+                ? 'damage'
+                : 'result',
+          }
+        : currentResolution,
+    )
+
+    if (outcome === 'block') {
+      void playTabletopSfx('impact-metal')
+    } else if (outcome === 'dodge') {
+      void playTabletopSfx('select', { rate: 1.2 })
+    } else if (outcome === 'miss') {
+      void playTabletopSfx('error')
+    }
+  }
+
+  function handleFinalizePendingCombat() {
+    if (
+      !pendingCombatResolution ||
+      !pendingCombatResolution.outcome ||
+      !pendingCombatTargetToken ||
+      !pendingCombatTargetCharacter ||
+      !pendingCombatAttackerToken ||
+      !pendingCombatAttackerCharacter
+    ) {
+      setTableFeedbackMessage('Escolha e confirme o resultado antes de concluir o ataque.')
+      return
+    }
+
+    const outcome = pendingCombatResolution.outcome
+    const rawDamage = pendingCombatDamageBeforeDefense
+    const blockValue = getCombatBlockValue(pendingCombatTargetCharacter)
+    const appliedDamage = pendingCombatFinalDamage
     const previousLife = pendingCombatTargetCharacter.recursos.vidaAtual
     const nextLife = Math.max(0, previousLife - appliedDamage)
-    const nextResources = {
+    const targetNextResources = {
       ...pendingCombatTargetCharacter.recursos,
       vidaAtual: nextLife,
     }
+    const payment = canPayCharacterActionCosts(
+      pendingCombatAttackerCharacter,
+      pendingCombatResolution.costs,
+    )
+
+    if (!payment.ok) {
+      setTableFeedbackMessage(
+        `${pendingCombatAttackerCharacter.nome} nao possui mais recurso suficiente para confirmar a acao.`,
+      )
+      return
+    }
+
+    if (
+      pendingCombatResolution.sourceFeatureResolution?.mode === 'drain-transfer' &&
+      appliedDamage > 0 &&
+      (!pendingCombatHealingTargetToken || !pendingCombatHealingTargetCharacter)
+    ) {
+      setTableFeedbackMessage('Escolha quem recebe a Vida drenada antes de confirmar.')
+      return
+    }
+
+    if (
+      (outcome === 'block' || outcome === 'dodge') &&
+      !consumeCombatReaction(pendingCombatTargetToken)
+    ) {
+      return
+    }
+
+    const attackerBeforeResources = pendingCombatAttackerCharacter.recursos
+    let nextAttacker = normalizeCharacterSheet(
+      applyCharacterActionCosts(
+        pendingCombatAttackerCharacter,
+        pendingCombatResolution.costs,
+      ),
+    )
+    const isSurgicalActivation =
+      pendingCombatResolution.sourceFeatureId ===
+      'training-davi-analise-cirurgica'
+    const surgicalActivationStatus = isSurgicalActivation
+      ? `combat:analise-cirurgica:${pendingCombatTargetToken.id}`
+      : ''
+
+    if (isSurgicalActivation && outcome === 'hit') {
+      nextAttacker = normalizeCharacterSheet({
+        ...nextAttacker,
+        status: [
+          ...nextAttacker.status.filter(
+            (status) => !status.startsWith('combat:analise-cirurgica:'),
+          ),
+          surgicalActivationStatus,
+        ],
+      })
+    } else if (pendingCombatUsesSurgicalAnalysis && pendingCombatSurgicalStatus) {
+      nextAttacker = normalizeCharacterSheet({
+        ...nextAttacker,
+        status: nextAttacker.status.filter(
+          (status) => status !== pendingCombatSurgicalStatus,
+        ),
+      })
+    }
+
+    let healingTargetNextResources =
+      pendingCombatHealingTargetCharacter?.recursos ?? null
+    if (pendingCombatHealingTargetCharacter && pendingCombatHealingAmount > 0) {
+      const healingBaseResources =
+        pendingCombatHealingTargetToken?.id === pendingCombatAttackerToken.id
+          ? nextAttacker.recursos
+          : pendingCombatHealingTargetToken?.id === pendingCombatTargetToken.id
+            ? targetNextResources
+            : pendingCombatHealingTargetCharacter.recursos
+
+      healingTargetNextResources = {
+        ...healingBaseResources,
+        vidaAtual: Math.min(
+          healingBaseResources.vidaMaxima,
+          healingBaseResources.vidaAtual + pendingCombatHealingAmount,
+        ),
+      }
+
+      if (pendingCombatHealingTargetToken?.id === pendingCombatAttackerToken.id) {
+        nextAttacker = normalizeCharacterSheet({
+          ...nextAttacker,
+          recursos: healingTargetNextResources,
+        })
+      } else if (
+        pendingCombatHealingTargetToken?.id === pendingCombatTargetToken.id
+      ) {
+        targetNextResources.vidaAtual = healingTargetNextResources.vidaAtual
+      }
+    }
+
+    if (
+      pendingCombatAttackerToken.resourceOverride ||
+      pendingCombatAttackerCharacter.tipo === 'mob'
+    ) {
+      commitCombatCharacterResourceUpdate(
+        pendingCombatAttackerCharacter,
+        pendingCombatAttackerToken,
+        nextAttacker.recursos,
+      )
+    } else {
+      commitCanonicalCharacterUpdate(nextAttacker)
+    }
+
+    if (
+      appliedDamage > 0 ||
+      (healingTargetNextResources &&
+        pendingCombatHealingTargetToken?.id === pendingCombatTargetToken.id)
+    ) {
+      commitCombatCharacterResourceUpdate(
+        pendingCombatTargetCharacter,
+        pendingCombatTargetToken,
+        targetNextResources,
+      )
+    }
+
+    if (
+      pendingCombatHealingTargetCharacter &&
+      pendingCombatHealingTargetToken &&
+      healingTargetNextResources &&
+      pendingCombatHealingTargetToken.id !== pendingCombatAttackerToken.id &&
+      pendingCombatHealingTargetToken.id !== pendingCombatTargetToken.id
+    ) {
+      commitCombatCharacterResourceUpdate(
+        pendingCombatHealingTargetCharacter,
+        pendingCombatHealingTargetToken,
+        healingTargetNextResources,
+      )
+    }
+
+    const targetLifeAfterResolution = targetNextResources.vidaAtual
     const outcomeLabel =
       outcome === 'hit'
         ? 'acerto'
@@ -9478,28 +12287,324 @@ export function TablePage() {
           : outcome === 'dodge'
             ? 'esquiva'
             : 'erro'
+    const criticalText = pendingCombatResolution.isCritical
+      ? ` Critico V2: dados de dano dobrados (${pendingCombatDamageFormula}).`
+      : ''
+    const dodgeText =
+      outcome === 'dodge'
+        ? ` Esquiva fixa ${pendingCombatDodgeValue} vs ataque ${pendingCombatResolution.rollTotal}.`
+        : ''
 
-    if (appliedDamage > 0) {
-      commitCombatCharacterResourceUpdate(
-        pendingCombatTargetCharacter,
-        pendingCombatTargetToken,
-        nextResources,
+    if (
+      pendingCombatGuardianReduction > 0 &&
+      pendingCombatGuardianPassiveKey &&
+      (outcome === 'hit' || outcome === 'block')
+    ) {
+      setConsumedCombatPassives((currentState) => ({
+        ...currentState,
+        [pendingCombatGuardianPassiveKey]: true,
+      }))
+    }
+
+    if (pendingCombatResolution.turnActionId) {
+      markActiveTurnActionForToken(
+        pendingCombatAttackerToken.id,
+        pendingCombatResolution.turnActionId,
       )
     }
+
+    const attackerPlayerIds = getTokenPlayerIds(pendingCombatAttackerToken)
+    const targetPlayerIds = getTokenPlayerIds(pendingCombatTargetToken)
+    const healingPlayerIds = getTokenPlayerIds(pendingCombatHealingTargetToken)
+    const visibleToPlayerIds = Array.from(
+      new Set([...attackerPlayerIds, ...targetPlayerIds, ...healingPlayerIds]),
+    )
+    const resourceChangesByPlayerId: Record<
+      string,
+      TabletopCombatResourceChange[]
+    > = {}
+    const attackerResourceChanges = pendingCombatResolution.costs.flatMap((cost) => {
+      const key =
+        cost.resource === 'vida'
+          ? 'vidaAtual'
+          : cost.resource === 'fushi'
+            ? 'fushiAtual'
+            : 'determinacaoAtual'
+      const label =
+        cost.resource === 'vida'
+          ? 'Vida'
+          : cost.resource === 'fushi'
+            ? 'FUSHI'
+            : 'Determinacao'
+
+      return [{
+        after: nextAttacker.recursos[key],
+        before: attackerBeforeResources[key],
+        label,
+      }]
+    })
+
+    attackerPlayerIds.forEach((playerId) => {
+      resourceChangesByPlayerId[playerId] = [...attackerResourceChanges]
+    })
+    targetPlayerIds.forEach((playerId) => {
+      resourceChangesByPlayerId[playerId] = [
+        ...(resourceChangesByPlayerId[playerId] ?? []),
+        { after: targetNextResources.vidaAtual, before: previousLife, label: 'Vida' },
+      ]
+    })
+    if (
+      pendingCombatHealingTargetCharacter &&
+      healingTargetNextResources &&
+      pendingCombatHealingTargetToken
+    ) {
+      healingPlayerIds.forEach((playerId) => {
+        resourceChangesByPlayerId[playerId] = [
+          ...(resourceChangesByPlayerId[playerId] ?? []),
+          {
+            after: healingTargetNextResources?.vidaAtual ?? 0,
+            before: pendingCombatHealingTargetCharacter.recursos.vidaAtual,
+            label: 'Vida curada',
+          },
+        ]
+      })
+    }
+
+    const receiptSummary =
+      outcome !== 'hit' && outcome !== 'block'
+        ? `${pendingCombatResolution.attackerName} usou ${pendingCombatResolution.attackName} contra ${pendingCombatTargetCharacter.nome}: ${outcomeLabel}.`
+        : pendingCombatResolutionMode === 'drain-transfer'
+          ? `${pendingCombatResolution.attackerName} causou ${pendingCombatFinalDamage} de dano em ${pendingCombatTargetCharacter.nome}, drenou ${pendingCombatEffectiveDamage} de Vida e curou ${pendingCombatHealingTargetCharacter?.nome ?? 'ninguem'} em ${pendingCombatEffectiveHealing}.`
+          : pendingCombatResolutionMode === 'heal'
+            ? `${pendingCombatResolution.attackerName} curou ${pendingCombatHealingTargetCharacter?.nome ?? pendingCombatTargetCharacter.nome} em ${pendingCombatEffectiveHealing}.`
+            : `${pendingCombatResolution.attackerName} causou ${pendingCombatEffectiveDamage} de dano em ${pendingCombatTargetCharacter.nome}.`
+    const isAbilityResolution = Boolean(
+      pendingCombatResolution.sourceFeatureId &&
+      pendingCombatAttackerCharacter.habilidadesDetalhadas?.some(
+        (feature) =>
+          feature.id === pendingCombatResolution.sourceFeatureId,
+      ),
+    )
+    const resolvedSourceFeature = pendingCombatResolution.sourceFeatureId
+      ? getCharacterCombatActions(pendingCombatAttackerCharacter).find(
+          (action) =>
+            action.feature.id === pendingCombatResolution.sourceFeatureId,
+        )?.feature ?? null
+      : null
+    const resolvedTargetStatusEffects =
+      (resolvedSourceFeature?.automation?.effects ?? []).filter(
+        (effect): effect is CharacterActionStatusEffect =>
+          effect.type === 'status' &&
+          effect.target === 'target',
+      )
+
+    updateSession((currentSession) => {
+      const now = Date.now()
+      const impacts = [
+        ...currentSession.publicCombatImpacts.filter(
+          (impact) => impact.expiresAt > now,
+        ),
+        {
+          createdAt: now,
+          expiresAt: now + 1800,
+          id: buildRuntimeEventId('combat-impact-attacker'),
+          tokenId: pendingCombatAttackerToken.id,
+          type: 'attack' as const,
+        },
+        ...(isAbilityResolution
+          ? [{
+              createdAt: now,
+              expiresAt: now + 2100,
+              id: buildRuntimeEventId('combat-impact-ability'),
+              tokenId: pendingCombatAttackerToken.id,
+              type:
+                outcome === 'hit' || outcome === 'block'
+                  ? 'ability-success' as const
+                  : 'ability-failure' as const,
+            }]
+          : []),
+        ...(appliedDamage > 0
+          ? [{
+              amount: pendingCombatEffectiveDamage,
+              createdAt: now,
+              expiresAt: now + 1800,
+              id: buildRuntimeEventId('combat-impact-damage'),
+              tokenId: pendingCombatTargetToken.id,
+              type: 'damage' as const,
+            }]
+          : []),
+        ...(pendingCombatHealingTargetToken && pendingCombatEffectiveHealing > 0
+          ? [{
+              amount: pendingCombatEffectiveHealing,
+              createdAt: now,
+              expiresAt: now + 1800,
+              id: buildRuntimeEventId('combat-impact-heal'),
+              tokenId: pendingCombatHealingTargetToken.id,
+              type: 'heal' as const,
+            }]
+          : []),
+      ]
+      const nextDeathStates = { ...currentSession.playerDeathStates }
+
+      if (targetPlayerIds.length > 0 && targetLifeAfterResolution <= 0) {
+        nextDeathStates[pendingCombatTargetToken.id] = {
+          failures: 0,
+          results: [null, null, null],
+          status: 'down',
+          successes: 0,
+          tokenId: pendingCombatTargetToken.id,
+          updatedAt: now,
+        }
+      } else if (targetLifeAfterResolution >= 2) {
+        delete nextDeathStates[pendingCombatTargetToken.id]
+      }
+
+      let marks = currentSession.publicCombatMarks.filter(
+        (mark) =>
+          !(
+            pendingCombatUsesSurgicalAnalysis &&
+            mark.sourceTokenId === pendingCombatAttackerToken.id &&
+            mark.targetTokenId === pendingCombatTargetToken.id
+          ),
+      )
+
+      if (isSurgicalActivation && outcome === 'hit') {
+        marks.push({
+          cancelableBySource: true,
+          color: '#f2cc48',
+          createdAt: now,
+          description:
+            `O proximo ataque de ${pendingCombatResolution.attackerName} contra ` +
+            `${pendingCombatTargetCharacter.nome} dobra o dano antes de aplicar penalidades negativas.`,
+          id: surgicalActivationStatus,
+          icon: 'science',
+          kind: 'mark',
+          label: 'Analise Cirurgica',
+          sourceCharacterId: pendingCombatAttackerCharacter.id,
+          sourceFeatureId: pendingCombatResolution.sourceFeatureId,
+          sourceTokenId: pendingCombatAttackerToken.id,
+          targetCharacterId: pendingCombatTargetCharacter.id,
+          targetTokenId: pendingCombatTargetToken.id,
+        })
+      }
+
+      if (
+        (outcome === 'hit' || outcome === 'block') &&
+        resolvedTargetStatusEffects.length > 0
+      ) {
+        const targetIsVaccinated = marks.some(
+          (mark) =>
+            mark.targetTokenId === pendingCombatTargetToken.id &&
+            mark.statusId === 'vacina',
+        )
+
+        resolvedTargetStatusEffects.forEach((effect) => {
+          const definition = findTabletopStatusDefinition(
+            effect.statusId ?? effect.status,
+          )
+
+          if (!definition) {
+            return
+          }
+
+          if (effect.mode === 'remove') {
+            marks = marks.filter(
+              (mark) =>
+                !(
+                  mark.targetTokenId === pendingCombatTargetToken.id &&
+                  mark.statusId === definition.id
+                ),
+            )
+            return
+          }
+
+          if (targetIsVaccinated && definition.id !== 'vacina') {
+            return
+          }
+
+          if (definition.id === 'vacina') {
+            marks = marks.filter(
+              (mark) =>
+                mark.targetTokenId !== pendingCombatTargetToken.id ||
+                !mark.statusId,
+            )
+          } else {
+            marks = marks.filter(
+              (mark) =>
+                !(
+                  mark.targetTokenId === pendingCombatTargetToken.id &&
+                  mark.sourceTokenId === pendingCombatAttackerToken.id &&
+                  mark.statusId === definition.id
+                ),
+            )
+          }
+
+          marks.push({
+            cancelableBySource:
+              effect.cancelableBySource === true ||
+              definition.id === 'especial-buff' ||
+              definition.id === 'especial-debuff',
+            color: definition.color,
+            createdAt: now,
+            description: definition.effect,
+            durationRounds:
+              effect.durationRounds ?? definition.defaultDurationRounds,
+            icon: definition.icon,
+            id: buildRuntimeEventId(`combat-status-${definition.id}`),
+            kind: definition.kind,
+            label: definition.label,
+            sourceCharacterId: pendingCombatAttackerCharacter.id,
+            sourceFeatureId: pendingCombatResolution.sourceFeatureId,
+            sourceTokenId: pendingCombatAttackerToken.id,
+            stacks: Math.min(
+              definition.rules.maxStacks ?? 99,
+              Math.max(1, effect.stacks ?? 1),
+            ),
+            statusId: definition.id,
+            targetCharacterId: pendingCombatTargetCharacter.id,
+            targetTokenId: pendingCombatTargetToken.id,
+          })
+        })
+      }
+
+      const receipt: TabletopCombatReceipt = {
+        attackerName: pendingCombatResolution.attackerName,
+        createdAt: now,
+        damageApplied: pendingCombatEffectiveDamage,
+        healingApplied: pendingCombatEffectiveHealing,
+        id: buildRuntimeEventId('combat-receipt'),
+        outcome,
+        resourceChangesByPlayerId,
+        sceneId: currentSceneId,
+        summary: receiptSummary,
+        targetName: pendingCombatTargetCharacter.nome,
+        visibleToPlayerIds,
+      }
+
+      return createPersistedTabletopSession({
+        ...currentSession,
+        playerDeathStates: nextDeathStates,
+        publicCombatImpacts: impacts,
+        publicCombatMarks: marks,
+        publicCombatReceipt: visibleToPlayerIds.length > 0 ? receipt : null,
+      })
+    })
 
     appendLogEntry({
       id: buildRuntimeEventId(`log-combat-resolution-${pendingCombatResolution.id}`),
       type: 'system',
-      visibility: pendingCombatTargetToken.visibility === 'public' ? 'public' : 'gm',
+      visibility: 'gm',
       author: 'Combate',
       text:
         `${pendingCombatResolution.attackerName} resolveu ${pendingCombatResolution.attackName} contra ` +
         `${pendingCombatTargetCharacter.nome}: ${outcomeLabel}. ` +
         (outcome === 'block'
-          ? `Dano bruto ${rawDamage}, bloqueio ${blockValue}, aplicado ${appliedDamage}.`
+          ? `Dano antes do bloqueio ${rawDamage}, bloqueio ${blockValue}, aplicado ${appliedDamage}.`
           : outcome === 'hit'
             ? `Dano aplicado ${appliedDamage}.`
             : 'Nenhum dano aplicado.') +
+        criticalText +
+        dodgeText +
         ` Vida: ${previousLife} -> ${nextLife}/${pendingCombatTargetCharacter.recursos.vidaMaxima}.`,
       createdAt: new Date().toISOString(),
     })
@@ -9510,10 +12615,42 @@ export function TablePage() {
     setPendingCombatResolution(null)
   }
 
+  function handlePrepareCharacterFeature(
+    request: CharacterFeatureActivationRequest,
+  ) {
+    const sourceToken =
+      visibleTokens.find((token) => token.id === request.tokenId) ??
+      visibleTokens.find((token) => token.id === sheetActionTokenId) ??
+      visibleTokens.find((token) => token.characterId === request.character.id) ??
+      null
+
+    if (!sourceToken) {
+      setTableFeedbackMessage(
+        `Coloque ${request.character.nome} na cena antes de preparar ${request.feature.nome}.`,
+      )
+      return
+    }
+
+    setCombatFocusRequest({
+      featureId: request.feature.id,
+      id: Date.now(),
+      sourceTokenId: sourceToken.id,
+    })
+    setInspectedTokenId('')
+    setActiveUtilityWindow('log')
+    setTableFeedbackMessage(
+      `${request.feature.nome} preparada. Escolha alvo e forma de uso em Dados de combate.`,
+    )
+  }
+
   function handleActivateCharacterFeature({
     character,
+    checkOptionId,
+    combatSnapshot,
     feature,
     source,
+    targetTokenId,
+    tokenId,
   }: CharacterFeatureActivationRequest) {
     const automation = feature.automation
 
@@ -9522,15 +12659,86 @@ export function TablePage() {
       return
     }
 
+    const combatSourceToken =
+      tokens.find((token) => token.id === tokenId) ??
+      tokens.find((token) => token.id === sheetActionTokenId) ??
+      activeToken ??
+      null
     const currentCharacter =
-      data?.characters.items.find((item) => item.id === character.id) ?? character
+      resolveTokenCharacterForCombat(combatSourceToken) ??
+      data?.characters.items.find((item) => item.id === character.id) ??
+      character
+    const combatTargetToken =
+      tokens.find((token) => token.id === targetTokenId && token.id !== combatSourceToken?.id) ??
+      selectedTokens.find((token) => token.id !== combatSourceToken?.id) ??
+      null
+    const selectedCheckOption = resolveCombatCheckOption({
+      checkOptionId,
+      feature,
+      sourceCell: combatSourceToken?.cell,
+      targetCell: combatTargetToken?.cell,
+    })
+    const sourceCell = combatSnapshot?.sourceCell ?? combatSourceToken?.cell
+    const targetCell = combatSnapshot?.targetCell ?? combatTargetToken?.cell
+    const distanceSquares =
+      combatSnapshot?.distanceSquares ??
+      (sourceCell && targetCell
+        ? calculateCombatAction({
+            character: currentCharacter,
+            checkOptionId: selectedCheckOption?.id,
+            feature,
+            source,
+            sourceCell,
+            targetCell,
+          }).distanceSquares
+        : null)
+    const rangeValidation = validateCombatRange({
+      checkOption: selectedCheckOption,
+      distanceSquares,
+      feature,
+    })
+
+    if (combatTargetToken && !rangeValidation.isInRange) {
+      setTableFeedbackMessage(rangeValidation.reason)
+      return
+    }
+
+    if (feature.id === 'training-davi-analise-cirurgica') {
+      if (!combatTargetToken) {
+        setTableFeedbackMessage('Escolha o alvo da Analise Cirurgica antes de ativar.')
+        return
+      }
+
+      if (
+        currentCharacter.status.some((status) =>
+          status.startsWith('combat:analise-cirurgica:'),
+        )
+      ) {
+        setTableFeedbackMessage(
+          'Analise Cirurgica ja esta ativa. Resolva o proximo ataque antes de usar novamente.',
+        )
+        return
+      }
+    }
+
     const costs = automation.costs ?? []
     const effects = automation.effects ?? []
     const payment = canPayCharacterActionCosts(currentCharacter, costs)
 
     if (!payment.ok) {
+      const missingResources = Array.from(
+        new Set(
+          payment.missing.map((cost) =>
+            cost.resource === 'vida'
+              ? 'Vida'
+              : cost.resource === 'fushi'
+                ? 'FUSHI'
+                : 'Determinacao',
+          ),
+        ),
+      )
       setTableFeedbackMessage(
-        `${currentCharacter.nome} nao tem recurso suficiente para ${feature.nome}.`,
+        `${currentCharacter.nome} esta sem ${missingResources.join(' e ')} para ${feature.nome}.`,
       )
       appendLogEntry({
         id: buildRuntimeEventId(`log-action-denied-${feature.id}`),
@@ -9543,14 +12751,44 @@ export function TablePage() {
       return
     }
 
-    const characterAfterCosts =
-      costs.length > 0
-        ? applyCharacterActionCosts(currentCharacter, costs)
-        : currentCharacter
-    const effectApplication = applyCharacterActionEffects(characterAfterCosts, effects)
-    const nextActionCharacter = normalizeCharacterSheet(effectApplication.character)
+    const baseRollConfig = getCharacterActionRollConfig(
+      feature,
+      currentCharacter,
+      selectedCheckOption?.id ?? checkOptionId,
+    )
+    const actionAttribute =
+      selectedCheckOption?.atributo ??
+      feature.automation?.combat?.teste?.atributo
+    const isPhysicalAction =
+      actionAttribute === 'forca' ||
+      actionAttribute === 'agilidade' ||
+      actionAttribute === 'vigor'
+    const activeStatusDicePenalty = combatSourceToken
+      ? (session?.publicCombatMarks ?? [])
+          .filter((mark) => mark.targetTokenId === combatSourceToken.id)
+          .reduce((total, mark) => {
+            const definition = findTabletopStatusDefinition(
+              mark.statusId ?? mark.label,
+            )
 
-    const rollConfig = getCharacterActionRollConfig(feature)
+            return (
+              total +
+              (definition?.rules.dicePenalty ?? 0) +
+              (isPhysicalAction
+                ? definition?.rules.physicalDicePenalty ?? 0
+                : 0)
+            )
+          }, 0)
+      : 0
+    const dicePoolPenalty =
+      getCombatRollDicePenalty({
+        checkOption: selectedCheckOption,
+        distanceSquares,
+        feature,
+      }) - activeStatusDicePenalty
+    const rollConfig = baseRollConfig
+      ? applyCombatDicePoolModifier(baseRollConfig, dicePoolPenalty)
+      : null
     const author = currentCharacter.nome
     const sourceLabel =
       source === 'ritual'
@@ -9566,6 +12804,11 @@ export function TablePage() {
     const gmCostText = costs.length > 0 ? ` Custo: ${getCharacterActionCostsLabel(feature)}.` : ''
     const activationLabel = getCharacterActionActivationLabel(feature)
     const gmActivationText = activationLabel ? ` ${activationLabel}.` : ''
+    const characterAfterCosts =
+      costs.length > 0
+        ? applyCharacterActionCosts(currentCharacter, costs)
+        : currentCharacter
+    const effectApplication = applyCharacterActionEffects(characterAfterCosts, effects)
     const gmEffectText =
       effectApplication.appliedLabels.length > 0
         ? ` Efeito: ${getCharacterActionEffectsLabel(feature)}.`
@@ -9576,27 +12819,58 @@ export function TablePage() {
 
     let actionRoll: ReturnType<typeof createRollRecord> | null = null
     let actionLogEntryId = ''
-    const combatSourceToken =
-      source === 'ataque'
-        ? tokens.find((token) => token.id === sheetActionTokenId) ?? activeToken ?? null
-        : null
+    const combatCalculation = calculateCombatAction({
+      character: currentCharacter,
+      checkOptionId: selectedCheckOption?.id,
+      feature,
+      source,
+      sourceCell,
+      targetCell,
+    })
+    const damageContexts = combatCalculation.contexts
+    const damageFormula = combatCalculation.damageFormula
+    const actionCheck = automation.combat?.teste
+    const hasTransactionalDamage = Boolean(combatCalculation.damageFormula)
+    const hasTransactionalResolution =
+      hasTransactionalDamage ||
+      feature.id === 'training-davi-analise-cirurgica' ||
+      Boolean(automation.combat?.resolucao)
+    const nextActionCharacter = normalizeCharacterSheet(effectApplication.character)
     const baseCombatPayload: TabletopCombatLogPayload | undefined =
-      source === 'ataque' && combatSourceToken
+      combatSourceToken && hasTransactionalResolution
         ? {
             attackerCharacterId: currentCharacter.id,
             attackerName: currentCharacter.nome,
             attackerTokenId: combatSourceToken.id,
             attackName: feature.nome,
-            damageFormula: getDamageFormulaFromActionFeature(feature),
+            baseDamageFormula:
+              combatCalculation.baseDamageFormula || damageFormula || '0',
+            buildDamageBonus: combatCalculation.buildDamageBonus,
+            checkDifficulty: actionCheck?.dificuldade,
+            checkTarget: actionCheck?.alvo ?? 'ca',
+            costs,
+            damageContexts,
+            damageFormula: damageFormula || '0',
+            distanceMeters: combatCalculation.distanceMeters,
+            distanceSquares: combatCalculation.distanceSquares,
             kind: 'attack',
+            opposedAttribute: actionCheck?.oposto?.atributo,
+            opposedSkill: actionCheck?.oposto?.pericia,
             sourceFeatureId: feature.id,
+            sourceFeatureResolution: automation.combat?.resolucao,
+            sourceCell: sourceCell ? { ...sourceCell } : undefined,
+            targetCell: targetCell ? { ...targetCell } : undefined,
+            targetTokenId: combatTargetToken?.id,
+            turnActionId: getTurnActionIdForFeature(feature),
           }
         : undefined
 
     if (rollConfig) {
       const roll = createRollRecord(
         rollConfig,
-        automation.roll?.contexto?.trim() || feature.nome,
+        selectedCheckOption?.label ||
+          automation.roll?.contexto?.trim() ||
+          feature.nome,
         {
           visualColor:
             automation.roll?.visualColor ||
@@ -9607,8 +12881,10 @@ export function TablePage() {
       actionRoll = roll
       actionLogEntryId = buildRuntimeEventId(`roll-feature-${feature.id}`)
       const combatPayload = baseCombatPayload
-        ? {
+      ? {
             ...baseCombatPayload,
+            isCritical: isCriticalAttackRoll(roll),
+            rollBase: roll.resultadoBase,
             rollText: roll.resultadoTexto,
             rollTotal: roll.total,
           }
@@ -9628,6 +12904,7 @@ export function TablePage() {
       if (rollAccepted === false) {
         return
       }
+      handleRollSubmitWindowBehavior()
     } else {
       actionLogEntryId = buildRuntimeEventId(`log-feature-${feature.id}`)
       appendLogEntry({
@@ -9641,16 +12918,19 @@ export function TablePage() {
       })
     }
 
-    if (costs.length > 0 || effectApplication.appliedLabels.length > 0) {
+    if (
+      !hasTransactionalResolution &&
+      (costs.length > 0 || effectApplication.appliedLabels.length > 0)
+    ) {
       handleInspectorCharacterChange(
         nextActionCharacter,
       )
     }
 
-    if (source === 'ataque' && viewMode === 'gm' && baseCombatPayload) {
+    if (viewMode === 'gm' && baseCombatPayload && !actionRoll) {
       const suggestedTarget =
+        combatTargetToken ??
         selectedTokens.find((token) => token.id !== baseCombatPayload.attackerTokenId) ??
-        visibleTokens.find((token) => token.id !== baseCombatPayload.attackerTokenId) ??
         null
 
       processedCombatLogEntryIdsRef.current.add(actionLogEntryId)
@@ -9659,12 +12939,30 @@ export function TablePage() {
         attackerName: baseCombatPayload.attackerName,
         attackerTokenId: baseCombatPayload.attackerTokenId,
         attackName: baseCombatPayload.attackName,
+        baseDamageFormula:
+          baseCombatPayload.baseDamageFormula ?? baseCombatPayload.damageFormula,
+        buildDamageBonus: baseCombatPayload.buildDamageBonus ?? 0,
+        checkDifficulty: baseCombatPayload.checkDifficulty,
+        checkTarget: baseCombatPayload.checkTarget ?? 'ca',
+        costs: baseCombatPayload.costs ?? [],
+        damageContexts: baseCombatPayload.damageContexts ?? [],
         damageFormula: baseCombatPayload.damageFormula,
+        distanceMeters: baseCombatPayload.distanceMeters ?? null,
+        distanceSquares: baseCombatPayload.distanceSquares ?? null,
         id: actionLogEntryId,
+        isCritical: false,
         rawDamage: 0,
-        rollText: actionRoll?.resultadoTexto,
-        rollTotal: actionRoll?.total,
+        rollText: undefined,
+        rollTotal: undefined,
+        opposedAttribute: baseCombatPayload.opposedAttribute,
+        opposedSkill: baseCombatPayload.opposedSkill,
+        sourceCell: baseCombatPayload.sourceCell,
+        sourceFeatureId: baseCombatPayload.sourceFeatureId,
+        sourceFeatureResolution: baseCombatPayload.sourceFeatureResolution,
+        stage: 'defense',
+        targetCell: baseCombatPayload.targetCell,
         targetTokenId: suggestedTarget?.id ?? '',
+        turnActionId: baseCombatPayload.turnActionId,
       })
     }
 
@@ -9677,6 +12975,14 @@ export function TablePage() {
         text: gmText,
         createdAt: new Date().toISOString(),
       })
+    }
+
+    const turnActionId = getTurnActionIdForFeature(feature)
+    const actionToken =
+      combatSourceToken ?? tokens.find((token) => token.id === sheetActionTokenId) ?? null
+
+    if (turnActionId && actionToken && !hasTransactionalResolution) {
+      markActiveTurnActionForToken(actionToken.id, turnActionId)
     }
 
     setTableFeedbackMessage(`${feature.nome} ativada.`)
@@ -9957,15 +13263,18 @@ export function TablePage() {
           fullscreen
           is3dCameraEditorEnabled={is3dCameraEditorEnabled}
           is3dFreeCameraVisible={is3dFreeCameraVisible}
+          isArtworkSuspended={isBoardArtworkSuspended}
           isCameraLocked={isBoardCameraLocked}
           isGridVisible={isGridVisible}
           isMeasureModeEnabled={canUseMeasureTool && isMeasureToolActive}
           isObjectPlacementActive={Boolean(objectPlacementPresetId)}
           map={boardMap ?? data.tabletop.map}
+          onArtworkBlank={handleBoardArtworkBlank}
+          renderEpoch={boardRenderEpoch}
           measurementColor={activeSessionDiceColor}
           measurementLabel={activeSessionAuthorLabel}
           sharedMeasurement={activeSharedMeasurement}
-          visualQuality={visualQuality}
+          visualQuality={boardVisualQuality}
           onCellAction={handleBoardCellAction}
           onClearSelection={handleClearSelection}
           on3dEditorToolChange={setEditor3dTool}
@@ -9999,10 +13308,29 @@ export function TablePage() {
               <TabletopFxStage
                 biomeId={boardMap?.biomeId}
                 height={boardMap?.stageHeight ?? data.tabletop.map.stageHeight}
-                quality={visualQuality}
+                quality={boardVisualQuality}
                 weather={boardSceneRuntime?.weather}
                 width={boardMap?.stageWidth ?? data.tabletop.map.stageWidth}
               />
+              <TabletopCombatRangeOverlay
+                map={boardMap ?? data.tabletop.map}
+                onClose={handleCloseCombatRangePreview}
+                preview={activeCombatPreview}
+                tokens={visibleTokens}
+              />
+              {activeAbilityImpact?.type === 'ability-success' &&
+              activeAbilityImpactToken ? (
+                <div
+                  aria-hidden="true"
+                  className="tabletop-ability-vfx tabletop-ability-vfx--success"
+                  key={activeAbilityImpact.id}
+                  style={activeAbilityImpactStyle}
+                >
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              ) : null}
               {boardSceneRuntime ? (
                 <TabletopWeatherOverlay runtime={boardSceneRuntime.weather} />
               ) : null}
@@ -10016,7 +13344,7 @@ export function TablePage() {
         <TabletopDiceRollOverlay
           entryId={activeDiceRollEntry?.id}
           onRollSettled={handleDiceRollSettled}
-          quality={visualQuality}
+          quality={boardVisualQuality}
           record={activeDiceRollRecord}
         />
       </div>
@@ -10236,6 +13564,37 @@ export function TablePage() {
         </div>
       ) : null}
 
+      {viewMode === 'player' &&
+      session?.publicCombatReceipt &&
+      session.publicCombatReceipt.id !== dismissedCombatReceiptId ? (
+        <div className="tabletop-combat-receipt" role="status">
+          <p className="eyebrow">Resultado confirmado pelo Mestre</p>
+          <h3>
+            {session.publicCombatReceipt.attackerName} -&gt;{' '}
+            {session.publicCombatReceipt.targetName}
+          </h3>
+          <p>{session.publicCombatReceipt.summary}</p>
+          <div className="tabletop-combat-receipt__resources">
+            {Object.values(session.publicCombatReceipt.resourceChangesByPlayerId)
+              .flat()
+              .map((change, index) => (
+                <span className="tag" key={`${change.label}-${index}`}>
+                  {change.label}: {change.before} -&gt; {change.after}
+                </span>
+              ))}
+          </div>
+          <button
+            className="button button--primary"
+            onClick={() =>
+              setDismissedCombatReceiptId(session.publicCombatReceipt?.id ?? '')
+            }
+            type="button"
+          >
+            OK
+          </button>
+        </div>
+      ) : null}
+
       {imagePreviewState ? (
         <div className="tabletop-image-preview" role="dialog" aria-modal="true">
           <button
@@ -10332,6 +13691,23 @@ export function TablePage() {
         >
           <img alt="" className="tabletop-hud__icon" src={resolveRuntimeAssetUrl(HUD_ICON_ASSETS.notes)} />
         </button>
+        {viewMode === 'player' ? (
+          <button
+            aria-label="Abrir Livro do Jogador"
+            className={`tabletop-hud__button${
+              activeUtilityWindow === 'book' ? ' tabletop-hud__button--active' : ''
+            }`}
+            onClick={() =>
+              setActiveUtilityWindow((currentWindow) =>
+                currentWindow === 'book' ? null : 'book',
+              )
+            }
+            title="Livro do Jogador"
+            type="button"
+          >
+            <img alt="" className="tabletop-hud__icon" src={resolveRuntimeAssetUrl(HUD_ICON_ASSETS.book)} />
+          </button>
+        ) : null}
         {canOpenPlayerMundi ? (
           <button
             aria-label="Abrir Mapa Mundi"
@@ -10436,6 +13812,7 @@ export function TablePage() {
           onClose={closeTransitionOverlay}
           onPlaybackStateChange={handleTransitionPlaybackStateChange}
           playbackState={sharedTransitionPlaybackState}
+          preferStillMedia={visualQuality === 'low'}
           scenePreviewUrl={
             (activeTransitionOverlay.toMapId
               ? mapPreviewById[activeTransitionOverlay.toMapId]
@@ -10457,16 +13834,55 @@ export function TablePage() {
       {turnState?.isActive ? (
         <TabletopTurnOverlay
           activeParticipant={activeTurnParticipantView}
+          canControlActiveParticipant={canControlActiveTurnParticipant}
+          featureActions={activeTurnFeatureActions}
           isGm={viewMode === 'gm'}
           onActionToggle={handleTurnActionToggle}
           onEndCombat={handleEndCombatTurns}
+          onFeatureAction={handleTurnFeatureAction}
+          onManeuverAction={handleTurnManeuverAction}
           onNextTurn={handleNextTurn}
           onOpenParticipant={handleTokenOpen}
           onPreviousTurn={handlePreviousTurn}
+          onResolveActionRequest={handleResolveTurnActionRequest}
           participants={turnParticipantViews}
+          pendingActionRequests={pendingTurnActionRequests}
           turnState={turnState}
         />
       ) : null}
+      {session?.trainingState?.isActive &&
+      isTabletopEventActive(eventState, 'initial-training') ? (
+        <TabletopTrainingArc
+          assignedRewardCharacterIds={assignedRewardCharacterIds}
+          isGm={viewMode === 'gm'}
+          key={`training-${trainingOpenRequestId}`}
+          openRequestId={trainingOpenRequestId}
+          onFinalOutcome={handleTrainingFinalOutcome}
+          onAssignRewardAbility={handleAssignTrainingRewardAbility}
+          onParticipantOutcome={handleTrainingParticipantOutcome}
+          onRestart={handleRestartVillageTraining}
+          onSelectStation={(participantId, stationId) =>
+            updateTrainingState((trainingState) =>
+              setTrainingParticipantStation(trainingState, participantId, stationId),
+            )
+          }
+          onSetActive={(isActive) =>
+            isActive
+              ? handleActivateTabletopEvent('initial-training')
+              : handleDeactivateTabletopEvent('initial-training')
+          }
+          onUnlockFinal={() =>
+            updateTrainingState((trainingState) =>
+              unlockTrainingFinalTrial(trainingState),
+            )
+          }
+          state={session.trainingState}
+          viewerCharacterId={
+            playerCharacterId || effectiveActiveAccessProfile?.characterId || ''
+          }
+        />
+      ) : null}
+      <TabletopEventPresentation state={eventState} />
       {configurableMap ? (
         <DeferredTabletopTool>
           <MapConfigurationModal
@@ -10523,11 +13939,12 @@ export function TablePage() {
             {isHudExpanded ? (
               <TabletopHud
                 activeItemId={activeHudPanel}
-                items={hudItems.map((item) => ({
+                items={hudItems
+                  .map((item) => ({
                   id: item.id,
                   label: item.label,
                   shortLabel: item.shortLabel,
-                }))}
+                  }))}
                 onToggle={(itemId) => toggleHudPanel(itemId as HudPanelId)}
               />
             ) : null}
@@ -11168,6 +14585,83 @@ export function TablePage() {
             </FloatingWindow>
           ) : null}
 
+          {activeHudPanel === 'builds' ? (
+            <FloatingWindow
+              initialPosition={{ x: 72, y: 72 }}
+              initialSize={{ width: 1120, height: 620 }}
+              onClose={() => setActiveHudPanel(null)}
+              subtitle="Catálogo canônico, raridades e vínculo permanente de itens à identidade."
+              title="BUI · Builds Absorvidas"
+            >
+              <TabletopHudPanel
+                onClose={() => setActiveHudPanel(null)}
+                showChrome={false}
+                subtitle="Catálogo canônico, raridades e vínculo permanente de itens à identidade."
+                title="BUI · Builds Absorvidas"
+              >
+                <TabletopBuildManager
+                  characters={data.characters.items}
+                  onChangeCharacter={commitCanonicalCharacterUpdate}
+                />
+              </TabletopHudPanel>
+            </FloatingWindow>
+          ) : null}
+
+          {activeHudPanel === 'statuses' ? (
+            <FloatingWindow
+              initialPosition={{ x: 82, y: 76 }}
+              initialSize={{ width: 1100, height: 680 }}
+              onClose={() => setActiveHudPanel(null)}
+              subtitle="Aplique, acompanhe e encerre estados temporarios da cena."
+              title="BUF · Buffs e Debuffs"
+            >
+              <TabletopHudPanel
+                onClose={() => setActiveHudPanel(null)}
+                showChrome={false}
+                subtitle="Aplique, acompanhe e encerre estados temporarios da cena."
+                title="BUF · Buffs e Debuffs"
+              >
+                <TabletopStatusManager
+                  marks={currentSceneStatusMarks}
+                  onApply={handleApplyTabletopStatus}
+                  onRemove={handleRemoveTabletopStatus}
+                  participants={statusParticipants}
+                />
+              </TabletopHudPanel>
+            </FloatingWindow>
+          ) : null}
+
+          {activeHudPanel === 'events' ? (
+            <FloatingWindow
+              initialPosition={{ x: 88, y: 84 }}
+              initialSize={{ width: 1060, height: 650 }}
+              onClose={() => setActiveHudPanel(null)}
+              subtitle="Ative, controle e encerre camadas temporarias da mesa sem deixar estado residual."
+              title="EVE · Eventos"
+            >
+              <TabletopHudPanel
+                onClose={() => setActiveHudPanel(null)}
+                showChrome={false}
+                subtitle="Ative, controle e encerre camadas temporarias da mesa sem deixar estado residual."
+                title="EVE · Eventos"
+              >
+                <TabletopEventManager
+                  characters={data.characters.items}
+                  eventState={eventState}
+                  onActivate={handleActivateTabletopEvent}
+                  onAssignCharacterGrant={handleAssignCharacterGrant}
+                  onClearRarityDraw={handleClearRarityDraw}
+                  onClearRarityHistory={handleClearRarityHistory}
+                  onDeactivate={handleDeactivateTabletopEvent}
+                  onOpenTraining={handleOpenTrainingControl}
+                  onRestartTraining={handleRestartVillageTraining}
+                  onStartRarityDraw={handleStartRarityDraw}
+                  trainingState={session?.trainingState ?? null}
+                />
+              </TabletopHudPanel>
+            </FloatingWindow>
+          ) : null}
+
           {activeHudPanel === 'world' ? (
             <FloatingWindow
               initialPosition={{ x: 84, y: 140 }}
@@ -11189,7 +14683,9 @@ export function TablePage() {
                     factions={data.factions.items}
                     maps={availableMaps}
                     mapPreviewById={mapPreviewById}
+                    isTrainingActive={isTabletopEventActive(eventState, 'initial-training')}
                     onChange={setWorldMundiState}
+                    onActivateTraining={handleActivateVillageTraining}
                     onEnsureMapPlaceholders={ensureWorldMundiMapPlaceholders}
                     onLinkMapToLocation={linkWorldMundiLocationToMap}
                     onOpenMap={openWorldMundiMap}
@@ -11831,57 +15327,28 @@ export function TablePage() {
           {activeHudPanel === 'book' ? (
             <FloatingWindow
               initialPosition={{ x: 104, y: 220 }}
-              initialSize={{ width: 640, height: 560 }}
+              initialSize={{ width: 720, height: 640 }}
               onClose={() => setActiveHudPanel(null)}
-              subtitle="Consulta rapida para narrar sem sair da mesa."
-              title="Livro"
+              subtitle={
+                viewMode === 'gm'
+                  ? 'Regras, DTs e protocolos do Mestre sem sair da mesa.'
+                  : 'Regras publicas para decidir a proxima acao.'
+              }
+              title={viewMode === 'gm' ? 'Escudo do Mestre' : 'Livro do Jogador'}
             >
               <TabletopHudPanel
                 onClose={() => setActiveHudPanel(null)}
                 showChrome={false}
-                subtitle="Consulta rapida para narrar sem sair da mesa."
-                title="Livro"
-                footer={
-                  <Link className="button button--primary" to="/livro">
-                    Abrir Livro completo
-                  </Link>
+                subtitle={
+                  viewMode === 'gm'
+                    ? 'Regras, DTs e protocolos do Mestre sem sair da mesa.'
+                    : 'Regras publicas para decidir a proxima acao.'
                 }
+                title={viewMode === 'gm' ? 'Escudo do Mestre' : 'Livro do Jogador'}
               >
-                <div className="list-stack">
-                  <article className="list-card">
-                    <div className="list-card__top">
-                      <h3>Sessao 1</h3>
-                      <span className="tag">Mestre</span>
-                    </div>
-                    <ul className="bullet-list">
-                      <li>Caverna do Primeiro Corpo: corpo, memoria e primeira escolha.</li>
-                      <li>Clareira dos Lobos: movimento, ataque, defesa e queda a 0 HP.</li>
-                      <li>Vila: Orian pode entregar mapa; Elara acolhe; alguem desconfia.</li>
-                      <li>Fechar em Treino ou Riacho Claro se a sessao bater 1 hora.</li>
-                    </ul>
-                  </article>
-                  <article className="list-card">
-                    <div className="list-card__top">
-                      <h3>Wave Lobos - Planicie</h3>
-                      <span className="tag">Drops reais</span>
-                    </div>
-                    <p className="support-copy">
-                      Wave 1: Bandagem. Wave 5: Faca 1d6 ou Dente do Primeiro
-                      Lobo. Wave 10: Nucleo Instavel. Entre esses marcos, sem
-                      drop automatico.
-                    </p>
-                  </article>
-                  <article className="list-card">
-                    <div className="list-card__top">
-                      <h3>XP rapido</h3>
-                      <span className="tag">Atos</span>
-                    </div>
-                    <p className="support-copy">
-                      Marque apenas cenas reais: Risco, Vontade, Vinculo, FUSHI,
-                      Custo, Treino, Ritual, Reencarnacao e Item marco.
-                    </p>
-                  </article>
-                </div>
+                <RulebookQuickReference
+                  audience={viewMode === 'gm' ? 'master' : 'player'}
+                />
               </TabletopHudPanel>
             </FloatingWindow>
           ) : null}
@@ -12196,13 +15663,29 @@ export function TablePage() {
           className="floating-window--log"
           initialPosition={{ x: window.innerWidth > 1200 ? 980 : 140, y: 72 }}
           initialSize={{ width: 420, height: 620 }}
-          minimizeSignal={rollWindowMinimizeSignal ?? undefined}
           onClose={() => setActiveUtilityWindow(null)}
+          restoreSignal={combatFocusRequest?.id}
           subtitle="Mensagens, pings e rolagens da sessao."
           title="Chat e rolagem"
         >
           <TabletopSessionLog
             authorLabel={activeSessionAuthorLabel}
+            bonusOptions={rollBonusOptions}
+            combatFocusSignal={combatFocusRequest?.id}
+            combatPanel={
+              <TabletopCombatRoller
+                characters={data.characters.items}
+                fixedCharacterId={
+                  viewMode === 'player' ? focusedPlayerCharacter?.id : undefined
+                }
+                focusRequest={combatFocusRequest ?? undefined}
+                isGm={viewMode === 'gm'}
+                onActivate={handleActivateCharacterFeature}
+                onPreview={handleCombatRangePreview}
+                preferredSourceTokenId={sheetActionTokenId}
+                tokens={visibleTokens}
+              />
+            }
             entries={logEntries}
             isGm={viewMode === 'gm'}
             isRollLocked={isDiceRollLocked}
@@ -12242,6 +15725,31 @@ export function TablePage() {
             ownerLabel={personalNotesOwnerLabel}
             value={personalNotes}
           />
+        </FloatingWindow>
+      ) : null}
+
+      {activeUtilityWindow === 'book' && viewMode === 'player' ? (
+        <FloatingWindow
+          initialPosition={{
+            x: Math.max(24, window.innerWidth - Math.min(720, window.innerWidth - 48) - 24),
+            y: 82,
+          }}
+          initialSize={{
+            width: Math.min(720, window.innerWidth - 48),
+            height: Math.min(640, window.innerHeight - 106),
+          }}
+          onClose={() => setActiveUtilityWindow(null)}
+          subtitle="Regras publicas para decidir a proxima acao sem sair da mesa."
+          title="Livro do Jogador"
+        >
+          <TabletopHudPanel
+            onClose={() => setActiveUtilityWindow(null)}
+            showChrome={false}
+            subtitle="Regras publicas para decidir a proxima acao sem sair da mesa."
+            title="Livro do Jogador"
+          >
+            <RulebookQuickReference audience="player" />
+          </TabletopHudPanel>
         </FloatingWindow>
       ) : null}
 
@@ -12316,8 +15824,23 @@ export function TablePage() {
                 <div>
                   <p className="eyebrow">Ataque</p>
                   <h3>{pendingCombatResolution.attackName}</h3>
+                  <p className="support-copy">
+                    <strong>
+                      {pendingCombatResolution.attackerName} -&gt;{' '}
+                      {pendingCombatTargetCharacter?.nome ?? 'alvo ainda nao escolhido'}
+                    </strong>
+                  </p>
                 </div>
-                <span className="tag">{pendingCombatResolution.attackerName}</span>
+                <div className="tag-row">
+                  <span className="tag">{pendingCombatResolution.attackerName}</span>
+                  <span className="tag">
+                    {pendingCombatResolution.stage === 'defense'
+                      ? '1. Defesa'
+                      : pendingCombatResolution.stage === 'damage'
+                        ? '2. Dano'
+                        : '3. Resultado'}
+                  </span>
+                </div>
               </div>
               {typeof pendingCombatResolution.rollTotal === 'number' ? (
                 <p className="support-copy">
@@ -12327,8 +15850,45 @@ export function TablePage() {
               {pendingCombatResolution.rollText ? (
                 <p className="support-copy">{pendingCombatResolution.rollText}</p>
               ) : null}
+              {typeof pendingCombatResolution.distanceSquares === 'number' ? (
+                <p className="support-copy">
+                  Distancia congelada na rolagem:{' '}
+                  <strong>
+                    {pendingCombatResolution.distanceSquares.toFixed(
+                      pendingCombatResolution.distanceSquares % 1 === 0 ? 0 : 1,
+                    )}{' '}
+                    quadrado(s) / {(pendingCombatResolution.distanceMeters ?? 0).toFixed(1)} m
+                  </strong>
+                </p>
+              ) : null}
+              {pendingCombatResolution.costs.length > 0 &&
+              pendingCombatAttackerCharacter ? (
+                <div className="tag-row">
+                  {pendingCombatResolution.costs.map((cost, index) => {
+                    const currentValue =
+                      cost.resource === 'vida'
+                        ? pendingCombatAttackerCharacter.recursos.vidaAtual
+                        : cost.resource === 'fushi'
+                          ? pendingCombatAttackerCharacter.recursos.fushiAtual
+                          : pendingCombatAttackerCharacter.recursos.determinacaoAtual
+                    const label =
+                      cost.resource === 'vida'
+                        ? 'Vida'
+                        : cost.resource === 'fushi'
+                          ? 'FUSHI'
+                          : 'Determinacao'
+
+                    return (
+                      <span className="tag tag--warning" key={`${cost.resource}-${index}`}>
+                        {label}: {currentValue} -&gt; {Math.max(0, currentValue - cost.amount)}
+                      </span>
+                    )
+                  })}
+                </div>
+              ) : null}
             </article>
 
+            {pendingCombatResolution.stage === 'defense' ? (
             <article className="list-card">
               <label className="field">
                 <span className="field__label">Alvo</span>
@@ -12339,6 +15899,8 @@ export function TablePage() {
                       currentResolution
                         ? {
                             ...currentResolution,
+                            opposedRollEntryId: undefined,
+                            opposedRollTotal: undefined,
                             targetTokenId: event.target.value,
                           }
                         : currentResolution,
@@ -12361,7 +15923,8 @@ export function TablePage() {
 
               {pendingCombatTargetCharacter ? (
                 <>
-                  <div className="metric-grid metric-grid--compact">
+                  {pendingCombatResolution.checkTarget === 'ca' ? (
+                    <div className="metric-grid metric-grid--compact">
                     <article className="metric-card">
                       <span className="metric-card__label">CA</span>
                       <strong className="metric-card__value">
@@ -12371,16 +15934,66 @@ export function TablePage() {
                     <article className="metric-card">
                       <span className="metric-card__label">Bloqueio</span>
                       <strong className="metric-card__value">
-                        {pendingCombatTargetCharacter.bloqueio ?? 0}
+                        {pendingCombatBlockValue}
                       </strong>
+                      <small>Fortitude, teto 15</small>
                     </article>
                     <article className="metric-card">
                       <span className="metric-card__label">Esquiva</span>
                       <strong className="metric-card__value">
-                        {pendingCombatTargetCharacter.esquiva ?? 0}
+                        {pendingCombatDodgeValue ?? '--'}
                       </strong>
+                      <small>{getCombatDodgeSummary(pendingCombatTargetCharacter)}</small>
                     </article>
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="metric-grid metric-grid--compact">
+                      <article className="metric-card">
+                        <span className="metric-card__label">
+                          {pendingCombatResolution.checkTarget === 'dt'
+                            ? 'Dificuldade'
+                            : 'Defesa resistida'}
+                        </span>
+                        <strong className="metric-card__value">
+                          {pendingCombatResolution.checkTarget === 'dt'
+                            ? pendingCombatResolution.checkDifficulty ?? '--'
+                            : pendingCombatResolution.opposedRollTotal ?? '--'}
+                        </strong>
+                        <small>{pendingCombatCheckLabel}</small>
+                      </article>
+                    </div>
+                  )}
+                  {pendingCombatResolution.checkTarget === 'ca' ? (
+                    <p className="support-copy">
+                      {pendingCombatTargetReactionUsed
+                        ? 'Reacao ja usada neste ciclo de turno.'
+                        : 'Reacao disponivel: Bloquear ou Esquivar.'}
+                    </p>
+                  ) : null}
+                  {pendingCombatResolution.checkTarget === 'resistido' &&
+                  typeof pendingCombatResolution.opposedRollTotal !== 'number' ? (
+                    <div className="combat-resolution-suggestion">
+                      <div className="list-card__top">
+                        <div>
+                          <p className="eyebrow">Defesa do alvo</p>
+                          <h3>{pendingCombatCheckLabel}</h3>
+                        </div>
+                        <button
+                          className="button button--primary"
+                          disabled={Boolean(pendingCombatResolution.opposedRollEntryId)}
+                          onClick={handleRollPendingCombatOpposedDefense}
+                          type="button"
+                        >
+                          {pendingCombatResolution.opposedRollEntryId
+                            ? 'Rolando defesa...'
+                            : 'Rolar defesa resistida'}
+                        </button>
+                      </div>
+                      <p className="support-copy">
+                        O alvo usa o proprio atributo e pericia. Empate favorece a defesa.
+                      </p>
+                    </div>
+                  ) : null}
                   {pendingCombatSuggestionLabel ? (
                     <div className="combat-resolution-suggestion">
                       <div className="list-card__top">
@@ -12407,30 +16020,128 @@ export function TablePage() {
                       <p className="support-copy">{pendingCombatSuggestionLabel}</p>
                     </div>
                   ) : null}
+                  {pendingCombatResolution.checkTarget === 'ca' &&
+                  pendingCombatDodgeSuggestionLabel ? (
+                    <div className="combat-resolution-suggestion">
+                      <div className="list-card__top">
+                        <div>
+                          <p className="eyebrow">Esquiva</p>
+                          <h3>
+                            {pendingCombatDodgeSucceeded
+                              ? 'Esquiva confirmada'
+                              : 'Esquiva falhou'}
+                          </h3>
+                        </div>
+                        {pendingCombatDodgeSucceeded ? (
+                          <button
+                            className="button"
+                            onClick={() => handleResolvePendingCombat('dodge')}
+                            type="button"
+                          >
+                            Aplicar Esquiva
+                          </button>
+                        ) : null}
+                      </div>
+                      <p className="support-copy">{pendingCombatDodgeSuggestionLabel}</p>
+                    </div>
+                  ) : null}
+                  <div className="button-row">
+                    <button
+                      className="button button--primary"
+                      disabled={!pendingCombatDefenseReady}
+                      onClick={() => handleResolvePendingCombat('hit')}
+                      type="button"
+                    >
+                      Confirmar acerto
+                    </button>
+                    <button
+                      className="button"
+                      disabled={
+                        pendingCombatResolution.checkTarget !== 'ca' ||
+                        pendingCombatTargetReactionUsed
+                      }
+                      onClick={() => handleResolvePendingCombat('block')}
+                      type="button"
+                    >
+                      Bloquear
+                    </button>
+                    <button
+                      className="button"
+                      disabled={
+                        pendingCombatResolution.checkTarget !== 'ca' ||
+                        pendingCombatDodgeValue === null ||
+                        pendingCombatTargetReactionUsed ||
+                        typeof pendingCombatResolution.rollTotal !== 'number' ||
+                        pendingCombatDodgeSucceeded !== true
+                      }
+                      onClick={() => handleResolvePendingCombat('dodge')}
+                      type="button"
+                    >
+                      Esquivar
+                    </button>
+                    <button
+                      className="button"
+                      disabled={!pendingCombatDefenseReady}
+                      onClick={() => handleResolvePendingCombat('miss')}
+                      type="button"
+                    >
+                      Confirmar erro
+                    </button>
+                  </div>
                 </>
               ) : (
                 <p className="support-copy">Escolha um token alvo para resolver.</p>
               )}
             </article>
+            ) : null}
 
+            {pendingCombatResolution.stage === 'damage' ? (
             <article className="list-card">
               <div className="list-card__top">
                 <div>
                   <p className="eyebrow">Dano</p>
-                  <h3>{pendingCombatResolution.damageFormula || 'Manual'}</h3>
+                  <h3>{pendingCombatDamageFormula || 'Manual'}</h3>
                 </div>
+                {pendingCombatResolution.isCritical ? (
+                  <span className="tag tag--danger">Critico: dados dobrados</span>
+                ) : null}
                 {pendingCombatDamageRollConfig ? (
                   <button
                     className="button"
+                    disabled={Boolean(pendingCombatResolution.damageRollEntryId)}
                     onClick={handleRollPendingCombatDamage}
                     type="button"
                   >
-                    Rolar dano
+                    {pendingCombatResolution.damageRollEntryId ? 'Rolando...' : 'Rolar dano'}
                   </button>
                 ) : null}
               </div>
+              <div className="combat-resolution-result__calculation">
+                <span>Base: {pendingCombatResolution.baseDamageFormula || 'manual'}</span>
+                <span>
+                  Build:{' '}
+                  {pendingCombatResolution.buildDamageBonus > 0 ? '+' : ''}
+                  {pendingCombatResolution.buildDamageBonus}
+                  {pendingCombatDamageContextLabel
+                    ? ` (${pendingCombatDamageContextLabel})`
+                    : ''}
+                </span>
+                <strong>Rolagem base: {pendingCombatDamageFormula || 'manual'}</strong>
+              </div>
+              {pendingCombatUsesSurgicalAnalysis ? (
+                <div className="combat-resolution-effect combat-resolution-effect--positive">
+                  <strong>Análise Cirúrgica ativa</strong>
+                  <span>O dano bruto será dobrado uma vez contra este alvo.</span>
+                </div>
+              ) : null}
+              {pendingCombatGuardianReduction > 0 ? (
+                <div className="combat-resolution-effect">
+                  <strong>Casca de Vigia</strong>
+                  <span>A primeira fonte de dano desta cena causa 1 a menos.</span>
+                </div>
+              ) : null}
               <label className="field">
-                <span className="field__label">Dano bruto</span>
+                <span className="field__label">Resultado dos dados, sem Build</span>
                 <input
                   className="field__input"
                   min={0}
@@ -12451,14 +16162,15 @@ export function TablePage() {
               {pendingCombatTargetCharacter ? (
                 <div className="metric-grid metric-grid--compact">
                   <article className="metric-card">
-                    <span className="metric-card__label">Acerto</span>
+                    <span className="metric-card__label">Dano aplicado</span>
                     <strong className="metric-card__value">{pendingCombatHitDamage}</strong>
                     <small>
                       Vida {pendingCombatTargetCharacter.recursos.vidaAtual} -&gt;{' '}
                       {pendingCombatLifeAfterHit}
                     </small>
                   </article>
-                  <article className="metric-card">
+                  {pendingCombatResolution.outcome === 'block' ? (
+                    <article className="metric-card">
                     <span className="metric-card__label">Bloqueio</span>
                     <strong className="metric-card__value">
                       {pendingCombatBlockedDamage}
@@ -12469,49 +16181,239 @@ export function TablePage() {
                       {pendingCombatLifeAfterBlock}
                     </small>
                   </article>
+                  ) : null}
                 </div>
               ) : null}
               <div className="button-row">
                 <button
                   className="button button--primary"
-                  disabled={!pendingCombatTargetCharacter}
-                  onClick={() => handleResolvePendingCombat('hit')}
+                  disabled={
+                    !pendingCombatTargetCharacter ||
+                    Boolean(pendingCombatResolution.damageRollEntryId)
+                  }
+                  onClick={() =>
+                    setPendingCombatResolution((currentResolution) =>
+                      currentResolution
+                        ? { ...currentResolution, stage: 'result' }
+                        : currentResolution,
+                    )
+                  }
                   type="button"
                 >
-                  Aplicar acerto
-                </button>
-                <button
-                  className="button"
-                  disabled={!pendingCombatTargetCharacter}
-                  onClick={() => handleResolvePendingCombat('block')}
-                  type="button"
-                >
-                  Aplicar bloqueio
-                </button>
-                <button
-                  className="button"
-                  disabled={!pendingCombatTargetCharacter}
-                  onClick={() => handleResolvePendingCombat('dodge')}
-                  type="button"
-                >
-                  Marcar esquiva
-                </button>
-                <button
-                  className="button"
-                  disabled={!pendingCombatTargetCharacter}
-                  onClick={() => handleResolvePendingCombat('miss')}
-                  type="button"
-                >
-                  Marcar erro
+                  Confirmar dano manual
                 </button>
               </div>
             </article>
+            ) : null}
+
+            {pendingCombatResolution.stage === 'result' &&
+            pendingCombatResolution.outcome ? (
+              <article
+                className={`combat-resolution-result combat-resolution-result--${pendingCombatResolution.outcome}`}
+              >
+                <span>Resultado</span>
+                <strong>
+                  {pendingCombatResolution.outcome === 'miss'
+                    ? 'ERROU'
+                    : pendingCombatResolution.outcome === 'dodge'
+                      ? 'ESQUIVOU'
+                      : pendingCombatResolution.outcome === 'block'
+                        ? `BLOQUEOU ${Math.min(
+                            pendingCombatDamageBeforeDefense,
+                            pendingCombatBlockValue,
+                          )}`
+                        : pendingCombatResolutionMode === 'heal'
+                          ? `CURA ${pendingCombatFinalAmount}`
+                          : `ACERTOU ${pendingCombatHitDamage}`}
+                </strong>
+                {pendingCombatResolution.outcome === 'hit' ||
+                pendingCombatResolution.outcome === 'block' ? (
+                  <div className="combat-resolution-result__calculation">
+                    <span>Rolagem bruta: {pendingCombatRawDamage}</span>
+                    {pendingCombatResolution.buildDamageBonus !== 0 ? (
+                      <span>
+                        {pendingCombatResolution.buildDamageBonus > 0
+                          ? 'Build antes do multiplicador'
+                          : 'Penalidade depois do multiplicador'}
+                        :{' '}
+                        {pendingCombatResolution.buildDamageBonus > 0 ? '+' : ''}
+                        {pendingCombatResolution.buildDamageBonus}
+                      </span>
+                    ) : null}
+                    {pendingCombatUsesSurgicalAnalysis ? (
+                      <span>
+                        Analise: ({pendingCombatRawDamage}
+                        {pendingCombatDamageSequence.positiveBuildModifier > 0
+                          ? ` + ${pendingCombatDamageSequence.positiveBuildModifier}`
+                          : ''}
+                        ) x2
+                        {pendingCombatDamageSequence.negativeBuildModifier < 0
+                          ? ` ${pendingCombatDamageSequence.negativeBuildModifier}`
+                          : ''}
+                      </span>
+                    ) : null}
+                    {pendingCombatGuardianReduction > 0 ? <span>Casca: -1</span> : null}
+                    {pendingCombatResolution.outcome === 'block' ? (
+                      <span>Bloqueio: -{pendingCombatBlockValue}</span>
+                    ) : null}
+                    <strong>
+                      {pendingCombatResolutionMode === 'heal'
+                        ? 'Cura final'
+                        : 'Dano final'}: {pendingCombatFinalAmount}
+                    </strong>
+                  </div>
+                ) : (
+                  <p>Nenhum dano será aplicado.</p>
+                )}
+                {pendingCombatResolution.outcome === 'hit' ||
+                pendingCombatResolution.outcome === 'block' ? (
+                  <label className="field">
+                    <span className="field__label">
+                      {pendingCombatResolutionMode === 'heal'
+                        ? 'Cura final ajustavel pelo Mestre'
+                        : 'Dano final ajustavel pelo Mestre'}
+                    </span>
+                    <input
+                      className="field__input"
+                      min={0}
+                      onChange={(event) =>
+                        setPendingCombatResolution((currentResolution) =>
+                          currentResolution
+                            ? {
+                                ...currentResolution,
+                                manualDamage: sanitizeCombatDamage(
+                                  Number(event.target.value),
+                                ),
+                              }
+                            : currentResolution,
+                        )
+                      }
+                      type="number"
+                      value={pendingCombatFinalAmount}
+                    />
+                    <small>
+                      Sugestao automatica: {pendingCombatSuggestedDamage}. Este valor sera
+                      aplicado na ficha.
+                    </small>
+                  </label>
+                ) : null}
+                {pendingCombatResolution.sourceFeatureResolution?.mode ===
+                  'drain-transfer' &&
+                pendingCombatEffectiveDamage > 0 ? (
+                  <label className="field">
+                    <span className="field__label">Transferir a Vida drenada para</span>
+                    <select
+                      className="field__input"
+                      onChange={(event) =>
+                        setPendingCombatResolution((currentResolution) =>
+                          currentResolution
+                            ? {
+                                ...currentResolution,
+                                healingTargetTokenId: event.target.value,
+                              }
+                            : currentResolution,
+                        )
+                      }
+                      value={pendingCombatResolution.healingTargetTokenId ?? ''}
+                    >
+                      <option value="">Escolher quem recebe a cura</option>
+                      {pendingCombatHealingTargetTokens
+                        .map((token) => (
+                          <option key={token.id} value={token.id}>
+                            {resolveTokenCharacterForCombat(token)?.nome ?? token.label}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                ) : null}
+                {pendingCombatTargetCharacter ? (
+                  <div className="metric-grid metric-grid--compact">
+                    {pendingCombatFinalDamage > 0 ? (
+                      <article className="metric-card">
+                        <span className="metric-card__label">Quem recebe o dano</span>
+                        <strong className="metric-card__value">
+                          {pendingCombatTargetCharacter.nome}
+                        </strong>
+                        <small>
+                          Vida {pendingCombatTargetCharacter.recursos.vidaAtual} -&gt;{' '}
+                          {Math.max(
+                            0,
+                            pendingCombatTargetCharacter.recursos.vidaAtual -
+                              pendingCombatEffectiveDamage,
+                          )}
+                        </small>
+                      </article>
+                    ) : null}
+                    {pendingCombatHealingTargetCharacter &&
+                    pendingCombatHealingAmount > 0 ? (
+                      <article className="metric-card">
+                        <span className="metric-card__label">Quem recebe a cura</span>
+                        <strong className="metric-card__value">
+                          {pendingCombatHealingTargetCharacter.nome}
+                        </strong>
+                        <small>
+                          Vida {pendingCombatHealingTargetCharacter.recursos.vidaAtual} -&gt;{' '}
+                          {pendingCombatHealingTargetCharacter.recursos.vidaAtual +
+                            pendingCombatEffectiveHealing}
+                        </small>
+                      </article>
+                    ) : null}
+                  </div>
+                ) : null}
+                <div className="button-row">
+                  <button
+                    className="button button--primary"
+                    disabled={
+                      pendingCombatResolutionMode === 'drain-transfer' &&
+                      pendingCombatEffectiveDamage > 0 &&
+                      !pendingCombatHealingTargetCharacter
+                    }
+                    onClick={handleFinalizePendingCombat}
+                    type="button"
+                  >
+                    Confirmar alteracoes
+                  </button>
+                  <button
+                    className="button"
+                    onClick={() =>
+                      setPendingCombatResolution((currentResolution) =>
+                        currentResolution
+                          ? { ...currentResolution, outcome: undefined, stage: 'defense' }
+                          : currentResolution,
+                      )
+                    }
+                    type="button"
+                  >
+                    Voltar à defesa
+                  </button>
+                  <button
+                    className="button button--danger"
+                    onClick={() => setPendingCombatResolution(null)}
+                    type="button"
+                  >
+                    Cancelar ataque
+                  </button>
+                </div>
+              </article>
+            ) : null}
+            {pendingCombatResolution.stage !== 'result' ? (
+              <div className="button-row">
+                <button
+                  className="button button--danger"
+                  onClick={() => setPendingCombatResolution(null)}
+                  type="button"
+                >
+                  Cancelar ataque
+                </button>
+              </div>
+            ) : null}
           </div>
         </FloatingWindow>
       ) : null}
 
       <TokenInspector
         canEdit={canEditActiveCharacter}
+        editLock={activeCharacterEditLock}
         canEditToken={canEditActiveToken}
         canDuplicateMobToken={
           viewMode === 'gm' &&
@@ -12520,20 +16422,43 @@ export function TablePage() {
         }
         canResizeToken={viewMode === 'gm' && Boolean(activeToken)}
         canRemoveToken={viewMode === 'gm' && Boolean(activeToken)}
+        canManageDeathState={
+          viewMode === 'gm' &&
+          Boolean(activeToken && session?.playerDeathStates[activeToken.id])
+        }
         character={activeCharacter}
+        deathState={
+          activeToken ? session?.playerDeathStates[activeToken.id] ?? null : null
+        }
+        effectsAppliedByCharacter={effectsAppliedByActiveCharacter}
+        effectsAppliedToCharacter={effectsAppliedToActiveCharacter}
         factionName={activeFaction?.nome ?? null}
         factions={data.factions.items}
+        focusRequest={sheetFocusRequest}
         activeSharedBodySheetSelectionId={activeSharedBodySheetSelectionId}
         activeIdentityResourceProfileId={
           viewMode === 'gm' ? activeIdentityResourceProfileId : ''
         }
         identityResourceOptions={viewMode === 'gm' ? identityResourceOptions : []}
         onBroadcastImage={viewMode === 'gm' ? broadcastImagePreview : undefined}
-        onActivateFeature={handleActivateCharacterFeature}
+        onCancelEffect={handleCancelCombatEffect}
+        onOpenStatusGuide={handleOpenStatusGuide}
+        onActivateFeature={handlePrepareCharacterFeature}
+        onBeginCharacterEdit={() =>
+          activeCharacter ? beginCharacterEdit(activeCharacter.id) : false
+        }
         onCharacterChange={handleInspectorCharacterChange}
         onClose={() => setInspectedTokenId('')}
         onDuplicateMobToken={() =>
           activeToken ? duplicateMobTokenOnCurrentScene(activeToken.id) : null
+        }
+        onDeathSaveSlotChange={(slotIndex) =>
+          activeToken
+            ? handleDeathSaveSlotChange(activeToken.id, slotIndex)
+            : undefined
+        }
+        onEndCharacterEdit={() =>
+          activeCharacter ? endCharacterEdit(activeCharacter.id) : undefined
         }
         onIdentityResourceSelect={(profileId) => {
           if (!activeToken) {

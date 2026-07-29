@@ -1654,6 +1654,18 @@ const defaultBiomes: WorldMundiBiome[] = [
     recursos: ['registros', 'suprimentos', 'rotas secretas'],
     faccoesProvaveis: ['ordem_do_veu_cinza'],
   }),
+  createBiome({
+    id: 'mundo_interno_fragmentado',
+    nome: 'Mundo dos Sonhos / Subconsciente do Fragmentado',
+    resumo:
+      'Camada interna fora dos biomas fisicos; nao e sonho literal, mas a forma como o Fragmentado ve lembrancas, ecos e vinculos de consciencia.',
+    riscoInicial: 'variavel',
+    estabilidadeInicial: 0,
+    recursos: ['memorias', 'ecos de consciencia', 'fios de vinculo'],
+    faccoesProvaveis: ['fragmentado'],
+    notes:
+      'Use como ponto isolado do MUN para sessoes solo, conversas internas e cenas de memoria compartilhada.',
+  }),
 ]
 
 function getSeedLocationTags(id: string, biomaId: string) {
@@ -2003,7 +2015,38 @@ const officialMundiBasePhase1ThumbById = new Map(
   officialMundiBasePoints.map((point) => [point.id, point.image]),
 )
 
-const allOfficialMundiPoints = [...officialMundiPoints, ...officialMundiBasePoints]
+const specialMundiPoints: OfficialMundiPoint[] = [
+  {
+    numero: 69,
+    id: 'mundo_dos_sonhos_fragmentado',
+    nome: 'Mundo dos Sonhos',
+    biomaId: 'mundo_interno_fragmentado',
+    tipo: 'segredo',
+    x: 91.5,
+    y: 93.5,
+    image:
+      '/assets/maps/mundo-dos-sonhos/fragmentado/mundo_dos_sonhos_fragmentado_topdown_thumb_640.jpg',
+    mapId: 'mundo_dos_sonhos_fragmentado_topdown',
+    risco: 'variavel',
+    descricao:
+      'Ponto isolado fora dos biomas fisicos. "Mundo dos Sonhos" e so o nome que os protagonistas podem dar: na pratica, e o espaco interno onde o Fragmentado ve lembrancas, ecos e vinculos de consciencia.',
+    tags: [
+      'fora_dos_biomas',
+      'mundo_interno',
+      'fragmentado',
+      'memoria',
+      'eco',
+      'consciencia_compartilhada',
+      'acesso_por_evento',
+    ],
+  },
+]
+
+const allOfficialMundiPoints = [
+  ...officialMundiPoints,
+  ...officialMundiBasePoints,
+  ...specialMundiPoints,
+]
 
 const officialMundiPointByNumber = new Map(
   allOfficialMundiPoints.map((point) => [point.numero, point]),
@@ -2152,13 +2195,38 @@ const defaultBaseUpgradeSubmaps: WorldMundiSubmap[] = baseUpgradeSubmapSeeds.fla
   ],
 )
 
+const M3_CARTOTECA_SUBMAP_ID = 'm3_s1_cartoteca_porao'
+const M3_CARTOTECA_PARENT_LOCATION_ID = 'armazem_comunitario'
+const M3_CARTOTECA_MAP_ID = 'planicie_m3_s1_cartoteca_porao_topdown'
 const M5_RIACHO_SUBMAP_ID = 'm5_s1_riacho_nilo_liora'
 const M5_RIACHO_PARENT_LOCATION_ID = 'vila_conhecimento_absorvido'
 const M5_RIACHO_MAP_ID = 'planicie_m5_s1_riacho_claro_nilo_liora'
+const S2_ECO_KAEL_SUBMAP_ID = 's2_solo_eco_kael_espaco_entre_ecos'
+const S2_ECO_KAEL_PARENT_LOCATION_ID = 'mundo_dos_sonhos_fragmentado'
+const S2_ECO_KAEL_PREVIOUS_PARENT_LOCATION_ID = 'vila_conhecimento_absorvido'
+const S2_ECO_KAEL_MAP_ID = 'mundo_dos_sonhos_fragmentado_topdown'
 const MUNDI_MAIN_SUBMAP_ID = '__main__'
+const DEFAULT_ACTIVE_SUBMAP_IDS_BY_PARENT: Record<string, string[]> = {
+  [M3_CARTOTECA_PARENT_LOCATION_ID]: [M3_CARTOTECA_SUBMAP_ID],
+  [M5_RIACHO_PARENT_LOCATION_ID]: [M5_RIACHO_SUBMAP_ID],
+  [S2_ECO_KAEL_PARENT_LOCATION_ID]: [S2_ECO_KAEL_SUBMAP_ID],
+}
 
 const defaultSubmaps: WorldMundiSubmap[] = [
   ...defaultBaseUpgradeSubmaps,
+  createWorldMundiSubmap({
+    id: M3_CARTOTECA_SUBMAP_ID,
+    parentLocationId: M3_CARTOTECA_PARENT_LOCATION_ID,
+    mapId: M3_CARTOTECA_MAP_ID,
+    codigo: 'M3-S1',
+    nome: 'Cartoteca do Porao',
+    tipo: 'interior',
+    descricao:
+      'Porão-cartoteca de Orian, com mapas herdados, registros de rota e pistas incompletas sobre a ilha.',
+    ordem: 10,
+    status: 'pronto',
+    tags: ['armazem_comunitario', 'orian', 'mapas', 'planicie', 'memoria_da_vila'],
+  }),
   createWorldMundiSubmap({
     id: M5_RIACHO_SUBMAP_ID,
     parentLocationId: M5_RIACHO_PARENT_LOCATION_ID,
@@ -2170,6 +2238,28 @@ const defaultSubmaps: WorldMundiSubmap[] = [
     ordem: 10,
     status: 'pronto',
     tags: ['nilo', 'liora', 'riacho_claro', 'memoria'],
+  }),
+  createWorldMundiSubmap({
+    id: S2_ECO_KAEL_SUBMAP_ID,
+    parentLocationId: S2_ECO_KAEL_PARENT_LOCATION_ID,
+    mapId: S2_ECO_KAEL_MAP_ID,
+    codigo: 'S2-SOLO',
+    nome: 'Mundo dos Sonhos: Eco de Kael',
+    tipo: 'memoria',
+    descricao:
+      'Submapa interno do Fragmentado: um vazio cosmico onde memorias, ecos dos protagonistas e o fio azul de consciencia podem aparecer fora do mundo fisico.',
+    ordem: 10,
+    status: 'pronto',
+    tags: [
+      'kael',
+      'eco',
+      'fragmentado',
+      'fio_azul',
+      'sessao_solo',
+      'memoria',
+      'mundo_dos_sonhos',
+      'fora_dos_biomas',
+    ],
   }),
   createWorldMundiSubmap({
     id: 'm7_s1_caverna_meditacao_interior',
@@ -2626,16 +2716,20 @@ const defaultSubmaps: WorldMundiSubmap[] = [
   }),
 ]
 
-const defaultLocationsWithSubmapState: WorldMundiLocation[] = defaultLocations.map((location) =>
-  location.id === M5_RIACHO_PARENT_LOCATION_ID
-    ? createWorldMundiLocation({
-        ...location,
-        activeSubmapIds: Array.from(
-          new Set([MUNDI_MAIN_SUBMAP_ID, M5_RIACHO_SUBMAP_ID, ...location.activeSubmapIds]),
-        ),
-      })
-    : location,
-)
+const defaultLocationsWithSubmapState: WorldMundiLocation[] = defaultLocations.map((location) => {
+  const defaultActiveSubmapIds = DEFAULT_ACTIVE_SUBMAP_IDS_BY_PARENT[location.id]
+
+  if (!defaultActiveSubmapIds) {
+    return location
+  }
+
+  return createWorldMundiLocation({
+    ...location,
+    activeSubmapIds: Array.from(
+      new Set([MUNDI_MAIN_SUBMAP_ID, ...defaultActiveSubmapIds, ...location.activeSubmapIds]),
+    ),
+  })
+})
 
 const defaultRoutes: WorldMundiRoute[] = officialMundiRoutePairs
   .map(([fromNumber, toNumber]) => {
@@ -3780,6 +3874,24 @@ function migrateStateToOfficialMundiGeography(state: WorldMundiState) {
   }
 }
 
+function ensureDefaultMundiBiomes(state: WorldMundiState): WorldMundiState {
+  if (state.biomes.length === 0 && state.locations.length === 0) {
+    return state
+  }
+
+  const existingBiomeIds = new Set(state.biomes.map((biome) => biome.id))
+  const missingBiomes = defaultBiomes.filter((biome) => !existingBiomeIds.has(biome.id))
+
+  if (missingBiomes.length === 0) {
+    return state
+  }
+
+  return {
+    ...state,
+    biomes: [...state.biomes, ...missingBiomes.map((biome) => cloneValue(biome))],
+  }
+}
+
 function getCanonicalSubmapOnlyActiveIds(
   location: WorldMundiLocation,
   defaultActiveIds: string[],
@@ -3841,19 +3953,51 @@ function repairSubmapOnlyLocationState(state: WorldMundiState): WorldMundiState 
   }
 }
 
-function repairM5RiachoSubmapPlacement(state: WorldMundiState): WorldMundiState {
+function repairCanonicalSubmapPlacement(state: WorldMundiState): WorldMundiState {
+  const canonicalSubmapsById: Record<
+    string,
+    Pick<WorldMundiSubmap, 'parentLocationId' | 'mapId'>
+  > = {
+    [M3_CARTOTECA_SUBMAP_ID]: {
+      parentLocationId: M3_CARTOTECA_PARENT_LOCATION_ID,
+      mapId: M3_CARTOTECA_MAP_ID,
+    },
+    [M5_RIACHO_SUBMAP_ID]: {
+      parentLocationId: M5_RIACHO_PARENT_LOCATION_ID,
+      mapId: M5_RIACHO_MAP_ID,
+    },
+    [S2_ECO_KAEL_SUBMAP_ID]: {
+      parentLocationId: S2_ECO_KAEL_PARENT_LOCATION_ID,
+      mapId: S2_ECO_KAEL_MAP_ID,
+    },
+  }
+
   return {
     ...state,
     submaps: state.submaps.map((submap) =>
-      submap.id === M5_RIACHO_SUBMAP_ID
+      canonicalSubmapsById[submap.id]
         ? createWorldMundiSubmap({
             ...submap,
-            parentLocationId: M5_RIACHO_PARENT_LOCATION_ID,
-            mapId: M5_RIACHO_MAP_ID,
+            ...canonicalSubmapsById[submap.id],
           })
         : submap,
     ),
     locations: state.locations.map((location) => {
+      if (location.id === S2_ECO_KAEL_PREVIOUS_PARENT_LOCATION_ID) {
+        const activeSubmapIds = location.activeSubmapIds.filter(
+          (submapId) => submapId !== S2_ECO_KAEL_SUBMAP_ID,
+        )
+
+        if (activeSubmapIds.length === location.activeSubmapIds.length) {
+          return location
+        }
+
+        return createWorldMundiLocation({
+          ...location,
+          activeSubmapIds,
+        })
+      }
+
       if (location.id === 'riacho_claro') {
         const activeSubmapIds = location.activeSubmapIds.filter(
           (submapId) => submapId !== M5_RIACHO_SUBMAP_ID,
@@ -3869,14 +4013,16 @@ function repairM5RiachoSubmapPlacement(state: WorldMundiState): WorldMundiState 
         })
       }
 
-      if (location.id !== M5_RIACHO_PARENT_LOCATION_ID) {
+      const defaultActiveSubmapIds = DEFAULT_ACTIVE_SUBMAP_IDS_BY_PARENT[location.id]
+
+      if (!defaultActiveSubmapIds) {
         return location
       }
 
       const activeSubmapIds = Array.from(
         new Set([
           MUNDI_MAIN_SUBMAP_ID,
-          M5_RIACHO_SUBMAP_ID,
+          ...defaultActiveSubmapIds,
           ...location.activeSubmapIds.filter((submapId) => Boolean(submapId)),
         ]),
       )
@@ -4429,8 +4575,10 @@ export function createWorldMundiState(
   }
 
   return ensureDefaultProtagonistParty(
-    repairM5RiachoSubmapPlacement(
-      repairSubmapOnlyLocationState(migrateStateToOfficialMundiGeography(normalizedState)),
+    repairCanonicalSubmapPlacement(
+      repairSubmapOnlyLocationState(
+        migrateStateToOfficialMundiGeography(ensureDefaultMundiBiomes(normalizedState)),
+      ),
     ),
   )
 }

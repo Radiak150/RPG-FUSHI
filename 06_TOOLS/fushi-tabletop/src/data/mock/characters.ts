@@ -3,6 +3,7 @@ import type {
   CharacterAttack,
   CharacterFeatureDetail,
   CharacterInventoryItem,
+  CharacterSheet,
   CharactersData,
   CharacterSkill,
 } from '../types'
@@ -67,6 +68,125 @@ function attack(
     dano,
     alcance,
     resumo,
+  }
+}
+
+function createProtagonistEchoMob(input: {
+  id: string
+  nome: string
+  label: string
+  baseColor: string
+  accentColor: string
+  foco: string
+  dor: string
+  pista: string
+  correta?: boolean
+}): CharacterSheet {
+  const { id, nome, label, baseColor, accentColor, foco, dor, pista, correta } = input
+
+  return {
+    id,
+    nome,
+    tokenImageUrl: createMockTokenArt({
+      label,
+      baseColor,
+      accentColor,
+    }),
+    tokenSize: 1,
+    tier: 1,
+    combatRole: correta
+      ? 'Mob narrativo - ancora de retorno'
+      : 'Mob narrativo - eco de meia-verdade',
+    tipo: 'mob',
+    faccao: 'ecos-memoria',
+    localAtual: 'Mundo dos Sonhos',
+    notas:
+      `${nome} e uma manifestacao de memoria/consciencia para a sessao solo do Kael. ` +
+      'Nao e o protagonista real nem um NPC vivo; use como reflexo emocional, pista e obstaculo. ' +
+      (correta
+        ? 'Pode funcionar como ancora correta para o retorno ao corpo, se o mestre decidir.'
+        : 'Funciona como eco errado/meia-verdade: se Kael aceitar como verdade total, prende e drena Determinacao.'),
+    defesa: 11,
+    deslocamento: 'flutua 8 m',
+    habilidades: [
+      `Foco emocional: ${foco}.`,
+      `Dor que prende: ${dor}.`,
+      `Pista que solta: ${pista}.`,
+    ],
+    habilidadesDetalhadas: [
+      {
+        id: `${id}-meia-verdade`,
+        nome: correta ? 'Ancora Possivel' : 'Meia-Verdade Pegajosa',
+        tipo: 'passiva',
+        descricao: correta
+          ? 'Se Kael reconhecer este eco como parte dele sem negar os outros fragmentos, o mestre pode encerrar a cena de retorno ao corpo ou conceder vantagem no teste final.'
+          : 'Quando Kael escolhe este eco como verdade total, o eco gruda nele, revela uma memoria distorcida e causa perda narrativa de Determinacao ate ser rejeitado, compreendido ou superado.',
+        automation: {
+          kind: 'passiva',
+          activation: 'Quando Kael toca, escolhe ou aceita o eco',
+          target: 'Kael / alma deslocada',
+          tags: correta
+            ? ['ancora', 'retorno', 'identidade']
+            : ['meia-verdade', 'drena Determinacao', 'eco errado'],
+          publicText: correta
+            ? `${nome} vibra como uma ancora de retorno.`
+            : `${nome} revela uma meia-verdade e tenta prender Kael.`,
+          gmText: correta
+            ? 'Se fizer sentido na cena, este eco pode ser a ancora correta para Kael voltar ao corpo.'
+            : 'Eco errado: reduza Determinacao de Kael, adicione outro eco ou force teste de Vontade/Presenca para se soltar.',
+          visualColor: accentColor,
+        },
+      },
+      {
+        id: `${id}-fio-azul`,
+        nome: 'Fio Azul de Consciencia',
+        tipo: 'tecnica',
+        descricao:
+          'O eco puxa um fio azul invisivel que liga Kael, Fragmentado/Davi e os demais protagonistas. Serve para mostrar que os corpos separados ainda pertencem a um mesmo conjunto.',
+        automation: {
+          kind: 'tecnica',
+          activation: 'Quando o eco e observado por mais de alguns segundos',
+          target: 'Eco e Kael',
+          duration: '1 rodada/cena curta',
+          tags: ['fio azul', 'corpo-alma', 'Fragmentado'],
+          publicText: `${nome} estica um fio azul na direcao de outro corpo.`,
+          gmText:
+            'Use para mostrar conexao sem explicar tudo: o fio aponta para falta/vinculo, nao para uma quest obrigatoria.',
+          visualColor: '#74d6f2',
+        },
+      },
+    ],
+    inventario: [],
+    status: correta
+      ? ['Eco', 'Ancora possivel', 'Nao vivo', 'Sessao solo Kael']
+      : ['Eco', 'Meia-verdade', 'Nao vivo', 'Sessao solo Kael'],
+    pericias: [
+      skill(`${id}-von`, 'Vontade', 'presenca', 5, 'Pressao emocional e resistencia de identidade.'),
+      skill(`${id}-int`, 'Intuicao', 'presenca', 5, 'Leitura de verdade parcial e mentira emocional.'),
+      skill(`${id}-ocu`, 'Ocultismo', 'intelecto', 5, 'Eco de FUSHI preso em memoria.'),
+    ],
+    ataques: [
+      attack(
+        `${id}-atk-01`,
+        'Agarrao de Meia-Verdade',
+        'presenca',
+        5,
+        '1d4 Determinacao',
+        'Curto alcance',
+        'Nao rasga carne; prende a alma em uma lembranca que parece verdadeira demais.',
+      ),
+    ],
+    atributos: { forca: 0, agilidade: 2, intelecto: 2, presenca: 3, vigor: 0 },
+    recursos: {
+      vidaAtual: correta ? 5 : 6,
+      vidaMaxima: correta ? 5 : 6,
+      fushiAtual: 2,
+      fushiMaximo: 2,
+      determinacaoAtual: correta ? 0 : 1,
+      determinacaoMaxima: correta ? 0 : 1,
+    },
+    rolagemBase: createAttributeRollConfig(3, 5),
+    tone: correta ? 'steady' : 'watch',
   }
 }
 
@@ -556,7 +676,10 @@ export const charactersData: CharactersData = {
       }),
       tokenSize: 1,
       tier: 0,
-      combatRole: 'Mob Basico - tutorial',
+      bloqueio: 0,
+      esquiva: 12,
+      combatProfile: { versao: 2, papelBuild: 'minion', podeEsquivar: true },
+      combatRole: 'Minion de alcateia',
       tipo: 'mob',
       faccao: 'mobs-planicie',
       localAtual: 'Clareira dos Lobos',
@@ -565,19 +688,19 @@ export const charactersData: CharactersData = {
       deslocamento: '12 m',
       habilidades: ['Alcateia: +1 no dano se outro lobo estiver adjacente ao alvo.'],
       inventario: [],
-      status: ['Basico', 'Animal', 'Wave 1'],
+      status: ['Minion', 'Animal', 'Wave tutorial'],
       pericias: [
         skill('mob-lc-ath', 'Atletismo', 'forca', 5, 'Corre, salta e pressiona presa.'),
         skill('mob-lc-per', 'Percepcao', 'intelecto', 5, 'Olfato e audicao de animal.'),
         skill('mob-lc-lut', 'Luta', 'forca', 5, 'Mordida simples.'),
       ],
       ataques: [
-        attack('mob-lc-atk-01', 'Mordida', 'forca', 5, '1d4', 'Corpo a corpo', 'Pressao direta de animal.'),
+        attack('mob-lc-atk-01', 'Mordida', 'forca', 5, '1d6', 'Corpo a corpo', 'Pressao direta de animal.'),
       ],
       atributos: { forca: 1, agilidade: 2, intelecto: 0, presenca: 1, vigor: 1 },
       recursos: {
-        vidaAtual: 4,
-        vidaMaxima: 4,
+        vidaAtual: 8,
+        vidaMaxima: 8,
         fushiAtual: 0,
         fushiMaximo: 0,
         determinacaoAtual: 1,
@@ -596,7 +719,10 @@ export const charactersData: CharactersData = {
       }),
       tokenSize: 1,
       tier: 1,
-      combatRole: 'Mob Basico - elite da wave',
+      bloqueio: 0,
+      esquiva: 19,
+      combatProfile: { versao: 2, papelBuild: 'elite-minion', podeEsquivar: true },
+      combatRole: 'Elite de alcateia FUSHI',
       tipo: 'mob',
       faccao: 'mobs-planicie',
       localAtual: 'Clareira dos Lobos',
@@ -605,18 +731,18 @@ export const charactersData: CharactersData = {
       deslocamento: '12 m',
       habilidades: ['Marca Instavel: ao cair a 0 PV, deixa rastro de FUSHI por 1 rodada.'],
       inventario: [],
-      status: ['Basico+', 'Animal', 'FUSHI instavel'],
+      status: ['Elite Basico', 'Animal', 'FUSHI instavel'],
       pericias: [
         skill('mob-lf-ref', 'Reflexos', 'agilidade', 5, 'Movimento nervoso e rapido.'),
         skill('mob-lf-lut', 'Luta', 'forca', 5, 'Mordida energizada.'),
       ],
       ataques: [
-        attack('mob-lf-atk-01', 'Mordida Instavel', 'agilidade', 5, '1d4 + 1', 'Corpo a corpo', 'Mordida curta com faisca de FUSHI.'),
+        attack('mob-lf-atk-01', 'Mordida Instavel', 'agilidade', 5, '1d6 + 1', 'Corpo a corpo', 'Mordida curta com faisca de FUSHI.'),
       ],
       atributos: { forca: 1, agilidade: 2, intelecto: 0, presenca: 2, vigor: 1 },
       recursos: {
-        vidaAtual: 6,
-        vidaMaxima: 6,
+        vidaAtual: 14,
+        vidaMaxima: 14,
         fushiAtual: 1,
         fushiMaximo: 1,
         determinacaoAtual: 2,
@@ -783,6 +909,62 @@ export const charactersData: CharactersData = {
       rolagemBase: createAttributeRollConfig(3, 5),
       tone: 'watch',
     },
+    createProtagonistEchoMob({
+      id: 'mob-eco-kael-interno',
+      nome: 'Eco de Kael',
+      label: 'EK',
+      baseColor: '#263a61',
+      accentColor: '#9fd6ff',
+      foco: 'fuga, responsabilidade e a diferenca entre o destino falso e a escolha atual.',
+      dor: 'o passado de monge/avatar parece inteiro demais, como se fosse dele desde sempre.',
+      pista:
+        'o eco correto nao exige que Kael negue os outros; ele aceita que ha partes demais presas no mesmo fio.',
+      correta: true,
+    }),
+    createProtagonistEchoMob({
+      id: 'mob-eco-kairos-interno',
+      nome: 'Eco de Kairos',
+      label: 'EKa',
+      baseColor: '#2d254b',
+      accentColor: '#c9b7ff',
+      foco: 'vozes, sinos, faixas e o medo de que a identidade seja so uma interpretacao.',
+      dor: 'faz Kael sentir que todo som no vazio chama um nome que nao e dele.',
+      pista:
+        'Kairos ecoa Selian, mas nao e Selian literal; molde nao e dono da alma.',
+    }),
+    createProtagonistEchoMob({
+      id: 'mob-eco-davi-interno',
+      nome: 'Eco de Davi',
+      label: 'ED',
+      baseColor: '#243b36',
+      accentColor: '#96d2c4',
+      foco: 'o corpo do Fragmentado, instinto de crescer e vontade de sobreviver.',
+      dor: 'puxa Kael para a casca vazia como se voltar ao corpo fosse virar uma coisa sem nome.',
+      pista:
+        'Davi ainda esta no Fragmentado, mas o corpo compartilhado nao explica sozinho todos os protagonistas.',
+    }),
+    createProtagonistEchoMob({
+      id: 'mob-eco-grim-interno',
+      nome: 'Eco de Grim',
+      label: 'EG',
+      baseColor: '#2f2f35',
+      accentColor: '#d3d0c4',
+      foco: 'raiva, sobrevivencia e a decisao de nomear a propria forma.',
+      dor: 'oferece forca imediata em troca de abandonar perguntas e agir so por impulso.',
+      pista:
+        'Grim/Ruiz tambem nasceu de ruptura; nome escolhido e importante, mas nao e a origem inteira.',
+    }),
+    createProtagonistEchoMob({
+      id: 'mob-eco-connor-interno',
+      nome: 'Eco de Connor',
+      label: 'EC',
+      baseColor: '#3c3324',
+      accentColor: '#f0c77a',
+      foco: 'abandono, alerta, sobrevivencia e o peso das memorias de Renji/Kazuo.',
+      dor: 'transforma cuidado em culpa e faz Kael sentir que alguem sempre chega tarde.',
+      pista:
+        'Connor ecoa Renji/Kazuo sem ser nenhum deles; reconhecer influencia nao e perder identidade.',
+    }),
     {
       id: 'npc-a1',
       nome: 'NPC Placeholder A1',

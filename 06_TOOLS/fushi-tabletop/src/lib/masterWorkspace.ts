@@ -12,6 +12,7 @@ import type {
   MasterPanelData,
   RollConfig,
 } from '../data/types'
+import { reconcileCharacterBuild } from './characterBuilds'
 import { storageAdapter } from './storage/storageAdapter'
 
 interface MasterWorkspaceState {
@@ -104,6 +105,15 @@ function isCharacterInventoryItem(value: unknown): value is CharacterInventoryIt
     typeof value.nome === 'string' &&
     typeof value.descricao === 'string' &&
     (value.imagemUrl === undefined || typeof value.imagemUrl === 'string') &&
+    (value.porte === undefined ||
+      value.porte === 'pequeno' ||
+      value.porte === 'medio' ||
+      value.porte === 'grande' ||
+      value.porte === 'grande_plus') &&
+    (value.quantidade === undefined ||
+      (typeof value.quantidade === 'number' &&
+        Number.isInteger(value.quantidade) &&
+        value.quantidade > 0)) &&
     Array.isArray(value.efeitos) &&
     value.efeitos.every((item) => typeof item === 'string')
   )
@@ -160,6 +170,11 @@ function isCharacterSheet(value: unknown): value is CharacterSheet {
     (value.inventarioDetalhado === undefined ||
       (Array.isArray(value.inventarioDetalhado) &&
         value.inventarioDetalhado.every(isCharacterInventoryItem))) &&
+    (value.inventarioPerfil === undefined ||
+      (isRecord(value.inventarioPerfil) &&
+        (value.inventarioPerfil.mochila === 'nenhuma' ||
+          value.inventarioPerfil.mochila === 'mochila' ||
+          value.inventarioPerfil.mochila === 'mochila_plus'))) &&
     (value.descricao === undefined || isCharacterDescription(value.descricao)) &&
     Array.isArray(value.status) &&
     value.status.every((item) => typeof item === 'string') &&
@@ -214,6 +229,8 @@ function mergeCanonicalWorkspaceCharacter(
   canonicalCharacter: CharacterSheet,
 ): CharacterSheet {
   const preserveImages = shouldPreserveCharacterImages(currentCharacter)
+  const currentBuild = currentCharacter.combatProfile?.build
+  const canonicalCombatProfile = canonicalCharacter.combatProfile
 
   return {
     ...cloneValue(canonicalCharacter),
@@ -227,8 +244,23 @@ function mergeCanonicalWorkspaceCharacter(
         : canonicalCharacter.tokenImageUrl,
     tokenSize: currentCharacter.tokenSize ?? canonicalCharacter.tokenSize,
     permissions: currentCharacter.permissions ?? canonicalCharacter.permissions,
+    combatProfile:
+      currentBuild || canonicalCombatProfile
+        ? {
+            ...cloneValue(canonicalCombatProfile ?? { versao: 2 }),
+            build: currentBuild ? cloneValue(currentBuild) : canonicalCombatProfile?.build,
+          }
+        : undefined,
   }
 }
+
+const CANONICAL_AUTO_APPEND_CHARACTER_IDS = new Set([
+  'mob-eco-kael-interno',
+  'mob-eco-kairos-interno',
+  'mob-eco-davi-interno',
+  'mob-eco-grim-interno',
+  'mob-eco-connor-interno',
+])
 
 function repairCanonicalWorkspaceCharacters(
   characters: CharacterSheet[],
@@ -259,9 +291,19 @@ function repairCanonicalWorkspaceCharacters(
     return mergeCanonicalWorkspaceCharacter(character, canonicalMaira)
   })
 
-  return hasMaira
+  const withMaira = hasMaira
     ? repairedCharacters
     : [...repairedCharacters, cloneValue(canonicalMaira)]
+
+  const existingIds = new Set(withMaira.map((character) => character.id))
+  const missingCanonicalCharacters = baseData.characters.items.filter(
+    (character) =>
+      CANONICAL_AUTO_APPEND_CHARACTER_IDS.has(character.id) && !existingIds.has(character.id),
+  )
+
+  return missingCanonicalCharacters.length > 0
+    ? [...withMaira, ...cloneValue(missingCanonicalCharacters)]
+    : withMaira
 }
 
 function createDefaultCampaign(baseData: MasterPanelData): LocalCampaign {
@@ -316,6 +358,7 @@ export function readMasterWorkspace(
         ? parsedCharacters
         : cloneValue(baseData.characters.items)
     const repairedCharacters = repairCanonicalWorkspaceCharacters(characters, baseData)
+      .map(reconcileCharacterBuild)
     const parsedCampaigns = isRecord(parsedValue.campaigns)
       ? parsedValue.campaigns
       : null

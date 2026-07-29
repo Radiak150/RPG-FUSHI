@@ -1,0 +1,5366 @@
+{
+  "generatedAt": "2026-07-27T06:16:48.522Z",
+  "sourcePath": "C:\\Users\\danie\\AppData\\Roaming\\FUSHI\\workspace.json",
+  "catalogPath": "C:\\RPG FUSHI\\RPG-FUSHI\\06_TOOLS\\fushi-tabletop\\src\\data\\statusCatalog.ts",
+  "statusCatalogSize": 24,
+  "npcs": 41,
+  "features": 318,
+  "automatic": 0,
+  "reviewCandidates": 61,
+  "reviewByCategory": {
+    "EFEITO_DIRETO_ESTRUTURAVEL": 3,
+    "ESCOLHA_OU_MODO": 8,
+    "PASSIVA_FASE_OU_EVENTO": 6,
+    "REFERENCIA_NAO_APLICA": 22,
+    "REGRA_ESPECIAL_MANUAL": 8,
+    "RESOLUCAO_IMEDIATA": 3,
+    "TESTE_SECUNDARIO": 11
+  },
+  "noExplicitStatus": 257,
+  "costsToReview": 124,
+  "items": [
+    {
+      "characterId": "npc-e1",
+      "character": "Eiran",
+      "featureId": "attack-d59c3fef-6c49-4be1-b9c3-e92a4ba10415",
+      "feature": "🧵 Faixas de Combate",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-e1",
+      "character": "Eiran",
+      "featureId": "detail-1",
+      "feature": "Instinto de Sobrevivência",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "agro"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-e1",
+      "character": "Eiran",
+      "featureId": "skill-feature-65fcdb11-26c7-4cba-8dd9-7eb9bdd84123",
+      "feature": "🛑 Mãos Vazias",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-e1",
+      "character": "Eiran",
+      "featureId": "skill-feature-b181bba4-298e-44de-82b7-54ec9f057ae6",
+      "feature": "🌊 Fluxo Pacífico",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-317d37b0-0ef8-43cc-89cb-48383d0edc72",
+      "character": "Aureon",
+      "featureId": "skill-feature-6c4c685f-d90e-4fd2-bd20-b0b8eb1190b5",
+      "feature": "Julgamento Natural",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-317d37b0-0ef8-43cc-89cb-48383d0edc72",
+      "character": "Aureon",
+      "featureId": "skill-feature-35e4b82c-3950-4c68-bcf7-f176d87a2f6c",
+      "feature": "Prisão de Raízes",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-317d37b0-0ef8-43cc-89cb-48383d0edc72",
+      "character": "Aureon",
+      "featureId": "skill-feature-c52b7d75-edfe-448f-9cd4-e95dd43ad36e",
+      "feature": "Corpo Absoluto",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-52a4bd61-9a98-4526-ad01-a40c52787230",
+      "character": "Kael",
+      "featureId": "skill-feature-90979c34-3f9e-4d9e-a815-acc273767dbb",
+      "feature": "🌪 Passo do Vento",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "agro"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-52a4bd61-9a98-4526-ad01-a40c52787230",
+      "character": "Kael",
+      "featureId": "skill-feature-7bbffba0-72a5-4e2e-bcd4-53f4e8a69dfc",
+      "feature": "🌊 Fluxo dos Quatro",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "ESCOLHA_OU_MODO",
+        "reason": "A acao possui modos diferentes. O estado so pode ser aplicado depois que o Mestre escolher o modo resolvido."
+      },
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-52a4bd61-9a98-4526-ad01-a40c52787230",
+      "character": "Kael",
+      "featureId": "skill-feature-fc411943-ec50-43ff-90d9-4d0b0782a720",
+      "feature": "🌍 Harmonia Elemental",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-52a4bd61-9a98-4526-ad01-a40c52787230",
+      "character": "Kael",
+      "featureId": "skill-feature-4197b276-5c48-4b2f-bc1f-94d3a98eb4ae",
+      "feature": "Estado de Fluxo",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-52a4bd61-9a98-4526-ad01-a40c52787230",
+      "character": "Kael",
+      "featureId": "feature-6-ataque-elemental-absoluto",
+      "feature": "Ataque Elemental Absoluto",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "desnorteado"
+      ],
+      "reviewDecision": {
+        "category": "TESTE_SECUNDARIO",
+        "reason": "O estado depende de uma segunda defesa ou falha; nao pode entrar automaticamente apenas com o acerto principal."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-52a4bd61-9a98-4526-ad01-a40c52787230",
+      "character": "Kael",
+      "featureId": "ritual-85e88d56-8849-4599-a7dc-e1bcf4ce2625",
+      "feature": "🌌 EXPANSÃO DE DOMÍNIO AVATAR",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 15,
+          "resource": "fushi"
+        },
+        {
+          "amount": 10,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-63f669b8-e592-4335-b255-4ec5b4b5c732",
+      "character": "Lux",
+      "featureId": "skill-feature-ba69caf9-5791-4127-a7e7-fb22c660f8d8",
+      "feature": "🔵 Atração",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-63f669b8-e592-4335-b255-4ec5b4b5c732",
+      "character": "Lux",
+      "featureId": "skill-feature-8df1f037-b365-4d9f-af76-a8153814ead7",
+      "feature": "🔴 Repulsão",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-63f669b8-e592-4335-b255-4ec5b4b5c732",
+      "character": "Lux",
+      "featureId": "skill-feature-501e4973-9736-45f6-af25-1d9f1aa845be",
+      "feature": "⚪ Colapso",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-63f669b8-e592-4335-b255-4ec5b4b5c732",
+      "character": "Lux",
+      "featureId": "skill-feature-82b8d32b-6053-4b58-8423-1b362c2b0b4e",
+      "feature": "🛑 Infinito",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 10,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-63f669b8-e592-4335-b255-4ec5b4b5c732",
+      "character": "Lux",
+      "featureId": "feature-6-sobrecarga-sensorial",
+      "feature": "Sobrecarga Sensorial",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-63f669b8-e592-4335-b255-4ec5b4b5c732",
+      "character": "Lux",
+      "featureId": "feature-7-ataque-do-vazio",
+      "feature": "Ataque do Vazio",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-63f669b8-e592-4335-b255-4ec5b4b5c732",
+      "character": "Lux",
+      "featureId": "ritual-a7c8c8bb-a36c-48b5-a25d-90cd8803ae9a",
+      "feature": "🌌 EXPANSÃO DE DOMÍNIO VAZIO INFINITO",
+      "kind": "ritual",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "lento"
+      ],
+      "reviewDecision": {
+        "category": "PASSIVA_FASE_OU_EVENTO",
+        "reason": "A regra persiste, altera uma fase ou usa valor proprio; precisa de integracao de evento/passiva antes de automatizar."
+      },
+      "resourceCosts": [
+        {
+          "amount": 15,
+          "resource": "fushi"
+        },
+        {
+          "amount": 10,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-073b29d3-5f70-4e41-95d0-e26f4a519da8",
+      "character": "Gorin",
+      "featureId": "attack-9dd7728a-57fd-422a-b71d-3d17ce98657c",
+      "feature": "🔨 Massa de Pedra",
+      "kind": "ataque",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "desnorteado"
+      ],
+      "reviewDecision": {
+        "category": "TESTE_SECUNDARIO",
+        "reason": "O estado depende de uma segunda defesa ou falha; nao pode entrar automaticamente apenas com o acerto principal."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-073b29d3-5f70-4e41-95d0-e26f4a519da8",
+      "character": "Gorin",
+      "featureId": "skill-feature-e0611605-cbaf-4296-8c69-bc372f206d7c",
+      "feature": "👁️ Sentido Absoluto",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-073b29d3-5f70-4e41-95d0-e26f4a519da8",
+      "character": "Gorin",
+      "featureId": "skill-feature-febf4eaa-2098-42f6-bc71-feb22117caf8",
+      "feature": "💥 Golpe Devastador",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-073b29d3-5f70-4e41-95d0-e26f4a519da8",
+      "character": "Gorin",
+      "featureId": "skill-feature-6e5b0503-154d-4fb0-99e2-16f7e66565bc",
+      "feature": "🛡️ Corpo Inabalável",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-29c41ff7-5811-48a3-9a02-0201dab0c35a",
+      "character": "Musashi",
+      "featureId": "attack-e0d1ff3e-2003-4239-9702-8e8efb4c4920",
+      "feature": "⚔️ Katana",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-29c41ff7-5811-48a3-9a02-0201dab0c35a",
+      "character": "Musashi",
+      "featureId": "attack-fc5815f2-ff87-4297-833f-2d6339b21950",
+      "feature": "⚔️ Wakizashi",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-29c41ff7-5811-48a3-9a02-0201dab0c35a",
+      "character": "Musashi",
+      "featureId": "skill-feature-cabb8801-9d21-46e9-9ec2-ffb9d8e28790",
+      "feature": "⚡ Corte Preciso",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-29c41ff7-5811-48a3-9a02-0201dab0c35a",
+      "character": "Musashi",
+      "featureId": "skill-feature-06605d75-c423-44b4-bb87-c73100cae56d",
+      "feature": "Leitura de Combate",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-29c41ff7-5811-48a3-9a02-0201dab0c35a",
+      "character": "Musashi",
+      "featureId": "skill-feature-5f32c84f-edb0-4f00-b047-1766621940b2",
+      "feature": "Duelo Verdadeiro",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "character": "Yanzik",
+      "featureId": "attack-d45fd029-7cfe-49d2-972c-33d16a124f1a",
+      "feature": "🗡️ Espada Massiva",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "character": "Yanzik",
+      "featureId": "skill-feature-95c27720-ffa3-48d9-a729-95a4fb3100eb",
+      "feature": "💥 Golpe Brutal",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "character": "Yanzik",
+      "featureId": "skill-feature-d27c0b4c-f9ed-4ae8-bd05-4aa54d19b512",
+      "feature": "Persistência Insana",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "character": "Yanzik",
+      "featureId": "skill-feature-464169ee-4458-4e09-96d9-d80075035871",
+      "feature": "Fúria Contida",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "character": "Yanzik",
+      "featureId": "skill-feature-82c0c34d-7ed9-442b-86b4-710e37d44e4e",
+      "feature": "‍ Continuarei Suportando",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "character": "Yanzik",
+      "featureId": "feature-6-transformacao",
+      "feature": "TRANSFORMAÇÃO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "character": "Yanzik",
+      "featureId": "feature-7-escala-de-furia",
+      "feature": "ESCALA DE FÚRIA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "character": "Yanzik",
+      "featureId": "feature-8-ataque-berserk",
+      "feature": "ATAQUE BERSERK",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "character": "Yanzik",
+      "featureId": "feature-9-impossibilidade-de-parar",
+      "feature": "IMPOSSIBILIDADE DE PARAR",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "character": "Yanzik",
+      "featureId": "ritual-936b3a0b-0106-4fdf-b124-0da3a0db9b42",
+      "feature": "⚫ HABILIDADE LENDÁRIA ARMADURA BERSERK",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-77e0c8ca-bb86-422b-8008-6d83d0740816",
+      "character": "Yanzik",
+      "featureId": "feature-10-pos-dominio",
+      "feature": "PÓS DOMÍNIO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "skill-feature-6bfe8411-776a-404b-a4bf-373c56bdb1f0",
+      "feature": "Comando Absoluto",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "skill-feature-0c81b46d-a724-410e-9bb2-bbb4352a4869",
+      "feature": "🕊 Influência Silenciosa",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "skill-feature-b1e5e4bc-1524-4939-a1b5-a70a58eb4539",
+      "feature": "Leitura de Intenção",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "feature-5-evento-de-ativacao",
+      "feature": "⚫ EVENTO DE ATIVAÇÃO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "feature-6-ascensao-femto",
+      "feature": "⚫ ASCENSÃO FEMTO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "feature-7-novo-estado",
+      "feature": "NOVO ESTADO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "feature-8-julgamento-celestial",
+      "feature": "🪽 Julgamento Celestial",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "paralisado"
+      ],
+      "reviewDecision": {
+        "category": "TESTE_SECUNDARIO",
+        "reason": "O estado depende de uma segunda defesa ou falha; nao pode entrar automaticamente apenas com o acerto principal."
+      },
+      "resourceCosts": [
+        {
+          "amount": 10,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "feature-9-gravidade-divina",
+      "feature": "🌑 Gravidade Divina",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 8,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "feature-10-asas-celestiais-femto",
+      "feature": "🪽 Asas Celestiais (FEMTO)",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "feature-11-dreno-existencial-femto",
+      "feature": "Dreno Existencial (FEMTO)",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "feature-12-presenca-absoluta",
+      "feature": "PRESENÇA ABSOLUTA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "feature-13-ataque",
+      "feature": "ATAQUE",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "feature-15-mundo-afetado",
+      "feature": "MUNDO AFETADO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "ritual-2f567253-049e-4f95-9a5f-420d7f025f7e",
+      "feature": "⚫ HABILIDADE LENDÁRIA ECLIPSE",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a3e91c75-b2e1-4697-ae76-cee67cb190ec",
+      "character": "Seraph",
+      "featureId": "feature-14-dominio-permanente",
+      "feature": "DOMÍNIO PERMANENTE",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-21db1e04-ce97-47d9-91ac-1765d98f8c01",
+      "character": "Velkar",
+      "featureId": "skill-feature-180d4c01-8ec5-47dc-a749-6da50f62604f",
+      "feature": "🧪 Toque da Distorção",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-21db1e04-ce97-47d9-91ac-1765d98f8c01",
+      "character": "Velkar",
+      "featureId": "skill-feature-56742645-b655-4a33-ac5e-5ea2c76c2bc8",
+      "feature": "Remodelar Corpo",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-21db1e04-ce97-47d9-91ac-1765d98f8c01",
+      "character": "Velkar",
+      "featureId": "skill-feature-22b479fd-1efb-4093-890c-248f87c8195a",
+      "feature": "Quebra de Identidade",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-21db1e04-ce97-47d9-91ac-1765d98f8c01",
+      "character": "Velkar",
+      "featureId": "skill-feature-c7a0cc99-7a81-4fb9-b2f4-04a28a8c4537",
+      "feature": "Transfiguração Forçada",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-21db1e04-ce97-47d9-91ac-1765d98f8c01",
+      "character": "Velkar",
+      "featureId": "feature-6-toque-absoluto",
+      "feature": "TOQUE ABSOLUTO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-21db1e04-ce97-47d9-91ac-1765d98f8c01",
+      "character": "Velkar",
+      "featureId": "feature-7-deformacao-constante",
+      "feature": "DEFORMAÇÃO CONSTANTE",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-21db1e04-ce97-47d9-91ac-1765d98f8c01",
+      "character": "Velkar",
+      "featureId": "feature-8-buff",
+      "feature": "BUFF",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-21db1e04-ce97-47d9-91ac-1765d98f8c01",
+      "character": "Velkar",
+      "featureId": "feature-5-habilidade-lendaria-dominio-da-distorcao",
+      "feature": "⚫ HABILIDADE LENDÁRIA DOMÍNIO DA DISTORÇÃO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 20,
+          "resource": "fushi"
+        },
+        {
+          "amount": 15,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+      "character": "Ryoku",
+      "featureId": "skill-feature-118a8728-835f-4eab-9ab6-7942d86ec875",
+      "feature": "Corte da Existência",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 8,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+      "character": "Ryoku",
+      "featureId": "skill-feature-38252ecd-f6c3-41bc-92db-0cd3856faec4",
+      "feature": "Consumo de Essência",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "RESOLUCAO_IMEDIATA",
+        "reason": "A cura ou transferencia ocorre uma vez na resolucao da acao; nao e o buff continuo Cura."
+      },
+      "resourceCosts": [
+        {
+          "amount": 10,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+      "character": "Ryoku",
+      "featureId": "skill-feature-ccdc8458-4299-4371-9842-300ec77712c5",
+      "feature": "Domínio do Medo",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "amedrontado"
+      ],
+      "reviewDecision": {
+        "category": "TESTE_SECUNDARIO",
+        "reason": "O estado depende de uma segunda defesa ou falha; nao pode entrar automaticamente apenas com o acerto principal."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+      "character": "Ryoku",
+      "featureId": "skill-feature-cd07506b-ebdb-4f07-9e86-19fb189d2dc3",
+      "feature": "Regeneração Anômala",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "PASSIVA_FASE_OU_EVENTO",
+        "reason": "A regra persiste, altera uma fase ou usa valor proprio; precisa de integracao de evento/passiva antes de automatizar."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+      "character": "Ryoku",
+      "featureId": "feature-6-ataques-de-ryoku",
+      "feature": "ATAQUES DE RYOKU",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+      "character": "Ryoku",
+      "featureId": "feature-7-marcacao",
+      "feature": "MARCAÇÃO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+      "character": "Ryoku",
+      "featureId": "feature-8-buff",
+      "feature": "BUFF",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+      "character": "Ryoku",
+      "featureId": "feature-9-sem-penalidade-pos-uso",
+      "feature": "SEM PENALIDADE PÓS USO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-a4273a6e-8a45-498c-a88d-9f1defffb3bc",
+      "character": "Ryoku",
+      "featureId": "feature-5-expansao-de-dominio-santuario-profano",
+      "feature": "⚫ EXPANSÃO DE DOMÍNIO SANTUÁRIO PROFANO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 30,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-c2ec2518-b254-4ef3-8b63-7a5dfb9eb909",
+      "character": "Jaxir",
+      "featureId": "attack-ad5bf461-b353-413c-8f8f-3e242da4e58b",
+      "feature": "🃏 Lâminas Ocultas",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-c2ec2518-b254-4ef3-8b63-7a5dfb9eb909",
+      "character": "Jaxir",
+      "featureId": "skill-feature-c94b3cbe-f631-4229-a6c0-2eac1ccb5b58",
+      "feature": "🧵 Fio Manipulador",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-c2ec2518-b254-4ef3-8b63-7a5dfb9eb909",
+      "character": "Jaxir",
+      "featureId": "skill-feature-4299a58e-fabc-4e8e-91ed-635521887d17",
+      "feature": "🎭 Engano Perfeito",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-c2ec2518-b254-4ef3-8b63-7a5dfb9eb909",
+      "character": "Jaxir",
+      "featureId": "skill-feature-f573b0df-7e4b-4f6e-acb3-32ec39a25860",
+      "feature": "Ritmo de Combate",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-c2ec2518-b254-4ef3-8b63-7a5dfb9eb909",
+      "character": "Jaxir",
+      "featureId": "skill-feature-4fa08ba1-d709-4c98-8db4-f3acf5e5bbec",
+      "feature": "💥 Estouro de Prazer",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-c2ec2518-b254-4ef3-8b63-7a5dfb9eb909",
+      "character": "Jaxir",
+      "featureId": "feature-6-caos-controlado",
+      "feature": "CAOS CONTROLADO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-c2ec2518-b254-4ef3-8b63-7a5dfb9eb909",
+      "character": "Jaxir",
+      "featureId": "feature-7-ataque-final",
+      "feature": "ATAQUE FINAL",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-c2ec2518-b254-4ef3-8b63-7a5dfb9eb909",
+      "character": "Jaxir",
+      "featureId": "feature-5-habilidade-lendaria-palco-do-caos",
+      "feature": "⚫ HABILIDADE LENDÁRIA PALCO DO CAOS",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 15,
+          "resource": "fushi"
+        },
+        {
+          "amount": 10,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-d363865a-77b1-4415-97d6-3dad86744a40",
+      "character": "Lyssara",
+      "featureId": "skill-feature-f1d196a7-674a-49c9-ba48-c8ceaa9e6803",
+      "feature": "💫 Presença Hipnótica",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-d363865a-77b1-4415-97d6-3dad86744a40",
+      "character": "Lyssara",
+      "featureId": "skill-feature-39986b48-d653-4f64-ade3-d28a79c68721",
+      "feature": "Vínculo Emocional",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-d363865a-77b1-4415-97d6-3dad86744a40",
+      "character": "Lyssara",
+      "featureId": "skill-feature-e2587d1d-bb46-4395-ba5e-aee5cd6fec6a",
+      "feature": "Drenar Essência",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "RESOLUCAO_IMEDIATA",
+        "reason": "A cura ou transferencia ocorre uma vez na resolucao da acao; nao e o buff continuo Cura."
+      },
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-d363865a-77b1-4415-97d6-3dad86744a40",
+      "character": "Lyssara",
+      "featureId": "skill-feature-61992031-5fda-4812-bd87-95549e53e71a",
+      "feature": "🌫 Retirada Elegante",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "agro"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-d363865a-77b1-4415-97d6-3dad86744a40",
+      "character": "Lyssara",
+      "featureId": "feature-6-dominado",
+      "feature": "DOMINADO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-d363865a-77b1-4415-97d6-3dad86744a40",
+      "character": "Lyssara",
+      "featureId": "feature-7-quebra",
+      "feature": "QUEBRA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-d363865a-77b1-4415-97d6-3dad86744a40",
+      "character": "Lyssara",
+      "featureId": "ritual-85a507a1-8685-49f2-8c10-00a95109bc0b",
+      "feature": "⚫ HABILIDADE LENDÁRIA LAÇO PROFANO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 10,
+          "resource": "fushi"
+        },
+        {
+          "amount": 10,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-038258c8-aea8-4b52-97b6-112b21b4ad2f",
+      "character": "Kairo",
+      "featureId": "skill-feature-da1daacc-e5c1-497f-bf61-f00483e3fbde",
+      "feature": "Leitura Total",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-038258c8-aea8-4b52-97b6-112b21b4ad2f",
+      "character": "Kairo",
+      "featureId": "skill-feature-91ee0118-d92c-4af0-8293-c8f81f0f3027",
+      "feature": "🎭 Manipulação Indireta",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-038258c8-aea8-4b52-97b6-112b21b4ad2f",
+      "character": "Kairo",
+      "featureId": "skill-feature-caf745ed-8379-45c8-850c-2b028d5b15b3",
+      "feature": "Execução Precisa",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-038258c8-aea8-4b52-97b6-112b21b4ad2f",
+      "character": "Kairo",
+      "featureId": "skill-feature-0a661c2f-dd47-4039-addf-64eb6de2403c",
+      "feature": "🧩 Acúmulo de Dados",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-038258c8-aea8-4b52-97b6-112b21b4ad2f",
+      "character": "Kairo",
+      "featureId": "feature-6-manipulacao",
+      "feature": "MANIPULAÇÃO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-038258c8-aea8-4b52-97b6-112b21b4ad2f",
+      "character": "Kairo",
+      "featureId": "feature-5-habilidade-lendaria-controle-invisivel",
+      "feature": "⚫ HABILIDADE LENDÁRIA CONTROLE INVISÍVEL",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 15,
+          "resource": "fushi"
+        },
+        {
+          "amount": 10,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-19595965-a972-4ff9-af7e-c2d58bcd3857",
+      "character": "Elion",
+      "featureId": "skill-feature-3a735a65-15d6-401b-9de2-1d22086d2090",
+      "feature": "Dedução Instantânea",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-19595965-a972-4ff9-af7e-c2d58bcd3857",
+      "character": "Elion",
+      "featureId": "skill-feature-ee341082-9cb1-451e-b22a-ebaf3aa4f723",
+      "feature": "Quebra de Lógica",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "confuso"
+      ],
+      "reviewDecision": {
+        "category": "EFEITO_DIRETO_ESTRUTURAVEL",
+        "reason": "O texto aplica um estado ou modificador direto e pode receber automacao estruturada sem mudar a habilidade."
+      },
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-19595965-a972-4ff9-af7e-c2d58bcd3857",
+      "character": "Elion",
+      "featureId": "skill-feature-70c672c7-ca0f-4b1c-8366-833fc053eb40",
+      "feature": "Análise Contínua",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-19595965-a972-4ff9-af7e-c2d58bcd3857",
+      "character": "Elion",
+      "featureId": "skill-feature-3311d1b6-8c19-4dfc-b301-db26c05d6ad9",
+      "feature": "Reação Calculada",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-19595965-a972-4ff9-af7e-c2d58bcd3857",
+      "character": "Elion",
+      "featureId": "feature-5-habilidade-lendaria-perfil-completo",
+      "feature": "⚫ HABILIDADE LENDÁRIA PERFIL COMPLETO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 8,
+          "resource": "fushi"
+        },
+        {
+          "amount": 8,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-36ce8cc9-8621-48fb-9206-925e6126c5c6",
+      "character": "Arven",
+      "featureId": "attack-91eae4be-6e8f-4819-a70f-e0a20aaad7e7",
+      "feature": "🗡️ Espada Curta",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-36ce8cc9-8621-48fb-9206-925e6126c5c6",
+      "character": "Arven",
+      "featureId": "skill-feature-35f9b49d-dc71-4067-b64c-852800f48696",
+      "feature": "📢 Comando Tático",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-36ce8cc9-8621-48fb-9206-925e6126c5c6",
+      "character": "Arven",
+      "featureId": "skill-feature-478950ec-e556-4aac-9867-1b02f90f798a",
+      "feature": "Antecipação de Movimento",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-36ce8cc9-8621-48fb-9206-925e6126c5c6",
+      "character": "Arven",
+      "featureId": "skill-feature-a9323faf-f969-4a9a-82ee-c17711c964ff",
+      "feature": "Determinação Coletiva",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-36ce8cc9-8621-48fb-9206-925e6126c5c6",
+      "character": "Arven",
+      "featureId": "feature-4-habilidade-lendaria-carga-do-comandante",
+      "feature": "⚫ HABILIDADE LENDÁRIA CARGA DO COMANDANTE",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        },
+        {
+          "amount": 6,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-f4b53e99-7640-4a1d-852b-16951ff3b86e",
+      "character": "Varek",
+      "featureId": "skill-feature-e313863c-4739-46c5-a174-b58159820e05",
+      "feature": "⚡ Execução Rápida",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-f4b53e99-7640-4a1d-852b-16951ff3b86e",
+      "character": "Varek",
+      "featureId": "skill-feature-f4f31c2e-a1ca-4b91-89ed-1940072c65c4",
+      "feature": "Movimento Relâmpago",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "agro"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-f4b53e99-7640-4a1d-852b-16951ff3b86e",
+      "character": "Varek",
+      "featureId": "skill-feature-490eaf1f-a9ed-420a-bf73-de15d27b3dad",
+      "feature": "Foco Absoluto",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-f4b53e99-7640-4a1d-852b-16951ff3b86e",
+      "character": "Varek",
+      "featureId": "skill-feature-017823b0-90a3-4390-a8a3-7cf36e1f6bda",
+      "feature": "Reflexo Instintivo",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-f4b53e99-7640-4a1d-852b-16951ff3b86e",
+      "character": "Varek",
+      "featureId": "feature-6-ataque",
+      "feature": "ATAQUE",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-f4b53e99-7640-4a1d-852b-16951ff3b86e",
+      "character": "Varek",
+      "featureId": "feature-5-habilidade-lendaria-limpeza-total",
+      "feature": "⚫ HABILIDADE LENDÁRIA LIMPEZA TOTAL",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 8,
+          "resource": "fushi"
+        },
+        {
+          "amount": 8,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-0204b270-a761-4248-9110-724c76155792",
+      "character": "Aeron",
+      "featureId": "attack-c1b333da-cf66-43ec-9c36-21260742b98f",
+      "feature": "🔪 Lâmina Oculta",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-0204b270-a761-4248-9110-724c76155792",
+      "character": "Aeron",
+      "featureId": "skill-feature-5c8470c5-3e47-45b7-8b37-8683cceabaab",
+      "feature": "🕶 Presença Nula",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-0204b270-a761-4248-9110-724c76155792",
+      "character": "Aeron",
+      "featureId": "skill-feature-a5661dcc-4cf0-4f8a-87e6-094f1a5f234b",
+      "feature": "🎭 Persona Construída",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-0204b270-a761-4248-9110-724c76155792",
+      "character": "Aeron",
+      "featureId": "skill-feature-3dcf7e01-2725-41ac-b330-758bdbe2bf35",
+      "feature": "Golpe Preciso",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-0204b270-a761-4248-9110-724c76155792",
+      "character": "Aeron",
+      "featureId": "skill-feature-0e40a10c-6629-4fb9-b30c-f9515a53e87c",
+      "feature": "Antecipação Estratégica",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-0204b270-a761-4248-9110-724c76155792",
+      "character": "Aeron",
+      "featureId": "feature-5-habilidade-lendaria-intervencao-silenciosa",
+      "feature": "⚫ HABILIDADE LENDÁRIA INTERVENÇÃO SILENCIOSA",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        },
+        {
+          "amount": 6,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-d2d4a2a0-7cfb-4157-b012-b10b55639dc5",
+      "character": "Sélian Velan",
+      "featureId": "feature-1-escuta-inquieta",
+      "feature": "👂 Escuta Inquieta",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-d2d4a2a0-7cfb-4157-b012-b10b55639dc5",
+      "character": "Sélian Velan",
+      "featureId": "feature-2-silencio-forcado",
+      "feature": "🤫 Silêncio Forçado",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-d2d4a2a0-7cfb-4157-b012-b10b55639dc5",
+      "character": "Sélian Velan",
+      "featureId": "feature-3-no-de-pano",
+      "feature": "🧣 Nó de Pano",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-d2d4a2a0-7cfb-4157-b012-b10b55639dc5",
+      "character": "Sélian Velan",
+      "featureId": "feature-4-coro-partido",
+      "feature": "Coro Partido",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-d2d4a2a0-7cfb-4157-b012-b10b55639dc5",
+      "character": "Sélian Velan",
+      "featureId": "skill-feature-f7cc346a-4a40-48e4-8d21-745c65809132",
+      "feature": "⚠ Colapso Sensorial",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "amedrontado",
+        "confuso"
+      ],
+      "reviewDecision": {
+        "category": "ESCOLHA_OU_MODO",
+        "reason": "A acao possui modos diferentes. O estado so pode ser aplicado depois que o Mestre escolher o modo resolvido."
+      },
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+      "character": "Yor",
+      "featureId": "attack-006cb953-8006-47e7-b56f-a027bd7bd12d",
+      "feature": "🗡️ Agulhas de Execução",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+      "character": "Yor",
+      "featureId": "skill-feature-75154458-fd1e-40a3-8da5-9e05da7e3c31",
+      "feature": "⚡ Passo Kunoichi",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "agro",
+        "rapidez"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+      "character": "Yor",
+      "featureId": "skill-feature-4e5d4ae6-c006-4aa6-9a26-339d85b1207b",
+      "feature": "🩸 Impacto Cruel",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+      "character": "Yor",
+      "featureId": "skill-feature-10d0256b-1758-403f-819a-6749a798dbc6",
+      "feature": "🕷️ Silêncio de Assassina",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+      "character": "Yor",
+      "featureId": "skill-feature-2b8a2807-1a4b-4cfe-a57a-25ce4c7bff80",
+      "feature": "🛡️ Guarda da Promessa",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "protecao"
+      ],
+      "reviewDecision": {
+        "category": "ESCOLHA_OU_MODO",
+        "reason": "A acao possui modos diferentes. O estado so pode ser aplicado depois que o Mestre escolher o modo resolvido."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+      "character": "Yor",
+      "featureId": "skill-feature-c9fc2503-df6e-4c9a-8b54-7341f7c63bb9",
+      "feature": "🔥 Corpo Volátil",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+      "character": "Yor",
+      "featureId": "ritual-b46e62ce-f2f0-4791-807f-1112e7f53fd0",
+      "feature": "⚫ JARDIM DE ESPINHOS",
+      "kind": "ritual",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "protecao"
+      ],
+      "reviewDecision": {
+        "category": "PASSIVA_FASE_OU_EVENTO",
+        "reason": "A regra persiste, altera uma fase ou usa valor proprio; precisa de integracao de evento/passiva antes de automatizar."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+      "character": "Yor",
+      "featureId": "ritual-9ca9cca1-2d7e-429b-b2d8-6ed4f3735d70",
+      "feature": "🔥 ATIVAÇÃO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+      "character": "Yor",
+      "featureId": "ritual-d211a41e-3589-4103-ae73-1dfc04c161ff",
+      "feature": "🔥 EFEITO PRINCIPAL",
+      "kind": "ritual",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "protecao"
+      ],
+      "reviewDecision": {
+        "category": "ESCOLHA_OU_MODO",
+        "reason": "A acao possui modos diferentes. O estado so pode ser aplicado depois que o Mestre escolher o modo resolvido."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-27b06ddc-4629-4caf-bd81-72054ceafc04",
+      "character": "Yor",
+      "featureId": "ritual-2eda1da7-4362-479f-b5a4-d1c772f1c942",
+      "feature": "🔥 PÓS-USO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dcffbf0f-fe93-4e2d-83b2-7799dfc06c03",
+      "character": "Maelra",
+      "featureId": "attack-56193392-f44e-4a90-a4eb-12da1147ab24",
+      "feature": "🪡 Agulhas de Sutra",
+      "kind": "ataque",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dcffbf0f-fe93-4e2d-83b2-7799dfc06c03",
+      "character": "Maelra",
+      "featureId": "skill-feature-cd4de855-42ae-439c-b023-2a8840bd7a97",
+      "feature": "Costura Vital",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "TESTE_SECUNDARIO",
+        "reason": "O estado depende de uma segunda defesa ou falha; nao pode entrar automaticamente apenas com o acerto principal."
+      },
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dcffbf0f-fe93-4e2d-83b2-7799dfc06c03",
+      "character": "Maelra",
+      "featureId": "skill-feature-1767016e-c38c-4716-be33-e679ce0576e5",
+      "feature": "Não Vá Ainda",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "agro"
+      ],
+      "reviewDecision": {
+        "category": "PASSIVA_FASE_OU_EVENTO",
+        "reason": "A regra persiste, altera uma fase ou usa valor proprio; precisa de integracao de evento/passiva antes de automatizar."
+      },
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        },
+        {
+          "amount": 3,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dcffbf0f-fe93-4e2d-83b2-7799dfc06c03",
+      "character": "Maelra",
+      "featureId": "skill-feature-47e94ad5-acb4-4c37-912b-b88bf4053230",
+      "feature": "🌊 Pulso da Maré Viva",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "sangrando",
+        "aura",
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "ESCOLHA_OU_MODO",
+        "reason": "A acao possui modos diferentes. O estado so pode ser aplicado depois que o Mestre escolher o modo resolvido."
+      },
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dcffbf0f-fe93-4e2d-83b2-7799dfc06c03",
+      "character": "Maelra",
+      "featureId": "skill-feature-329edc1e-103e-4bb6-a910-4f3d10413db6",
+      "feature": "Corpo Que Fica",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dcffbf0f-fe93-4e2d-83b2-7799dfc06c03",
+      "character": "Maelra",
+      "featureId": "skill-feature-d6b93d81-ac05-4d93-a654-e44630a09341",
+      "feature": "👵 Repreensão da Avó",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "protecao"
+      ],
+      "reviewDecision": {
+        "category": "TESTE_SECUNDARIO",
+        "reason": "O estado depende de uma segunda defesa ou falha; nao pode entrar automaticamente apenas com o acerto principal."
+      },
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dcffbf0f-fe93-4e2d-83b2-7799dfc06c03",
+      "character": "Maelra",
+      "featureId": "skill-feature-1eb38e03-4bb7-4c2d-9418-0c1550193764",
+      "feature": "🩺 Mãos que Aprenderam Demais",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "envenenado"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dcffbf0f-fe93-4e2d-83b2-7799dfc06c03",
+      "character": "Maelra",
+      "featureId": "feature-7-habilidade-lendaria-leito-da-ultima-mare",
+      "feature": "⚫ HABILIDADE LENDÁRIA LEITO DA ÚLTIMA MARÉ",
+      "kind": "ritual",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "sangrando",
+        "aura",
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "ESCOLHA_OU_MODO",
+        "reason": "A acao possui modos diferentes. O estado so pode ser aplicado depois que o Mestre escolher o modo resolvido."
+      },
+      "resourceCosts": [
+        {
+          "amount": 20,
+          "resource": "fushi"
+        },
+        {
+          "amount": 15,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-3ed3206c-769e-4475-96d3-9002d6b7d8ba",
+      "character": "Veyra",
+      "featureId": "attack-bd731c92-80f1-4f8f-88ad-e98b7f833403",
+      "feature": "🔪 Lâmina de Mesa",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3ed3206c-769e-4475-96d3-9002d6b7d8ba",
+      "character": "Veyra",
+      "featureId": "skill-feature-0379c477-7477-4f8d-a2a7-745e6d61d5f3",
+      "feature": "🎲 Aposta Aberta",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-3ed3206c-769e-4475-96d3-9002d6b7d8ba",
+      "character": "Veyra",
+      "featureId": "skill-feature-fff06128-687c-4001-8baf-7de07a932d6b",
+      "feature": "🃏 Mesa Viciada",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-3ed3206c-769e-4475-96d3-9002d6b7d8ba",
+      "character": "Veyra",
+      "featureId": "skill-feature-0237404d-6110-4b0d-8d63-d06956b6cfbb",
+      "feature": "🍀 Sorte Suicida",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-3ed3206c-769e-4475-96d3-9002d6b7d8ba",
+      "character": "Veyra",
+      "featureId": "feature-4-habilidade-lendaria-tudo-ou-nada",
+      "feature": "⚫ HABILIDADE LENDÁRIA TUDO OU NADA",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 15,
+          "resource": "fushi"
+        },
+        {
+          "amount": 10,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-6a172a0f-5f32-4529-b5e8-e83dbe450849",
+      "character": "Liryssa",
+      "featureId": "attack-liryssa-pistola-sinalizacao-v2",
+      "feature": "Pistola de Sinalização Adaptada",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-6a172a0f-5f32-4529-b5e8-e83dbe450849",
+      "character": "Liryssa",
+      "featureId": "skill-feature-89c232a8-10d8-453e-96ba-25c2f6792e51",
+      "feature": "🧭 Rota Impossível",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "agro"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-6a172a0f-5f32-4529-b5e8-e83dbe450849",
+      "character": "Liryssa",
+      "featureId": "skill-feature-7e7467a1-240e-41f2-8f2e-d7d532ee4855",
+      "feature": "📢 Ordem de Capítulo",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-6a172a0f-5f32-4529-b5e8-e83dbe450849",
+      "character": "Liryssa",
+      "featureId": "skill-feature-cace93a3-ac15-420e-9a38-f6215e5e5d1e",
+      "feature": "🌊 Leitura de Corrente",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-6a172a0f-5f32-4529-b5e8-e83dbe450849",
+      "character": "Liryssa",
+      "featureId": "feature-4-habilidade-lendaria-capitulo-final-nem-pensar",
+      "feature": "⚫ HABILIDADE LENDÁRIA CAPÍTULO FINAL? NEM PENSAR",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 12,
+          "resource": "fushi"
+        },
+        {
+          "amount": 10,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-c924a24e-a2e8-4227-8a51-ee815d0b0b2b",
+      "character": "Varden",
+      "featureId": "attack-b982a8f7-d7b4-4c2b-90ac-d67954ff3610",
+      "feature": "🔪 Estojo Cirúrgico de Campo",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-c924a24e-a2e8-4227-8a51-ee815d0b0b2b",
+      "character": "Varden",
+      "featureId": "skill-feature-fe178977-2941-45db-8786-0cd653108f93",
+      "feature": "Mapa Anatômico",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-c924a24e-a2e8-4227-8a51-ee815d0b0b2b",
+      "character": "Varden",
+      "featureId": "skill-feature-27d8fcd3-090e-4578-b55f-f5b2350c2ecb",
+      "feature": "Corte Clínico",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-c924a24e-a2e8-4227-8a51-ee815d0b0b2b",
+      "character": "Varden",
+      "featureId": "skill-feature-36df9ba3-1808-4c97-b3cd-e8e98b5c7b71",
+      "feature": "🧪 Autoexperimento",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+      "character": "Nyx",
+      "featureId": "skill-feature-aa0c29ca-1ae9-4010-b06b-0f22a99c49fc",
+      "feature": "🟦 Construção Holográfica",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "protecao"
+      ],
+      "reviewDecision": {
+        "category": "ESCOLHA_OU_MODO",
+        "reason": "A acao possui modos diferentes. O estado so pode ser aplicado depois que o Mestre escolher o modo resolvido."
+      },
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+      "character": "Nyx",
+      "featureId": "skill-feature-cbb9799a-d42b-4a35-94b0-8e28d9d51af5",
+      "feature": "👾 Invocação Digital",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+      "character": "Nyx",
+      "featureId": "skill-feature-529d4b62-f7f0-4d0e-b649-cdc0b5c9ff0f",
+      "feature": "🎮 HUD Tático",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+      "character": "Nyx",
+      "featureId": "skill-feature-fb92c42e-35ff-4814-a019-66d83a015a61",
+      "feature": "⚡ Overclock Mental",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+      "character": "Nyx",
+      "featureId": "feature-6-corpos-reais",
+      "feature": "💤 CORPOS REAIS",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+      "character": "Nyx",
+      "featureId": "feature-7-interferencia-externa",
+      "feature": "⚠ INTERFERÊNCIA EXTERNA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+      "character": "Nyx",
+      "featureId": "feature-9-administradora",
+      "feature": "👾 ADMINISTRADORA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+      "character": "Nyx",
+      "featureId": "feature-10-ataque-game-over",
+      "feature": "💥 ATAQUE GAME OVER",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+      "character": "Nyx",
+      "featureId": "feature-5-expansao-de-dominio-realidade-exe",
+      "feature": "🌌 EXPANSÃO DE DOMÍNIO REALIDADE EXE",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 15,
+          "resource": "fushi"
+        },
+        {
+          "amount": 10,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-60254e47-a63e-4ca7-94da-84ba9fa4efb7",
+      "character": "Nyx",
+      "featureId": "ritual-765db1a0-5ac4-445a-a268-8fbe2d0660f7",
+      "feature": "🕹 DENTRO DO DOMÍNIO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3bb5c7d5-f6f2-410c-8934-2f2caa58c0f1",
+      "character": "Bront",
+      "featureId": "attack-17ff6fd2-07bc-454b-accc-d6485404c0c1",
+      "feature": "🛠️ Martelo Multifuncional",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3bb5c7d5-f6f2-410c-8934-2f2caa58c0f1",
+      "character": "Bront",
+      "featureId": "skill-feature-89457681-0f03-4d6a-9ae9-1e031181a32a",
+      "feature": "Reparo Improvisado",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "quebrado",
+        "aura"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-3bb5c7d5-f6f2-410c-8934-2f2caa58c0f1",
+      "character": "Bront",
+      "featureId": "skill-feature-74c2b392-c3f4-4ae6-8cc0-1a9b67109a55",
+      "feature": "☕ Conversa de Convés",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-3bb5c7d5-f6f2-410c-8934-2f2caa58c0f1",
+      "character": "Bront",
+      "featureId": "skill-feature-05dbc6ae-1184-485c-b325-cab9a550e3ab",
+      "feature": "🍖 Refeição Energizante",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "amedrontado",
+        "vacina"
+      ],
+      "reviewDecision": {
+        "category": "ESCOLHA_OU_MODO",
+        "reason": "A acao possui modos diferentes. O estado so pode ser aplicado depois que o Mestre escolher o modo resolvido."
+      },
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-3bb5c7d5-f6f2-410c-8934-2f2caa58c0f1",
+      "character": "Bront",
+      "featureId": "skill-feature-2ede70ec-3157-4da2-b7de-d27e80e4bf33",
+      "feature": "“Come Primeiro”",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "skill-feature-91fd6c54-de93-4868-8438-20e38d29e49d",
+      "feature": "🌑 Toque do Vazio",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "skill-feature-2ee8e94f-1f3d-4b66-acde-da83aa254004",
+      "feature": "🌫 Mar de Sombras",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "skill-feature-efc5f14b-f687-4b56-a180-ac1dea4f811a",
+      "feature": "☠ Consumo Silencioso",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "skill-feature-0d35d58e-a887-4e5e-9a07-754fb4185899",
+      "feature": "⚫ Corpo Incontável",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "feature-5-transicao-de-fase",
+      "feature": "⚠ TRANSIÇÃO DE FASE",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "feature-6-fase-3-takedown-o-mar-infinito",
+      "feature": "🌑 FASE 3 TAKEDOWN: O MAR INFINITO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "feature-7-sombras-agarradas",
+      "feature": "🌑 SOMBRAS AGARRADAS",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "feature-8-mecanica-de-reducao",
+      "feature": "MECÂNICA DE REDUÇÃO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "feature-9-escolha-tatica",
+      "feature": "ESCOLHA TÁTICA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "feature-10-defensivo",
+      "feature": "DEFENSIVO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "feature-11-agressivo",
+      "feature": "AGRESSIVO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "feature-12-item-cajado-das-mil-sombras",
+      "feature": "ITEM CAJADO DAS MIL SOMBRAS",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "feature-13-requisitos",
+      "feature": "📌 REQUISITOS",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "feature-14-habilidade-legiao-sombria",
+      "feature": "🌑 HABILIDADE LEGIÃO SOMBRIA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "ritual-b5df0706-4fa4-460d-bcdb-63bc74a3352e",
+      "feature": "⚔️ ESTRUTURA DA LUTA — CASA I",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "ritual-03aa68ab-6b86-428f-a62e-dde8d8853e6a",
+      "feature": "🌑 FASE 1 — A CORRIDA DO ABISMO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "ritual-e94219b1-962e-4866-896f-527867894e94",
+      "feature": "⚫ FASE 2 — MORGHAST, O NÚCLEO DAS SOMBRAS",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-dab4fd02-f7a4-41dc-88bb-24546a5ea383",
+      "character": "Morghast",
+      "featureId": "ritual-a3162501-1a4e-4177-8c5e-57060a7dac8f",
+      "feature": "🌑 FASE 3 — TAKEDOWN: O MAR INFINITO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "skill-feature-92761fb5-8b5d-4912-96ab-2c8e3b3cc0f3",
+      "feature": "Olhar Petrificante",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "skill-feature-8dbac6f3-ad44-4cac-8a23-99aae936a44e",
+      "feature": "🐍 Serpentes Famintas",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "skill-feature-0efb93d6-0bbf-4fbb-93be-fe60286174f5",
+      "feature": "♻ Regeneração Anormal",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "aura",
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "feature-4-item-cabeca-de-euryaleth",
+      "feature": "ITEM CABEÇA DE EURYALETH",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "feature-5-habilidade-olhar-petrificante",
+      "feature": "HABILIDADE OLHAR PETRIFICANTE",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "feature-6-saida-da-petrificacao",
+      "feature": "🧩 SAÍDA DA PETRIFICAÇÃO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "feature-7-opcao-1",
+      "feature": "💥 OPÇÃO 1",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "feature-8-opcao-2",
+      "feature": "OPÇÃO 2",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "feature-9-estagnacao",
+      "feature": "🪨 ESTAGNAÇÃO",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "lento"
+      ],
+      "reviewDecision": {
+        "category": "REGRA_ESPECIAL_MANUAL",
+        "reason": "O efeito e real, mas nao equivale sozinho ao estado padrao; exige regra propria ou confirmacao do Mestre."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "ritual-dfcf8d0f-556d-4a2b-b4ea-ca36982df4e6",
+      "feature": "🪨 FASE 1 — O SALÃO DAS ESTÁTUAS",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "ritual-cb55b533-ec1d-483b-b0cd-2216f4a41d18",
+      "feature": "👁️ FASE 2 — OLHAR DA ESTAGNAÇÃO",
+      "kind": "ritual",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "vulneravel",
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "TESTE_SECUNDARIO",
+        "reason": "O estado depende de uma segunda defesa ou falha; nao pode entrar automaticamente apenas com o acerto principal."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "ritual-d2835770-efb6-4a89-9153-e3fcd24e291d",
+      "feature": "♻️ REGENERAÇÃO ABSOLUTA",
+      "kind": "ritual",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "vulneravel",
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "REGRA_ESPECIAL_MANUAL",
+        "reason": "O efeito e real, mas nao equivale sozinho ao estado padrao; exige regra propria ou confirmacao do Mestre."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-3d11d9cb-5961-4d2a-a4cc-8df078bbb137",
+      "character": "Euryaleth",
+      "featureId": "ritual-64bed18d-ab4b-4612-b8eb-9dd0c5c1c0c7",
+      "feature": "👁️ FASE 3 — A CABEÇA VIVA",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "character": "Vorashk",
+      "featureId": "skill-feature-0cbab5e6-3b1e-4d0e-9d75-419ae6672918",
+      "feature": "🐍 Mordida Colossal",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "sangrando"
+      ],
+      "reviewDecision": {
+        "category": "TESTE_SECUNDARIO",
+        "reason": "O estado depende de uma segunda defesa ou falha; nao pode entrar automaticamente apenas com o acerto principal."
+      },
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "character": "Vorashk",
+      "featureId": "skill-feature-bf782b11-1930-45ad-96b0-c815efa855cd",
+      "feature": "Escamas Evolutivas",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "character": "Vorashk",
+      "featureId": "skill-feature-ca927c83-1162-4791-936e-541e179297d6",
+      "feature": "🌪 Corpo Serpentino",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "agro"
+      ],
+      "reviewDecision": {
+        "category": "REGRA_ESPECIAL_MANUAL",
+        "reason": "O efeito e real, mas nao equivale sozinho ao estado padrao; exige regra propria ou confirmacao do Mestre."
+      },
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "character": "Vorashk",
+      "featureId": "skill-feature-b78e496f-2157-4bac-8d7b-6a4b96b9d954",
+      "feature": "☠ Caçador do Labirinto",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "character": "Vorashk",
+      "featureId": "feature-5-item-lendario-escama-de-vorashk",
+      "feature": "ITEM LENDÁRIO ESCAMA DE VORASHK",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "character": "Vorashk",
+      "featureId": "feature-6-mecanica-viva",
+      "feature": "MECÂNICA VIVA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "character": "Vorashk",
+      "featureId": "feature-7-habilidade-transferencia-viva",
+      "feature": "🌪 HABILIDADE TRANSFERÊNCIA VIVA",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "protecao"
+      ],
+      "reviewDecision": {
+        "category": "EFEITO_DIRETO_ESTRUTURAVEL",
+        "reason": "O texto aplica um estado ou modificador direto e pode receber automacao estruturada sem mudar a habilidade."
+      },
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "character": "Vorashk",
+      "featureId": "feature-8-adaptacao-defensiva",
+      "feature": "⚠ ADAPTAÇÃO DEFENSIVA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "character": "Vorashk",
+      "featureId": "feature-9-assimilacao",
+      "feature": "🐍 ASSIMILAÇÃO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "character": "Vorashk",
+      "featureId": "ritual-6629adf9-090f-48dd-8aea-ee431fb431a6",
+      "feature": "🌀 FASE 1 — O LABIRINTO VIVO",
+      "kind": "ritual",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "envenenado",
+        "confuso",
+        "vacina",
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-02e140c5-382c-46d0-b012-4c981b47c5ed",
+      "character": "Vorashk",
+      "featureId": "ritual-43d9fa8d-ea57-4b10-8ff1-ab5587b5c254",
+      "feature": "⚔️ FASE 2 — A SERPENTE EXPOSTA",
+      "kind": "ritual",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "vacina",
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "skill-feature-5207531b-af20-4850-8235-5d4676a945c6",
+      "feature": "🌪 Investida Celestial",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "skill-feature-2a8de39d-de32-4687-a5c2-33c7499203bc",
+      "feature": "Asas de Cinzas",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "skill-feature-80303d77-21af-4509-a43c-fbd8e5895c52",
+      "feature": "🌋 Turbulência Vulcânica",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "skill-feature-1d3f2272-4b23-4586-be17-a905d853268b",
+      "feature": "☄ Mergulho do Meteoro",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 8,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "feature-5-transicao-final",
+      "feature": "⚠ TRANSIÇÃO FINAL",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "feature-6-fase-3-o-ceu-desmoronando",
+      "feature": "FASE 3 O CÉU DESMORONANDO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "feature-7-mecanica",
+      "feature": "MECÂNICA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "feature-8-rajadas-finais",
+      "feature": "🌪 RAJADAS FINAIS",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "feature-9-finalizacao",
+      "feature": "⚠ FINALIZAÇÃO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "feature-10-item-lendario-asas-de-aeronyx",
+      "feature": "🪽 ITEM LENDÁRIO ASAS DE AERONYX",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "feature-11-habilidade-voo-ascendente",
+      "feature": "🪽 HABILIDADE VOO ASCENDENTE",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 5,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "feature-12-mecanica-do-voo",
+      "feature": "MECÂNICA DO VOO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "feature-13-habilidade-extra-rajada-aerea",
+      "feature": "🌪 HABILIDADE EXTRA RAJADA AÉREA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "feature-14-instabilidade-aerea",
+      "feature": "🌪 INSTABILIDADE AÉREA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "ritual-97bca0c2-f695-4003-80ac-d3dfda03444a",
+      "feature": "🌋 FASE 1 — A ASCENSÃO",
+      "kind": "ritual",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "protecao"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "ritual-0ce012f0-ba28-4d68-a0a0-9108493ad146",
+      "feature": "⚔️ FASE 2 — O DOMÍNIO DOS CÉUS",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-cde65d40-cd6c-4e32-8e2d-9ba1f5c51a88",
+      "character": "Aeronyx",
+      "featureId": "ritual-bfc682b3-741c-4de8-b255-25e75c248d88",
+      "feature": "⚔️ FASE 3 — O CÉU DESMORONANDO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "skill-feature-6f61b737-307e-462c-a6d1-a96d1e5025a4",
+      "feature": "🌊 Dilúvio Absoluto",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 8,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "skill-feature-1c399ddf-da8e-48dc-9baa-b2c741bcaefe",
+      "feature": "⚡ Tempestade Encarnada",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "skill-feature-6aa5f05a-9d7f-43a3-987c-1ed35c8e0722",
+      "feature": "☠ Grito Abissal",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "sangrando"
+      ],
+      "reviewDecision": {
+        "category": "TESTE_SECUNDARIO",
+        "reason": "O estado depende de uma segunda defesa ou falha; nao pode entrar automaticamente apenas com o acerto principal."
+      },
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "skill-feature-2d4baa16-f59b-4e98-bfe3-2c0aa90dace9",
+      "feature": "♻ Regeneração Hidra",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "PASSIVA_FASE_OU_EVENTO",
+        "reason": "A regra persiste, altera uma fase ou usa valor proprio; precisa de integracao de evento/passiva antes de automatizar."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "feature-5-item-lendario-nucleo-abissal-da-hidra",
+      "feature": "ITEM LENDÁRIO NÚCLEO ABISSAL DA HIDRA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "feature-6-habilidade-ira-do-diluvio",
+      "feature": "🌊 HABILIDADE IRA DO DILÚVIO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 8,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "feature-7-habilidade-extra-tempestade-viva",
+      "feature": "⚡ HABILIDADE EXTRA TEMPESTADE VIVA",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "feature-8-pressao-oceanica",
+      "feature": "🌊 PRESSÃO OCEÂNICA",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "lento"
+      ],
+      "reviewDecision": {
+        "category": "REGRA_ESPECIAL_MANUAL",
+        "reason": "O efeito e real, mas nao equivale sozinho ao estado padrao; exige regra propria ou confirmacao do Mestre."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "ritual-c600e010-6d2c-4098-82ef-787b27e0905e",
+      "feature": "🌊 EVENTO GLOBAL — O DILÚVIO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "ritual-3df66ef2-259e-4325-ac57-bd0c504acef3",
+      "feature": "🌊 FASE 1 — A TEMPESTADE VIVA",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "ritual-c34f8590-4943-41b1-9cd9-1dc263233622",
+      "feature": "⚔️ FASE 2 — THAL’ZHYR DESPERTA",
+      "kind": "ritual",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "TESTE_SECUNDARIO",
+        "reason": "O estado depende de uma segunda defesa ou falha; nao pode entrar automaticamente apenas com o acerto principal."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-70254378-aafe-4af0-bc4f-7cfed33fa74a",
+      "character": "Thal’Zhyr",
+      "featureId": "ritual-57689f05-d08b-4dc4-8053-b7912e99c5de",
+      "feature": "🌊 FASE 3 — O MAR COLAPSANDO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-1-senhor-das-coordenadas",
+      "feature": "🌌 Senhor das Coordenadas",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "agro"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-2-troca-de-coordenadas",
+      "feature": "🧭 Troca de Coordenadas",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 7,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-3-corte-orbital",
+      "feature": "🌠 Corte Orbital",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-4-gravidade-de-anel",
+      "feature": "🪐 Gravidade de Anel",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 8,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-5-rasgo-dimensional",
+      "feature": "🌌 Rasgo Dimensional",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 10,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-6-horizonte-de-evento",
+      "feature": "🕳 Horizonte de Evento",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 10,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-7-paradoxo-menor",
+      "feature": "🔁 Paradoxo Menor",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 8,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-9-olhar-alem-das-galaxias",
+      "feature": "Olhar Além das Galáxias",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 8,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-11-item-lendario-fragmento-transcendente",
+      "feature": "🌠 ITEM LENDÁRIO FRAGMENTO TRANSCENDENTE",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        },
+        {
+          "amount": 8,
+          "resource": "fushi"
+        },
+        {
+          "amount": 3,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-12-preco-do-fragmento",
+      "feature": "⚠ PREÇO DO FRAGMENTO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-8-paradoxo-absoluto",
+      "feature": "🔄 Paradoxo Absoluto",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 12,
+          "resource": "fushi"
+        },
+        {
+          "amount": 5,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "character-4fd495a5-b422-49ad-a5e8-0770321d4b33",
+      "character": "Astrael",
+      "featureId": "feature-10-habilidade-lendaria-ciclo-vorpal",
+      "feature": "🌌 HABILIDADE LENDÁRIA CICLO VORPAL",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-vila-elara-vonn",
+      "character": "Elara",
+      "featureId": "attack-52821087-c721-42fd-a925-cdef4fe3b70a",
+      "feature": "🔪 Faca Utilitária",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-vila-elara-vonn",
+      "character": "Elara",
+      "featureId": "detail-1",
+      "feature": "Ordem Clara",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-elara-vonn",
+      "character": "Elara",
+      "featureId": "detail-2",
+      "feature": "Prioridade: Civis",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-elara-vonn",
+      "character": "Elara",
+      "featureId": "feature-3-segurar-o-panico",
+      "feature": "✋ Segurar o Pânico",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "amedrontado",
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "REGRA_ESPECIAL_MANUAL",
+        "reason": "O efeito e real, mas nao equivale sozinho ao estado padrao; exige regra propria ou confirmacao do Mestre."
+      },
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-elara-vonn",
+      "character": "Elara",
+      "featureId": "feature-4-nao-mais-um",
+      "feature": "Não Mais Um",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-elara-vonn",
+      "character": "Elara",
+      "featureId": "detail-3",
+      "feature": "Decisão Difícil",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-orian-vonn",
+      "character": "Orian",
+      "featureId": "attack-2c6ce9be-0603-41b1-a384-d0938ed4feee",
+      "feature": "🔪 Faca de Rota",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-vila-orian-vonn",
+      "character": "Orian",
+      "featureId": "attack-8dec4d0a-56ce-4f81-b06a-b8e15b1e81be",
+      "feature": "🏹 Arco Curto Simples",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-vila-orian-vonn",
+      "character": "Orian",
+      "featureId": "detail-1",
+      "feature": "🧭 Sentir Caminho Errado",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-orian-vonn",
+      "character": "Orian",
+      "featureId": "detail-2",
+      "feature": "🗺 Marcar Retorno",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-orian-vonn",
+      "character": "Orian",
+      "featureId": "detail-3",
+      "feature": "📣 Direção Clara",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-orian-vonn",
+      "character": "Orian",
+      "featureId": "skill-feature-3858d8ef-c3af-4e39-8be8-8fa93c4fac2a",
+      "feature": "🏹 Disparo de Cobertura",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-orian-vonn",
+      "character": "Orian",
+      "featureId": "skill-feature-af7a28c2-2bfd-4634-9708-8a0387650cac",
+      "feature": "Memória de Rota",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-nilo-arven",
+      "character": "Nilo",
+      "featureId": "feature-1-rebobinar-passo",
+      "feature": "⏪ Rebobinar Passo",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-nilo-arven",
+      "character": "Nilo",
+      "featureId": "feature-2-eco-de-movimento",
+      "feature": "Eco de Movimento",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-nilo-arven",
+      "character": "Nilo",
+      "featureId": "feature-3-corrida-de-resgate",
+      "feature": "🏃 Corrida de Resgate",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-nilo-arven",
+      "character": "Nilo",
+      "featureId": "feature-4-improviso-genial",
+      "feature": "🛠 Improviso Genial",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-nilo-arven",
+      "character": "Nilo",
+      "featureId": "feature-5-segundo-atrasado",
+      "feature": "🕰 Segundo Atrasado",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-d1",
+      "character": "Maira Velan",
+      "featureId": "maira-atk-bastao",
+      "feature": "Bastao de Cerimonia",
+      "kind": "ataque",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-d1",
+      "character": "Maira Velan",
+      "featureId": "maira-hab-centro",
+      "feature": "Cantico de Centro",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-d1",
+      "character": "Maira Velan",
+      "featureId": "maira-hab-ritmo",
+      "feature": "Ritmo Compartilhado",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "amedrontado"
+      ],
+      "reviewDecision": {
+        "category": "PASSIVA_FASE_OU_EVENTO",
+        "reason": "A regra persiste, altera uma fase ou usa valor proprio; precisa de integracao de evento/passiva antes de automatizar."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-d1",
+      "character": "Maira Velan",
+      "featureId": "maira-hab-voz-mae",
+      "feature": "Voz de Mae",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-d1",
+      "character": "Maira Velan",
+      "featureId": "maira-hab-abrigo",
+      "feature": "Rito de Abrigo",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "amedrontado"
+      ],
+      "reviewDecision": {
+        "category": "REGRA_ESPECIAL_MANUAL",
+        "reason": "O efeito e real, mas nao equivale sozinho ao estado padrao; exige regra propria ou confirmacao do Mestre."
+      },
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-d1",
+      "character": "Maira Velan",
+      "featureId": "maira-hab-defesa",
+      "feature": "Defesa Improvisada",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "protecao"
+      ],
+      "reviewDecision": {
+        "category": "REGRA_ESPECIAL_MANUAL",
+        "reason": "O efeito e real, mas nao equivale sozinho ao estado padrao; exige regra propria ou confirmacao do Mestre."
+      },
+      "resourceCosts": [
+        {
+          "amount": 1,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-dalvo-seren",
+      "character": "Dalvo",
+      "featureId": "feature-1-tratamento-de-emergencia",
+      "feature": "Tratamento de Emergência",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "RESOLUCAO_IMEDIATA",
+        "reason": "A cura ou transferencia ocorre uma vez na resolucao da acao; nao e o buff continuo Cura."
+      },
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-dalvo-seren",
+      "character": "Dalvo",
+      "featureId": "feature-2-dose-arriscada",
+      "feature": "🍃 Dose Arriscada",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-dalvo-seren",
+      "character": "Dalvo",
+      "featureId": "feature-3-fumaca-de-retirada",
+      "feature": "🌫 Fumaça de Retirada",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-dalvo-seren",
+      "character": "Dalvo",
+      "featureId": "feature-4-ler-sinais-do-corpo",
+      "feature": "Ler Sinais do Corpo",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "amedrontado",
+        "envenenado"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-dalvo-seren",
+      "character": "Dalvo",
+      "featureId": "feature-5-corpo-na-frente",
+      "feature": "Corpo na Frente",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-elias-norem",
+      "character": "Elias",
+      "featureId": "feature-1-leitura-organica",
+      "feature": "Leitura Orgânica",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "enfraquecido",
+        "amedrontado",
+        "envenenado"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-elias-norem",
+      "character": "Elias",
+      "featureId": "feature-2-reagente-irritante",
+      "feature": "🧪 Reagente Irritante",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-elias-norem",
+      "character": "Elias",
+      "featureId": "feature-3-preparar-contencao",
+      "feature": "🪤 Preparar Contenção",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-elias-norem",
+      "character": "Elias",
+      "featureId": "feature-4-estimulo-de-sobrevivencia",
+      "feature": "💉 Estímulo de Sobrevivência",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-elias-norem",
+      "character": "Elias",
+      "featureId": "feature-5-frieza-clinica",
+      "feature": "Frieza Clínica",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-nayr-velcaris",
+      "character": "Nayr",
+      "featureId": "feature-1-corte-de-esquina",
+      "feature": "Corte de Esquina",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "agro"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-nayr-velcaris",
+      "character": "Nayr",
+      "featureId": "feature-2-puxao-de-gancho",
+      "feature": "🪝 Puxão de Gancho",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-nayr-velcaris",
+      "character": "Nayr",
+      "featureId": "feature-3-sorriso-de-mentira",
+      "feature": "😏 Sorriso de Mentira",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "amedrontado"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-nayr-velcaris",
+      "character": "Nayr",
+      "featureId": "feature-4-dor-como-alivio",
+      "feature": "Dor Como Alívio",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "amedrontado",
+        "agro"
+      ],
+      "reviewDecision": {
+        "category": "TESTE_SECUNDARIO",
+        "reason": "O estado depende de uma segunda defesa ou falha; nao pode entrar automaticamente apenas com o acerto principal."
+      },
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "vida"
+        },
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-nayr-velcaris",
+      "character": "Nayr",
+      "featureId": "feature-5-ira-autopunitiva",
+      "feature": "Ira Autopunitiva",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "exausto",
+        "protecao"
+      ],
+      "reviewDecision": {
+        "category": "REGRA_ESPECIAL_MANUAL",
+        "reason": "O efeito e real, mas nao equivale sozinho ao estado padrao; exige regra propria ou confirmacao do Mestre."
+      },
+      "resourceCosts": [
+        {
+          "amount": 4,
+          "resource": "fushi"
+        },
+        {
+          "amount": 3,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-nayr-velcaris",
+      "character": "Nayr",
+      "featureId": "feature-6-habilidade-latente-o-que-sobrou-do-filho",
+      "feature": "⚫ HABILIDADE LATENTE O QUE SOBROU DO FILHO",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 6,
+          "resource": "fushi"
+        },
+        {
+          "amount": 6,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-renji-akimura",
+      "character": "Renji",
+      "featureId": "feature-1-escutar-antes-de-olhar",
+      "feature": "👂 Escutar Antes de Olhar",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-renji-akimura",
+      "character": "Renji",
+      "featureId": "feature-2-interromper-movimento",
+      "feature": "🥊 Interromper Movimento",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-renji-akimura",
+      "character": "Renji",
+      "featureId": "feature-3-sair-da-linha",
+      "feature": "🦶 Sair da Linha",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "agro"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-renji-akimura",
+      "character": "Renji",
+      "featureId": "feature-4-guarda-de-rua",
+      "feature": "Guarda de Rua",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "protecao"
+      ],
+      "reviewDecision": {
+        "category": "EFEITO_DIRETO_ESTRUTURAVEL",
+        "reason": "O texto aplica um estado ou modificador direto e pode receber automacao estruturada sem mudar a habilidade."
+      },
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-renji-akimura",
+      "character": "Renji",
+      "featureId": "feature-5-modo-sobrevivente",
+      "feature": "Modo Sobrevivente",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        },
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-kazuo-kato",
+      "character": "Kazuo",
+      "featureId": "feature-1-ouvir-o-fluxo",
+      "feature": "👂 Ouvir o Fluxo",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "amedrontado"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-kazuo-kato",
+      "character": "Kazuo",
+      "featureId": "feature-2-toque-de-desvio",
+      "feature": "🪵 Toque de Desvio",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-kazuo-kato",
+      "character": "Kazuo",
+      "featureId": "feature-3-palavra-de-centro",
+      "feature": "🧘 Palavra de Centro",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-kazuo-kato",
+      "character": "Kazuo",
+      "featureId": "feature-4-passo-antes-da-queda",
+      "feature": "🛑 Passo Antes da Queda",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 3,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-vila-kazuo-kato",
+      "character": "Kazuo",
+      "featureId": "feature-5-mao-no-ombro",
+      "feature": "🫱 Mão no Ombro",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 2,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-1-o-jogo-global-do-dragao",
+      "feature": "🎲 O JOGO GLOBAL DO DRAGÃO",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-2-provas-do-jogo-global",
+      "feature": "🧩 PROVAS DO JOGO GLOBAL",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-3-fase-final-a-forma-humana-do-dragao",
+      "feature": "FASE FINAL A FORMA HUMANA DO DRAGÃO",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "amedrontado",
+        "vacina"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-4-coracao-da-imortalidade",
+      "feature": "🐉 Coração da Imortalidade",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-5-escamas-do-desejo",
+      "feature": "🌌 Escamas do Desejo",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-6-chama-draconica-celestial",
+      "feature": "Chama Dracônica Celestial",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-7-presenca-de-cataclisma",
+      "feature": "🐉 Presença de Cataclisma",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-8-sopro-draconico-celestial",
+      "feature": "Sopro Dracônico Celestial",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 18,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-9-mandato-da-lenda",
+      "feature": "🌌 Mandato da Lenda",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 15,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-10-garras-da-imortalidade",
+      "feature": "🐲 Garras da Imortalidade",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 12,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-11-chama-draconica",
+      "feature": "Chama Dracônica",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-12-cauda-celestial",
+      "feature": "🌠 Cauda Celestial",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 10,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-13-voo-do-ser-imortal",
+      "feature": "Voo do Ser Imortal",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-14-olho-do-desejo",
+      "feature": "Olho do Desejo",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 20,
+          "resource": "fushi"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-16-julgamento-draconico",
+      "feature": "🐉 Julgamento Dracônico",
+      "kind": "habilidade",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 40,
+          "resource": "fushi"
+        },
+        {
+          "amount": 20,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-18-recompensa-desejo-do-dragao-fushi",
+      "feature": "🎁 RECOMPENSA DESEJO DO DRAGÃO FUSHI",
+      "kind": "habilidade",
+      "classification": "REVISAR_ESTRUTURA",
+      "structuredStatuses": [],
+      "keywordCandidates": [
+        "aura",
+        "cura"
+      ],
+      "reviewDecision": {
+        "category": "REFERENCIA_NAO_APLICA",
+        "reason": "O texto cita o conceito, evita reacao, diagnostica ou move imediatamente; nao impoe o estado canonico."
+      },
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-15-equilibrio-absoluto",
+      "feature": "⚖ Equilíbrio Absoluto",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [
+        {
+          "amount": 20,
+          "resource": "fushi"
+        },
+        {
+          "amount": 10,
+          "resource": "determinacao"
+        }
+      ],
+      "resourceCostStatus": "DEFINIDO"
+    },
+    {
+      "characterId": "npc-lore-vhazaryon",
+      "character": "Vhazaryon",
+      "featureId": "feature-17-habilidade-lendaria-o-jogo-da-imortalidade",
+      "feature": "🌌 HABILIDADE LENDÁRIA O JOGO DA IMORTALIDADE",
+      "kind": "ritual",
+      "classification": "SEM_ESTADO_EXPLICITO",
+      "structuredStatuses": [],
+      "keywordCandidates": [],
+      "reviewDecision": null,
+      "resourceCosts": [],
+      "resourceCostStatus": "REVISAR_CUSTO"
+    }
+  ]
+}

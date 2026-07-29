@@ -21,6 +21,7 @@ const contactSheetRoot = path.join(
   '.codex-dev',
   'mun-interlude-thumbnails',
 )
+const imageProbeCache = new Map()
 
 function getFushiDataRoot() {
   const overriddenAppDataRoot = process.env.FUSHI_APPDATA_ROOT?.trim()
@@ -123,6 +124,12 @@ function probeImage(filePath) {
     }
   }
 
+  const cachedProbe = imageProbeCache.get(filePath)
+
+  if (cachedProbe) {
+    return cachedProbe
+  }
+
   const result = childProcess.spawnSync(
     ffmpegPath,
     [
@@ -140,6 +147,7 @@ function probeImage(filePath) {
     {
       encoding: null,
       maxBuffer: 20 * 1024 * 1024,
+      timeout: 15000,
       windowsHide: true,
     },
   )
@@ -148,12 +156,15 @@ function probeImage(filePath) {
   const dimensionsMatch = /s:(\d+)x(\d+)/.exec(stderr)
 
   if (result.status !== 0 || pixels.length !== 32 * 32) {
-    return {
+    const failedProbe = {
       decodes: false,
       error: stderr.trim().split(/\r?\n/).slice(-3).join(' ') || `ffmpeg status ${result.status}`,
       filePath,
       sampledBytes: pixels.length,
     }
+
+    imageProbeCache.set(filePath, failedProbe)
+    return failedProbe
   }
 
   const values = [...pixels]
@@ -171,7 +182,7 @@ function probeImage(filePath) {
     (mean < 18 || mean > 237)
   const nearBlack = mean < 7 && maximum < 22
 
-  return {
+  const probe = {
     decodes: true,
     darkPixelRatio: Number(darkPixelRatio.toFixed(4)),
     filePath,
@@ -184,6 +195,9 @@ function probeImage(filePath) {
     visuallyEmpty,
     width: dimensionsMatch ? Number(dimensionsMatch[1]) : 0,
   }
+
+  imageProbeCache.set(filePath, probe)
+  return probe
 }
 
 function summarizeThumbnailAudit(entries) {
@@ -400,6 +414,14 @@ async function main() {
     const maps = tabletopModule.tabletopData.assetLibrary.maps
     const mundi = mundiModule.EMPTY_WORLD_MUNDI_STATE
     const mapsById = new Map(maps.map((map) => [map.id, map]))
+    const locationByMapId = new Map(
+      mundi.locations
+        .filter((location) => location.mapId)
+        .map((location) => [location.mapId, location]),
+    )
+    const locationById = new Map(
+      mundi.locations.map((location) => [location.id, location]),
+    )
     const contentLibraryAssetRoot = path.join(
       getFushiDataRoot(),
       'library',
@@ -449,7 +471,14 @@ async function main() {
     })
 
     const thumbnailAudit = automaticMaps.map((map) => {
-      const thumbnailAsset = map.thumbnailUrl || map.previewImage || ''
+      const linkedLocation =
+        locationByMapId.get(map.id) ||
+        (map.munLocationId ? locationById.get(map.munLocationId) : null)
+      const locationPreviewAsset =
+        linkedLocation?.previewImageUrl || linkedLocation?.imagemLocalUrl || ''
+      const mapThumbnailAsset = map.thumbnailUrl || map.previewImage || ''
+      const thumbnailAsset = locationPreviewAsset || mapThumbnailAsset
+      const semanticSource = locationPreviewAsset ? 'mundi-location' : 'map-thumbnail'
       const sourceThumbnailPath = resolveExistingAssetFile(
         sourceAssetRoot,
         thumbnailAsset,
@@ -576,14 +605,31 @@ async function main() {
         contentLibraryThumbnailPath,
         mapId: map.id,
         mapName: map.name,
+        mapThumbnailAsset,
         releaseThumbnailPath,
         runtime,
         runtimeThumbnailPath,
         source,
         sourceThumbnailPath,
+        semanticSource,
         thumbnailAsset,
       }
     })
+
+    const statuesTransition = thumbnailAudit.find(
+      (entry) => entry.mapId === 'praia_estatuas_litoral_topdown',
+    )
+
+    if (
+      statuesTransition?.thumbnailAsset !==
+      '/assets/mundi/locations/estatuas_litoral.png'
+    ) {
+      issues.push({
+        code: 'estatuas-transition-not-using-mundi-preview',
+        actual: statuesTransition?.thumbnailAsset ?? '',
+        expected: '/assets/mundi/locations/estatuas_litoral.png',
+      })
+    }
 
     const m5Submap = mundi.submaps.find(
       (submap) => submap.id === 'm5_s1_riacho_nilo_liora',
@@ -613,6 +659,27 @@ async function main() {
       issues.push({
         code: 'm5-active-under-riacho',
         locationId: riachoLocation.id,
+      })
+    }
+
+    const m3Submap = mundi.submaps.find((submap) => submap.id === 'm3_s1_cartoteca_porao')
+
+    if (m3Submap?.parentLocationId !== 'armazem_comunitario') {
+      issues.push({
+        code: 'm3-parent-mismatch',
+        actual: m3Submap?.parentLocationId ?? '',
+        expected: 'armazem_comunitario',
+      })
+    }
+
+    const warehouseLocation = mundi.locations.find(
+      (location) => location.id === 'armazem_comunitario',
+    )
+
+    if (!warehouseLocation?.activeSubmapIds?.includes('m3_s1_cartoteca_porao')) {
+      issues.push({
+        code: 'm3-not-active-under-warehouse',
+        locationId: warehouseLocation?.id ?? '',
       })
     }
 

@@ -241,21 +241,42 @@ async function main() {
       return document.querySelector('.tabletop-board__free-3d-layer canvas')?.dataset.cameraTarget ?? null
     })()`,
   )
-  await delay(300)
-  const streamedDuringHold = await evaluate(
+  const streamDeadline = Date.now() + 1_200
+  let streamedDuringHold = {
+    cameraStreamSequence: before.cameraStreamSequence,
+    cameraTarget: before.cameraTarget,
+  }
+
+  while (Date.now() < streamDeadline) {
+    await delay(100)
+    streamedDuringHold = await evaluate(
+      send,
+      `(() => {
+        const canvas = document.querySelector('.tabletop-board__free-3d-layer canvas')
+        return {
+          cameraStreamSequence: Number(canvas?.dataset.cameraStreamSequence ?? 0),
+          cameraTarget: canvas?.dataset.cameraTarget ?? null,
+        }
+      })()`,
+    )
+
+    if (
+      streamedDuringHold.cameraStreamSequence > before.cameraStreamSequence &&
+      streamedDuringHold.cameraTarget !== before.cameraTarget
+    ) {
+      break
+    }
+  }
+
+  await evaluate(
     send,
     `(() => {
-      const canvas = document.querySelector('.tabletop-board__free-3d-layer canvas')
-      const result = {
-        cameraStreamSequence: Number(canvas?.dataset.cameraStreamSequence ?? 0),
-        cameraTarget: canvas?.dataset.cameraTarget ?? null,
-      }
       window.dispatchEvent(new KeyboardEvent('keyup', {
         bubbles: true,
         cancelable: true,
         key: 'w',
       }))
-      return result
+      return true
     })()`,
   )
   await send('Input.dispatchMouseEvent', {

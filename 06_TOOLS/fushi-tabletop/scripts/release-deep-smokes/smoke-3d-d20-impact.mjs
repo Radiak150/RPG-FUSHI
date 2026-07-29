@@ -231,10 +231,23 @@ async function main() {
   const canvasReady = await waitFor(
     send,
     `Boolean(document.querySelector('.tabletop-board__free-3d-layer canvas[data-camera-mode="free"]'))`,
-    50,
-    240,
+    100,
+    300,
   )
-  if (!canvasReady) throw new Error('3D GM canvas did not become ready')
+  if (!canvasReady) {
+    const diagnostic = await evaluate(
+      send,
+      `(() => ({
+        hasTabletop: Boolean(document.querySelector('.tabletop-screen')),
+        hasStage: Boolean(document.querySelector('.tabletop-board__stage')),
+        hasFreeLayer: Boolean(document.querySelector('.tabletop-board__free-3d-layer')),
+        canvasCount: document.querySelectorAll('.tabletop-board__free-3d-layer canvas').length,
+        cameraModes: Array.from(document.querySelectorAll('.tabletop-board__free-3d-layer canvas')).map((canvas) => canvas.dataset.cameraMode ?? null),
+        active3dButton: Array.from(document.querySelectorAll('button')).find((button) => button.textContent?.trim().includes('3D GM'))?.className ?? null,
+      }))()`
+    )
+    throw new Error(`3D GM canvas did not become ready: ${JSON.stringify(diagnostic)}`)
+  }
   await delay(2200)
 
   const before = await evaluate(
@@ -502,6 +515,13 @@ async function main() {
       }
     }
 
+    // The tabletop keeps the result unobstructed before restoring windows that
+    // were open before the roll. Observe the post-restore state, not the first
+    // impact frame.
+    if (observedImpact) {
+      await delay(1_100)
+    }
+
     const after = await evaluate(
       send,
       `(() => {
@@ -520,6 +540,9 @@ async function main() {
           imageNaturalWidth: image?.naturalWidth ?? 0,
           impactText: document.querySelector('.tabletop-dice-box-overlay__impact')?.textContent?.trim() ?? '',
           impactActive: canvas?.dataset.impactActive ?? null,
+          rollBase: document.querySelector('.tabletop-dice-box-overlay')?.dataset.rollBase ?? null,
+          rollResults: document.querySelector('.tabletop-dice-box-overlay')?.dataset.rollResults ?? null,
+          rollMode: document.querySelector('.tabletop-dice-box-overlay')?.dataset.rollMode ?? null,
           rollOutcome: document.querySelector('.tabletop-dice-box-overlay')?.dataset.rollOutcome ?? null,
           rollTotal: document.querySelector('.tabletop-dice-box-overlay')?.dataset.rollTotal ?? null,
           rollWindowMinimized: Boolean(document.querySelector('.floating-window--log.floating-window--minimized')),
@@ -569,7 +592,7 @@ async function main() {
     !critical.after.impactText.toLowerCase().includes('sucesso') &&
     critical.after.rollOutcome === 'critical' &&
     critical.after.rollTotal === '1' &&
-    critical.after.rollWindowMinimized &&
+    critical.after.rollWindowMinimized === false &&
     critical.after.imageComplete &&
     critical.after.imageNaturalWidth > 0 &&
     triumph.clicked &&
@@ -582,7 +605,7 @@ async function main() {
     !triumph.after.impactText.toLowerCase().includes('falha') &&
     triumph.after.rollOutcome === 'triumph' &&
     triumph.after.rollTotal === '20' &&
-    triumph.after.rollWindowMinimized &&
+    triumph.after.rollWindowMinimized === false &&
     triumph.after.imageComplete &&
     triumph.after.imageNaturalWidth > 0 &&
     actionableIssueEvents.length === 0

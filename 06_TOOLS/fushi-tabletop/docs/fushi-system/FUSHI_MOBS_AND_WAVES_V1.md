@@ -128,43 +128,21 @@ Estes foram adicionados como `tipo: mob` e devem aparecer na pasta virtual MOBS.
 
 ### Lobo Cinzento
 
-- Nivel de Poder: Basico.
+- Papel de encontro: Minion.
 - Defesa: 10.
-- Vida: 4.
-- Ataque: Mordida, Forca + Luta, 1d4.
+- Vida: 8.
+- Bloqueio: 0; Esquiva por Reacao se a ficha permitir.
+- Ataque: Mordida, Forca + Luta, 1d6.
 - Uso: primeiro combate, 2 a 4 unidades.
 
 ### Lobo Marcado por FUSHI
 
-- Nivel de Poder: Basico+.
+- Papel de encontro: Elite de alcateia FUSHI.
 - Defesa: 12.
-- Vida: 6.
-- Ataque: Mordida Instavel, 1d4+1.
+- Vida: 14.
+- Bloqueio: 0; Esquiva por Reacao se a ficha permitir.
+- Ataque: Mordida Instavel, 1d6+1.
 - Uso: elite da primeira wave; mostra FUSHI em animal.
-
-### Javali de Casco Duro
-
-- Nivel de Poder: Basico+.
-- Defesa: 11.
-- Vida: 8.
-- Ataque: Chifrada, 1d6.
-- Uso: ensina bloqueio, empurrao e terreno.
-
-### Corvo do Veu Cinza
-
-- Nivel de Poder: Basico+.
-- Defesa: 13.
-- Vida: 3.
-- Ataque fraco, funcao de alarme.
-- Uso: chama reforco, revela movimento, aumenta chance de encontro.
-
-### Urso FUSHI Jovem
-
-- Nivel de Poder: Avancado.
-- Defesa: 14.
-- Vida: 22.
-- Ataque: Patada Verde, 1d8+2.
-- Uso: elite territorial da Floresta Mistica. Nao usar na primeira sessao.
 
 ### Eco de Liora
 

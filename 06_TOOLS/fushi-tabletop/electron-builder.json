@@ -68,10 +68,19 @@
       "to": "assets/maps/planicie",
       "filter": [
         "caverna-inicial/**/*",
+        "vila/exterior/campo-treino-vila/**/*",
         "planicie_aberta.png",
         "regiao_vila.png",
         "trilha_sobrevivencia.png"
       ]
+    },
+    {
+      "from": "public/assets/maps/mundo-dos-sonhos",
+      "to": "assets/maps/mundo-dos-sonhos"
+    },
+    {
+      "from": "public/assets/_optimized/maps/mundo-dos-sonhos",
+      "to": "assets/_optimized/maps/mundo-dos-sonhos"
     },
     {
       "from": "public/assets/transitions/planicie",

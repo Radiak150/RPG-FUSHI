@@ -1,0 +1,103 @@
+{
+  "version": 2,
+  "roll": "1d10",
+  "rarityBudgets": {
+    "comum": 10,
+    "raro": 12,
+    "epico": 14,
+    "lendario": 16,
+    "mitico": 18
+  },
+  "rarities": [
+    { "id": "comum", "label": "Comum", "min": 1, "max": 2, "representativeRoll": 2, "color": "#aeb9b5" },
+    { "id": "raro", "label": "Raro", "min": 3, "max": 4, "representativeRoll": 4, "color": "#74d6f2" },
+    { "id": "epico", "label": "Épico", "min": 5, "max": 6, "representativeRoll": 6, "color": "#c9b7ff" },
+    { "id": "lendario", "label": "Lendário", "min": 7, "max": 9, "representativeRoll": 9, "color": "#f2d59b" },
+    { "id": "mitico", "label": "Mítico", "min": 10, "max": 10, "representativeRoll": 10, "color": "#f08d88" }
+  ],
+  "biomes": [
+    { "id": "planicie", "label": "Planície / Floresta Inicial" },
+    { "id": "praia", "label": "Praia / Litoral / Oceano" },
+    { "id": "montanha", "label": "Montanhas do Vazio Sereno" },
+    { "id": "floresta", "label": "Floresta Mística" },
+    { "id": "vulcao", "label": "Vulcão / Terras Cinzentas" },
+    { "id": "gelo", "label": "Região Congelada / Neve" },
+    { "id": "ruinas", "label": "Ruínas Antigas" },
+    { "id": "veu", "label": "Vale Cinzento / Rotas do Véu" }
+  ],
+  "archetypes": [
+    { "id": "tank", "label": "Tank", "affinity": "vigor", "affinityStat": "life", "affinityDivisor": 1, "color": "#7ec8a5", "summary": "Absorve pressão e protege a continuidade do grupo.", "publicExampleItemId": "planicie-tank-casca-vigia" },
+    { "id": "assassino", "label": "Assassino", "affinity": "agilidade", "affinityStat": "initiative", "affinityDivisor": 1, "color": "#e87457", "summary": "Converte abertura e isolamento em explosão de dano.", "publicExampleItemId": "planicie-assassino-dente-primeiro-lobo" },
+    { "id": "suporte", "label": "Suporte", "affinity": "presenca", "affinityStat": "healing", "affinityDivisor": 2, "color": "#74d6f2", "summary": "Mantém aliados ativos e amplia a qualidade das ações do grupo.", "publicExampleItemId": "planicie-suporte-fita-memoria" },
+    { "id": "lutador", "label": "Lutador", "affinity": "forca", "affinityStat": "determination", "affinityDivisor": 1, "color": "#d8a34d", "summary": "Entrega consistência física sem atingir o pico dos especialistas.", "publicExampleItemId": "planicie-lutador-punho-estrada" },
+    { "id": "atirador", "label": "Atirador", "affinity": "agilidade", "affinityStat": "initiative", "affinityDivisor": 1, "color": "#9bc7ef", "summary": "Controla distância, linha de tiro e prioridade de alvo.", "publicExampleItemId": "planicie-atirador-mira-vidro-claro" },
+    { "id": "ocultista", "label": "Ocultista", "affinity": "intelecto", "affinityStat": "fushi", "affinityDivisor": 1, "color": "#b79cff", "summary": "Troca resistência corporal por mais FUSHI e impacto de Habilidades.", "publicExampleItemId": "planicie-ocultista-pedra-foco-fushi" }
+  ],
+  "items": [
+    { "id": "planicie-tank-casca-vigia", "biomeId": "planicie", "archetype": "tank", "name": "Casca de Vigia", "weights": { "life": 7, "damage": -3 }, "passive": "A primeira fonte de dano de cada cena causa 1 a menos." },
+    { "id": "praia-tank-ancora-salina", "biomeId": "praia", "archetype": "tank", "name": "Âncora Salina", "weights": { "block": 4, "movement": -4, "initiative": -2 }, "passive": "Empurrões recebidos movem 1 m a menos. Em Disparada, a perda de Deslocamento desta build é aplicada outra vez durante a ação." },
+    { "id": "montanha-tank-placa-vazio-sereno", "biomeId": "montanha", "archetype": "tank", "name": "Placa do Vazio Sereno", "weights": { "determination": 6, "fushi": -4 }, "passive": "Recebe +1 em testes para permanecer consciente." },
+    { "id": "floresta-tank-cerne-guardiao", "biomeId": "floresta", "archetype": "tank", "name": "Cerne Guardião", "weights": { "life": 6, "initiative": -4 }, "passive": "Cura recebida recupera +1 Vida." },
+    { "id": "vulcao-tank-escama-obsidiana", "biomeId": "vulcao", "archetype": "tank", "name": "Escama de Obsidiana", "weights": { "ca": 3, "damage": -7 }, "passive": "Reduz em 1 o primeiro dano de fogo ou calor da cena." },
+    { "id": "gelo-tank-casco-geada", "biomeId": "gelo", "archetype": "tank", "name": "Casco de Geada", "weights": { "healingReceived": 5, "damage": -5 }, "passive": "Ignora a primeira penalidade de terreno gelado da cena." },
+    { "id": "ruinas-tank-placa-memorial", "biomeId": "ruinas", "archetype": "tank", "name": "Placa do Memorial", "weights": { "life": 4, "determination": 3, "initiative": -3 }, "passive": "Enquanto protege um aliado adjacente, recebe +1 Bloqueio." },
+    { "id": "veu-tank-manto-bruma-densa", "biomeId": "veu", "archetype": "tank", "name": "Manto de Bruma Densa", "weights": { "life": 5, "healingReceived": 2, "damage": -3 }, "passive": "Cobertura parcial concede +1 CA adicional." },
+
+    { "id": "planicie-assassino-dente-primeiro-lobo", "biomeId": "planicie", "archetype": "assassino", "name": "Dente do Primeiro Lobo", "weights": { "damage": 3, "life": -7 }, "passive": "Causa +1 dano contra alvo isolado." },
+    { "id": "praia-assassino-lamina-mare-baixa", "biomeId": "praia", "archetype": "assassino", "name": "Lâmina de Maré Baixa", "weights": { "movement": 2, "meleeDamage": 3, "ca": -5 }, "passive": "Após atravessar 3 m, o primeiro ataque corpo a corpo causa +1 dano." },
+    { "id": "montanha-assassino-agulha-cristal", "biomeId": "montanha", "archetype": "assassino", "name": "Agulha de Cristal", "weights": { "initiative": 5, "healingReceived": -5 }, "passive": "O primeiro acerto da cena causa +1 dano." },
+    { "id": "floresta-assassino-espinho-sem-rastro", "biomeId": "floresta", "archetype": "assassino", "name": "Espinho sem Rastro", "weights": { "meleeDamage": 3, "determination": -7 }, "passive": "Sair de ocultação concede +1 dano no primeiro acerto." },
+    { "id": "vulcao-assassino-estilhaco-cinza", "biomeId": "vulcao", "archetype": "assassino", "name": "Estilhaço de Cinza", "weights": { "abilityDamage": 3, "fushi": -7 }, "passive": "Habilidades contra alvo abaixo de metade da Vida causam +1 dano." },
+    { "id": "gelo-assassino-lasca-gelo-negro", "biomeId": "gelo", "archetype": "assassino", "name": "Lasca de Gelo Negro", "weights": { "rangedDamage": 3, "healing": -7 }, "passive": "Contra alvo que ainda não agiu, causa +1 dano." },
+    { "id": "ruinas-assassino-chave-sem-nome", "biomeId": "ruinas", "archetype": "assassino", "name": "Chave sem Nome", "weights": { "criticalDamage": 3, "healingReceived": -7 }, "passive": "Em um crítico, o bônus de Dano Crítico é aplicado depois de dobrar os dados." },
+    { "id": "veu-assassino-faca-passo-cinza", "biomeId": "veu", "archetype": "assassino", "name": "Faca do Passo Cinza", "weights": { "caPenetration": 3, "ca": -7 }, "passive": "Perfuração reduz apenas a CA usada contra o ataque; nunca reduz a ficha do alvo." },
+
+    { "id": "planicie-suporte-fita-memoria", "biomeId": "planicie", "archetype": "suporte", "name": "Fita de Memória", "weights": { "healing": 2, "determination": 3, "damage": -5 }, "passive": "A primeira cura da cena recupera +1 Vida." },
+    { "id": "praia-suporte-concha-retorno", "biomeId": "praia", "archetype": "suporte", "name": "Concha de Retorno", "weights": { "determination": 6, "damage": -4 }, "passive": "Ajudar um aliado concede +1 Determinação temporária até o fim da cena." },
+    { "id": "montanha-suporte-sino-folego", "biomeId": "montanha", "archetype": "suporte", "name": "Sino do Fôlego", "weights": { "fushi": 6, "life": -4 }, "passive": "A primeira Habilidade de suporte da cena custa 1 FUSHI a menos." },
+    { "id": "floresta-suporte-musgo-vigilia", "biomeId": "floresta", "archetype": "suporte", "name": "Musgo de Vigília", "weights": { "healing": 2, "fushi": 3, "ca": -5 }, "passive": "Estabilizar um alvo concede +1 Vida imediata." },
+    { "id": "vulcao-suporte-brasa-retorno", "biomeId": "vulcao", "archetype": "suporte", "name": "Brasa de Retorno", "weights": { "healing": 2, "determination": 3, "movement": -5 }, "passive": "Aliado curado abaixo de metade da Vida recebe +1 no próximo teste." },
+    { "id": "gelo-suporte-fio-termico", "biomeId": "gelo", "archetype": "suporte", "name": "Fio Térmico", "weights": { "healingReceived": 5, "initiative": -5 }, "passive": "Cura em alvo Caído recupera +1 Vida." },
+    { "id": "ruinas-suporte-medalhao-vigilia", "biomeId": "ruinas", "archetype": "suporte", "name": "Medalhão de Vigília", "weights": { "determination": 5, "initiative": -5 }, "passive": "A primeira falha de Vontade da cena recebe +1 no total." },
+    { "id": "veu-suporte-fio-sinal", "biomeId": "veu", "archetype": "suporte", "name": "Fio de Sinal", "weights": { "fushi": 6, "damage": -4 }, "passive": "Ajudar a distância de até 6 m continua sendo possível com linha de visão." },
+
+    { "id": "planicie-lutador-punho-estrada", "biomeId": "planicie", "archetype": "lutador", "name": "Punho de Estrada", "weights": { "life": 2, "meleeDamage": 2, "fushi": -6 }, "passive": "Manobras corpo a corpo recebem +1 no total." },
+    { "id": "praia-lutador-no-conves", "biomeId": "praia", "archetype": "lutador", "name": "Nó de Convés", "weights": { "movement": 2, "block": 2, "healing": -6 }, "passive": "Empurrar ou Puxar move 1 m adicional." },
+    { "id": "montanha-lutador-faixa-pedra", "biomeId": "montanha", "archetype": "lutador", "name": "Faixa de Pedra", "weights": { "block": 2, "meleeDamage": 2, "abilityDamage": -6 }, "passive": "Após Bloquear, o próximo ataque corpo a corpo causa +1 dano." },
+    { "id": "floresta-lutador-bracadeira-cipo", "biomeId": "floresta", "archetype": "lutador", "name": "Braçadeira de Cipó", "weights": { "life": 2, "ca": 2, "determination": -6 }, "passive": "Agarrar recebe +1 no total." },
+    { "id": "vulcao-lutador-manopla-escoria", "biomeId": "vulcao", "archetype": "lutador", "name": "Manopla de Escória", "weights": { "meleeDamage": 2, "determination": 2, "healingReceived": -6 }, "passive": "Ao sofrer dano corpo a corpo, o próximo acerto causa +1 dano." },
+    { "id": "gelo-lutador-punho-gelo-azul", "biomeId": "gelo", "archetype": "lutador", "name": "Punho de Gelo Azul", "weights": { "life": 2, "movement": 2, "initiative": -6 }, "passive": "Derrubar recebe +1 no total." },
+    { "id": "ruinas-lutador-manopla-arco-caido", "biomeId": "ruinas", "archetype": "lutador", "name": "Manopla do Arco Caído", "weights": { "meleeDamage": 2, "caPenetration": 2, "rangedDamage": -6 }, "passive": "Desarmar recebe +1 no total." },
+    { "id": "veu-lutador-bracadeira-caminho-oculto", "biomeId": "veu", "archetype": "lutador", "name": "Braçadeira do Caminho Oculto", "weights": { "determination": 2, "initiative": 2, "healingReceived": -6 }, "passive": "Desengajar concede +1 CA até o próximo turno." },
+
+    { "id": "planicie-atirador-mira-vidro-claro", "biomeId": "planicie", "archetype": "atirador", "name": "Mira de Vidro Claro", "weights": { "rangedDamage": 5, "adjacentDamage": -5 }, "passive": "A mais de 6 m, o primeiro disparo da cena causa +1 dano." },
+    { "id": "praia-atirador-luneta-ressaca", "biomeId": "praia", "archetype": "atirador", "name": "Luneta da Ressaca", "weights": { "initiative": 5, "life": -5 }, "passive": "Ignora a primeira penalidade de clima em Pontaria." },
+    { "id": "montanha-atirador-olho-pico", "biomeId": "montanha", "archetype": "atirador", "name": "Olho do Pico", "weights": { "rangedDamage": 3, "ca": -7 }, "passive": "Atacar de posição elevada causa +1 dano à distância." },
+    { "id": "floresta-atirador-semente-mira", "biomeId": "floresta", "archetype": "atirador", "name": "Semente de Mira", "weights": { "movement": 4, "determination": -6 }, "passive": "Cobertura vegetal leve não reduz a linha de tiro." },
+    { "id": "vulcao-atirador-mira-basalto", "biomeId": "vulcao", "archetype": "atirador", "name": "Mira de Basalto", "weights": { "rangedDamage": 3, "fushi": -7 }, "passive": "Alvo imóvel sofre +1 dano à distância." },
+    { "id": "gelo-atirador-lente-nevasca", "biomeId": "gelo", "archetype": "atirador", "name": "Lente de Nevasca", "weights": { "rangedDamage": 3, "healingReceived": -7 }, "passive": "A primeira troca de alvo da cena não perde preparação." },
+    { "id": "ruinas-atirador-visor-sentinela", "biomeId": "ruinas", "archetype": "atirador", "name": "Visor do Sentinela", "weights": { "criticalDamage": 3, "healing": -7 }, "passive": "Em um crítico, o bônus de Dano Crítico é aplicado depois de dobrar os dados." },
+    { "id": "veu-atirador-mira-veu", "biomeId": "veu", "archetype": "atirador", "name": "Mira do Véu", "weights": { "caPenetration": 3, "meleeDamage": -7 }, "passive": "Perfuração reduz apenas a CA usada contra o disparo; nunca reduz a ficha do alvo." },
+
+    { "id": "planicie-ocultista-pedra-foco-fushi", "biomeId": "planicie", "archetype": "ocultista", "name": "Pedra de Foco FUSHI", "weights": { "fushi": 6, "life": -4 }, "passive": "A primeira Habilidade da cena custa 1 FUSHI a menos." },
+    { "id": "praia-ocultista-perola-corrente", "biomeId": "praia", "archetype": "ocultista", "name": "Pérola de Corrente", "weights": { "abilityDamage": 3, "determination": -7 }, "passive": "Habilidade que move um alvo desloca 1 m adicional." },
+    { "id": "montanha-ocultista-prisma-eco", "biomeId": "montanha", "archetype": "ocultista", "name": "Prisma de Eco", "weights": { "determination": 6, "ca": -4 }, "passive": "A primeira falha de Ocultismo da cena recebe +1 no total." },
+    { "id": "floresta-ocultista-seiva-lunar", "biomeId": "floresta", "archetype": "ocultista", "name": "Seiva Lunar", "weights": { "fushi": 5, "movement": -5 }, "passive": "Habilidade de controle recebe +1 no teste contra um único alvo." },
+    { "id": "vulcao-ocultista-nucleo-magma", "biomeId": "vulcao", "archetype": "ocultista", "name": "Núcleo de Magma", "weights": { "abilityDamage": 3, "healingReceived": -7 }, "passive": "Habilidades contra alvo abaixo de metade da Vida causam +1 dano." },
+    { "id": "gelo-ocultista-cristal-aurora", "biomeId": "gelo", "archetype": "ocultista", "name": "Cristal de Aurora", "weights": { "fushi": 6, "ca": -4 }, "passive": "A primeira Habilidade defensiva da cena dura 1 turno adicional." },
+    { "id": "ruinas-ocultista-fragmento-inscricao", "biomeId": "ruinas", "archetype": "ocultista", "name": "Fragmento de Inscrição", "weights": { "determination": 6, "damage": -4 }, "passive": "Rituais preparados recebem +1 no primeiro teste." },
+    { "id": "veu-ocultista-orbe-nevoa", "biomeId": "veu", "archetype": "ocultista", "name": "Orbe de Névoa", "weights": { "criticalDamage": 3, "fushi": -7 }, "passive": "Habilidade usada sem linha de visão direta recebe +1 no teste quando o alvo já foi percebido." }
+  ],
+  "secretItems": [
+    { "id": "secreto-elevacao-mitica", "name": "Memória de Elevação", "effect": "Eleva um item já absorvido diretamente para a raridade Mítica.", "placement": "Somente trama; não participa da distribuição comum por bioma." },
+    { "id": "secreto-cinco-ecos", "name": "Eco das Cinco Escolhas", "effect": "Permite rerrolar a raridade de um item já absorvido até cinco vezes, mantendo um dos resultados obtidos.", "placement": "Somente trama; não participa da distribuição comum por bioma." }
+  ],
+  "rules": {
+    "absorption": "A raridade só é revelada depois que o personagem aceita absorver o item. A absorção é permanente em jogo.",
+    "debugRemoval": "Somente o Mestre pode remover uma absorção pelo BUI para correção técnica.",
+    "dominantAffinity": "A afinidade do arquétipo dominante é aplicada uma única vez. Em empate, prevalece o arquétipo do item absorvido mais recentemente.",
+    "healingSaturation": "Em combate, o primeiro efeito de cura recebido por um alvo na rodada usa o bônus completo de build; curas seguintes no mesmo alvo usam metade desse bônus, arredondada para baixo.",
+    "blockCap": "Fortitude e bônus comuns respeitam o teto 15. Apenas bônus explícitos de item podem ultrapassá-lo.",
+    "dashMovement": "Disparada aplica novamente a perda total de Deslocamento da build durante a ação; após a ação, volta ao valor normal da build."
+  }
+}

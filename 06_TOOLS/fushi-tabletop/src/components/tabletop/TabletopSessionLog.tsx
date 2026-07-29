@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { RollConfig, RollMode } from '../../data/types'
 import { createRollRecord, formatRollFormula } from '../../lib/rolls'
 import type { TabletopLogEntry } from '../../lib/tabletopSession'
@@ -6,6 +6,11 @@ import { DiceIcon } from '../ui/DiceIcon'
 
 interface TabletopSessionLogProps {
   authorLabel: string
+  bonusOptions?: Array<{
+    bonus: number
+    id: string
+    label: string
+  }>
   entries: TabletopLogEntry[]
   isGm: boolean
   rollDraft: TabletopRollDraft
@@ -17,6 +22,8 @@ interface TabletopSessionLogProps {
   isRollLocked?: boolean
   rollLockLabel?: string
   rollQueueLabels?: string[]
+  combatPanel?: ReactNode
+  combatFocusSignal?: number
 }
 
 export interface TabletopRollDraft {
@@ -84,6 +91,7 @@ function renderFeedEntries(entries: TabletopLogEntry[], emptyText: string) {
 
 export function TabletopSessionLog({
   authorLabel,
+  bonusOptions = [],
   entries,
   isGm,
   rollDraft,
@@ -95,8 +103,23 @@ export function TabletopSessionLog({
   isRollLocked = false,
   rollLockLabel = '',
   rollQueueLabels = [],
+  combatPanel,
+  combatFocusSignal,
 }: TabletopSessionLogProps) {
   const [message, setMessage] = useState('')
+  const [rollSurface, setRollSurface] = useState<'common' | 'combat'>('common')
+
+  useEffect(() => {
+    if (combatFocusSignal === undefined) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setRollSurface('combat')
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [combatFocusSignal])
   const visibleEntries = useMemo(
     () => entries.filter((entry) => isGm || entry.visibility === 'public'),
     [entries, isGm],
@@ -172,7 +195,29 @@ export function TabletopSessionLog({
 
   return (
     <div className="tabletop-session-log">
-      <section className="tabletop-session-log__roller">
+      {combatPanel ? (
+        <div className="tabletop-session-log__surface-toggle" aria-label="Tipo de rolagem">
+          <button
+            aria-pressed={rollSurface === 'common'}
+            className={rollSurface === 'common' ? 'is-active' : ''}
+            onClick={() => setRollSurface('common')}
+            type="button"
+          >
+            Dados comuns
+          </button>
+          <button
+            aria-pressed={rollSurface === 'combat'}
+            className={rollSurface === 'combat' ? 'is-active' : ''}
+            onClick={() => setRollSurface('combat')}
+            type="button"
+          >
+            Dados de combate
+          </button>
+        </div>
+      ) : null}
+
+      {rollSurface === 'combat' && combatPanel ? combatPanel : (
+      <section className="tabletop-session-log__roller" data-roll-surface="common">
         <div className="list-card__top">
           <h3>Rolagens</h3>
           <span className="tag">{authorLabel}</span>
@@ -213,7 +258,34 @@ export function TabletopSessionLog({
             />
           </label>
           <label className="field">
-            <span>Bonus</span>
+            <span className="tabletop-session-log__bonus-heading">
+              Bonus
+              {bonusOptions.length > 0 ? (
+                <select
+                  aria-label="Escolher bonus de pericia"
+                  className="tabletop-session-log__bonus-select"
+                  defaultValue=""
+                  onChange={(event) => {
+                    const selectedOption = bonusOptions.find(
+                      (option) => option.id === event.target.value,
+                    )
+
+                    if (selectedOption) {
+                      updateRollDraft({ bonus: selectedOption.bonus })
+                    }
+                  }}
+                  title="Escolher bonus da ficha"
+                >
+                  <option value="">Escolher bonus</option>
+                  {bonusOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label} ({option.bonus >= 0 ? '+' : ''}
+                      {option.bonus})
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+            </span>
             <input
               className="field__input"
               onChange={(event) => updateRollDraft({ bonus: Number(event.target.value) || 0 })}
@@ -303,6 +375,7 @@ export function TabletopSessionLog({
           </div>
         ) : null}
       </section>
+      )}
 
       <section className="tabletop-session-log__composer">
         <div className="list-card__top">

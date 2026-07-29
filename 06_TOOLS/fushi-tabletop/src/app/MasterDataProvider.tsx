@@ -18,6 +18,7 @@ import {
   readMasterWorkspace,
   writeMasterWorkspace,
 } from '../lib/masterWorkspace'
+import { reconcileCharacterBuild } from '../lib/characterBuilds'
 import { useMultiplayer } from '../hooks/useMultiplayer'
 import { MasterDataContext, type MasterDataStatus } from './MasterDataContext'
 
@@ -172,9 +173,7 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
       return null
     }
 
-    const nextCharacter = {
-      ...character,
-    }
+    const nextCharacter = reconcileCharacterBuild({ ...character })
 
     updateWorkspaceState((currentWorkspace) => {
       if (!currentWorkspace) {
@@ -195,9 +194,7 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
       return null
     }
 
-    const nextCharacter = {
-      ...character,
-    }
+    const nextCharacter = reconcileCharacterBuild({ ...character })
 
     updateWorkspaceState((currentWorkspace) => {
       if (!currentWorkspace) {

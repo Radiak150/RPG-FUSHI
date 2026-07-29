@@ -42,8 +42,8 @@ export const navigationItems: NavigationItem[] = [
   {
     to: '/livro',
     label: 'Livro',
-    description: 'Base navegavel de regras, FUSHI e documentacao.',
-    allowedViews: ['gm'],
+    description: 'Livro do Jogador e escudo confidencial do Mestre.',
+    allowedViews: ['gm', 'player'],
   },
   {
     to: '/configuracoes',
@@ -95,9 +95,9 @@ const routeMeta: Record<string, RouteMeta> = {
   '/livro': {
     title: 'Livro',
     description:
-      'Estrutura navegavel para regras, sistema, FUSHI, protagonistas e base documental.',
+      'Consulta de regras do Jogador e escudo confidencial do Mestre.',
     eyebrow: 'Modulo',
-    allowedViews: ['gm'],
+    allowedViews: ['gm', 'player'],
   },
   '/configuracoes': {
     title: 'Configuracoes',

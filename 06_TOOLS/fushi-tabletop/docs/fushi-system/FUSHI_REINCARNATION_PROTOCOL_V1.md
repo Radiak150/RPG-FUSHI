@@ -1,5 +1,12 @@
 # FUSHI Reincarnation Protocol V1
 
+> Atualizacao operacional 2026-07-10: o protocolo comeca somente depois de 3
+> falhas de estabilizacao. A busca padrao segue para outro corpo; a opcao antiga
+> de reacender o proprio corpo fica suspensa salvo evento, item ou Ritual
+> aprovado explicitamente. A ordem atual e Ficha Avancada, Ficha Basica e Animal
+> Silvestre. A matematica completa de estabilizacao esta em
+> `FUSHI_RULEBOOK_CANON_V1.md`.
+
 Objetivo: transformar morte/reencarnacao em uma mecanica de mesa divertida, tensa e coerente com a lore do Fragmentado.
 
 ## Verdade de lore
@@ -12,10 +19,9 @@ Essa continuidade nao e premio gratis. E instinto de sobrevivencia.
 
 Quando um fragmento morre, a mesa resolve a busca nesta ordem:
 
-1. Consumir FUSHI ao redor e reacender o proprio corpo.
-2. Possuir a Ficha Avancada mais proxima.
-3. Possuir a Ficha Basica mais proxima.
-4. Cair em Animal Silvestre proximo.
+1. Possuir a Ficha Avancada mais proxima.
+2. Possuir a Ficha Basica mais proxima.
+3. Cair em Animal Silvestre proximo.
 
 Nao ha escolha livre de alvo. O MUN decide proximidade.
 
@@ -43,7 +49,6 @@ O jogador descreve em uma frase o que a consciencia tenta lembrar, sentir ou pux
 
 | Alvo | DT base |
 | --- | ---: |
-| Proprio corpo por FUSHI ao redor | 32 |
 | Ficha Avancada | 30 |
 | Ficha Basica | 20 |
 | Animal Silvestre | automatico |

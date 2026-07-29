@@ -26,6 +26,10 @@ const vilaArmazemComunitarioTopdownPath =
   '/assets/maps/planicie/vila/interior/armazem-comunitario/armazem_comunitario_interior_topdown_4000.png'
 const vilaArmazemComunitarioTopdownThumbPath =
   '/assets/maps/planicie/vila/interior/armazem-comunitario/armazem_comunitario_interior_topdown_thumb_640.jpg'
+const vilaArmazemCartotecaPoraoTopdownPath =
+  '/assets/maps/planicie/vila/interior/armazem-comunitario/submapas/M3-S1_cartoteca_porao_topdown_4000.png'
+const vilaArmazemCartotecaPoraoTopdownThumbPath =
+  '/assets/maps/planicie/vila/interior/armazem-comunitario/submapas/M3-S1_cartoteca_porao_topdown_thumb_640.jpg'
 const vilaCampoTreinoTopdownPath =
   '/assets/maps/planicie/vila/exterior/campo-treino-vila/campo_treino_vila_topdown_4000.png'
 const vilaCampoTreinoTopdownThumbPath =
@@ -46,6 +50,10 @@ const vilaRiachoClaroNiloLioraTopdownPath =
   '/assets/maps/planicie/vila/exterior-grande/riacho-claro/submapas/M5-S1_riacho_claro_nilo_liora_topdown_4000.png'
 const vilaRiachoClaroNiloLioraTopdownThumbPath =
   '/assets/maps/planicie/vila/exterior-grande/riacho-claro/submapas/M5-S1_riacho_claro_nilo_liora_topdown_thumb_640.jpg'
+const mundoDosSonhosFragmentadoTopdownPath =
+  '/assets/maps/mundo-dos-sonhos/fragmentado/mundo_dos_sonhos_fragmentado_topdown_4000.png'
+const mundoDosSonhosFragmentadoTopdownThumbPath =
+  '/assets/maps/mundo-dos-sonhos/fragmentado/mundo_dos_sonhos_fragmentado_topdown_thumb_640.jpg'
 const veuTorreObservacaoExteriorMapPath =
   '/assets/maps/veu-cinzento/torre-observacao/torre_observacao_exterior_topdown_4000.png'
 const veuTorreObservacaoExteriorThumbPath =
@@ -509,6 +517,21 @@ const planicieVillageTopdownMaps: TabletopMap[] = [
       'Interior de escambo e suprimentos da vila, com corredores claros e area de negociacao.',
   },
   {
+    id: 'planicie_m3_s1_cartoteca_porao_topdown',
+    biomeId: 'planicie_floresta_inicial',
+    munLocationId: 'armazem_comunitario_cartoteca',
+    name: 'M3-S1 - Cartoteca do Porao',
+    type: 'interior' as const,
+    mapVisibility: 'mestre_apenas' as const,
+    image: vilaArmazemCartotecaPoraoTopdownPath,
+    imageUrl: vilaArmazemCartotecaPoraoTopdownPath,
+    previewImage: vilaArmazemCartotecaPoraoTopdownThumbPath,
+    thumbnailUrl: vilaArmazemCartotecaPoraoTopdownThumbPath,
+    biome: 'Planicie / Floresta Inicial',
+    summary:
+      'Cartoteca subterranea de Orian sob o Armazem Comunitario, com rotas herdadas, registros da vila e a mesa de mapas.',
+  },
+  {
     id: 'planicie_campo_treino_vila_topdown',
     biomeId: 'planicie_floresta_inicial',
     munLocationId: 'campo_treino_vila',
@@ -595,6 +618,31 @@ const planicieVillageTopdownMaps: TabletopMap[] = [
   stageHeight: 4000,
   stageWidth: 4000,
 }))
+
+const mundoDosSonhosFragmentadoMap: TabletopMap = {
+  id: 'mundo_dos_sonhos_fragmentado_topdown',
+  biomeId: 'mundo_interno_fragmentado',
+  munLocationId: 'mundo_dos_sonhos_fragmentado',
+  name: 'Mundo dos Sonhos - Subconsciente do Fragmentado',
+  type: 'evento' as const,
+  mapVisibility: 'mestre_apenas' as const,
+  image: mundoDosSonhosFragmentadoTopdownPath,
+  imageUrl: mundoDosSonhosFragmentadoTopdownPath,
+  previewImage: mundoDosSonhosFragmentadoTopdownThumbPath,
+  thumbnailUrl: mundoDosSonhosFragmentadoTopdownThumbPath,
+  biome: 'Fora dos Biomas / Mundo Interno',
+  summary:
+    'Espaco cosmico interno onde o Fragmentado organiza lembrancas, ecos de consciencia e vinculos entre protagonistas.',
+  cellSize: 4000 / 30,
+  defaultCamera: {
+    zoom: 0.52,
+  },
+  gridColumns: 30,
+  gridRows: 17,
+  source: 'manual',
+  stageHeight: 2252,
+  stageWidth: 4000,
+}
 
 const veilObservationTowerExteriorMap: TabletopMap = {
   id: 'veu_torre_observacao_exterior',
@@ -1814,6 +1862,17 @@ const planicieFlorestaInicialBiome: TabletopBiome = {
   transitions: [getBaseArrivalTransitionId('base_planicie_nascente')],
 }
 
+const mundoInternoFragmentadoBiome: TabletopBiome = {
+  id: 'mundo_interno_fragmentado',
+  name: 'Mundo dos Sonhos / Fragmentado',
+  description:
+    'Categoria interna fora dos biomas fisicos: nao e sonho literal, mas a forma como o Fragmentado ve lembrancas, ecos e vinculos de consciencia.',
+  themePresetId: 'ui-fushi-default',
+  weatherPresetId: 'weather-none',
+  maps: [mundoDosSonhosFragmentadoMap.id],
+  transitions: [],
+}
+
 const veilGreyBiome: TabletopBiome = {
   id: 'vale_cinzento_veu',
   name: 'Vale Cinzento / Veu Cinza',
@@ -1988,6 +2047,64 @@ const villagePlayerToken: TabletopToken = {
   },
 }
 
+const kaelEchoSceneTokens: TabletopToken[] = [
+  {
+    id: 'token-solo-kael-eco-kael',
+    characterId: 'mob-eco-kael-interno',
+    mobId: 'mob-eco-kael-interno',
+    tokenKind: 'mob',
+    label: 'EK',
+    color: '#9fd6ff',
+    cell: { column: 15, row: 8 },
+    size: 1,
+    visibility: 'public',
+  },
+  {
+    id: 'token-solo-kael-eco-kairos',
+    characterId: 'mob-eco-kairos-interno',
+    mobId: 'mob-eco-kairos-interno',
+    tokenKind: 'mob',
+    label: 'EKa',
+    color: '#c9b7ff',
+    cell: { column: 15, row: 4 },
+    size: 1,
+    visibility: 'public',
+  },
+  {
+    id: 'token-solo-kael-eco-davi',
+    characterId: 'mob-eco-davi-interno',
+    mobId: 'mob-eco-davi-interno',
+    tokenKind: 'mob',
+    label: 'ED',
+    color: '#96d2c4',
+    cell: { column: 7, row: 8 },
+    size: 1,
+    visibility: 'public',
+  },
+  {
+    id: 'token-solo-kael-eco-grim',
+    characterId: 'mob-eco-grim-interno',
+    mobId: 'mob-eco-grim-interno',
+    tokenKind: 'mob',
+    label: 'EG',
+    color: '#d3d0c4',
+    cell: { column: 23, row: 8 },
+    size: 1,
+    visibility: 'public',
+  },
+  {
+    id: 'token-solo-kael-eco-connor',
+    characterId: 'mob-eco-connor-interno',
+    mobId: 'mob-eco-connor-interno',
+    tokenKind: 'mob',
+    label: 'EC',
+    color: '#f0c77a',
+    cell: { column: 15, row: 13 },
+    size: 1,
+    visibility: 'public',
+  },
+]
+
 const sessionScenes: TabletopScene[] = [
   {
     id: 'scene-sessao-01-caverna',
@@ -2077,6 +2194,28 @@ const sessionScenes: TabletopScene[] = [
         'Mapa final da sessao depois do interludio de chegada. Pode fechar a sessao ou puxar a continuacao.',
     },
   },
+  {
+    id: 'scene-solo-kael-espaco-entre-ecos',
+    name: 'Solo Kael - Mundo dos Sonhos do Fragmentado',
+    mapId: 'mundo_dos_sonhos_fragmentado_topdown',
+    tokens: kaelEchoSceneTokens,
+    gridCellSize: 4000 / 30,
+    cameraState: {
+      zoom: 0.52,
+    },
+    metadata: {
+      musicTrackId: '',
+      ambienceTrackId: '',
+      lightingPresetId: 'lighting-cave',
+      weatherPresetId: 'weather-none',
+      uiThemePresetId: 'ui-fushi-default',
+      introCardId: '',
+      cinematicId: '',
+      cameraPresetId: 'camera-wide',
+      notes:
+        'Sessao solo de Kael em estado de eco/alma dentro do Mundo dos Sonhos do Fragmentado. Nao e sonho literal: e a forma cosmica como o Fragmentado ve lembrancas, vinculos e consciencias.',
+    },
+  },
 ]
 
 const sessionPlans: TabletopSessionPlan[] = [
@@ -2157,6 +2296,28 @@ const sessionPlans: TabletopSessionPlan[] = [
       },
     ],
   },
+  {
+    id: 'solo_kael_eco',
+    name: 'Solo Kael - Eco Entre Corpos',
+    objective:
+      'Kael atravessa um espaco interno de ecos, reconhece meias-verdades e encontra uma ancora para voltar ao corpo.',
+    summary:
+      'Sessao solo de memoria/identidade criada a partir do apagao de Kael na Sessao 2, com ecos dos protagonistas e pista do fio azul.',
+    scenes: [
+      {
+        id: 'solo_kael_cena_01',
+        order: 1,
+        name: 'Mapa: Mundo dos Sonhos',
+        mode: 'map',
+        sceneId: 'scene-solo-kael-espaco-entre-ecos',
+        mapId: 'mundo_dos_sonhos_fragmentado_topdown',
+        intro:
+          'Kael desperta fora do corpo, em um vazio cosmico onde o Fragmentado ve lembrancas e ecos de consciencia.',
+        notes:
+          'Comece com Determinacao temporaria 5. Cada eco errado drena Determinacao ou gera novo eco; o caminho certo e reconhecer o fio entre corpo, Kael e os outros fragmentos.',
+      },
+    ],
+  },
 ]
 
 export const tabletopData: TabletopData = {
@@ -2169,6 +2330,7 @@ export const tabletopData: TabletopData = {
     villageApproachMap,
     ...baseUpgradeTopdownMaps,
     ...planicieVillageTopdownMaps,
+    mundoDosSonhosFragmentadoMap,
     veilCampExteriorMap,
     veilCampInteriorMap,
     ...veilGeneratedTopdownMaps,
@@ -2184,6 +2346,7 @@ export const tabletopData: TabletopData = {
   biomes: [
     planicieBiome,
     planicieFlorestaInicialBiome,
+    mundoInternoFragmentadoBiome,
     veilGreyBiome,
     florestaMisticaBiome,
     praiaLitoralOceanoBiome,
@@ -2209,6 +2372,7 @@ export const tabletopData: TabletopData = {
       villageApproachMap,
       ...baseUpgradeTopdownMaps,
       ...planicieVillageTopdownMaps,
+      mundoDosSonhosFragmentadoMap,
       veilCampExteriorMap,
       veilCampInteriorMap,
       ...veilGeneratedTopdownMaps,
@@ -2503,6 +2667,14 @@ export const tabletopData: TabletopData = {
         summary: 'Topdown 4000x4000 da bifurcacao Floresta Mistica / Praia.',
         source: vilaRiachoClaroTopdownPath,
         previewImage: vilaRiachoClaroTopdownThumbPath,
+      },
+      {
+        id: 'image-mundo-dos-sonhos-fragmentado',
+        name: 'Mundo dos Sonhos - Fragmentado',
+        summary:
+          'Mapa cosmico topdown para sessoes de ecos, lembrancas e conexoes internas do Fragmentado.',
+        source: mundoDosSonhosFragmentadoTopdownPath,
+        previewImage: mundoDosSonhosFragmentadoTopdownThumbPath,
       },
       {
         id: 'image-veu-acampamento-exterior',

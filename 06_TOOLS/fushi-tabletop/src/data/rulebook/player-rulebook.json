@@ -1,0 +1,1623 @@
+{
+  "audience": "player",
+  "title": "FUSHI - Livro do Jogador",
+  "subtitle": "Regras públicas, combate tático e caminhos de evolução",
+  "edition": "Edição Alpha 0.1 - Julho de 2026",
+  "confidentiality": "Conteúdo público da mesa. Novas páginas podem ser liberadas pelo Mestre conforme a campanha avança.",
+  "quickReference": [
+    {
+      "label": "Teste",
+      "detail": "Atributo define os d20; escolha o resultado indicado e some Perícia e bônus.",
+      "sectionId": "testes"
+    },
+    {
+      "label": "Turno",
+      "detail": "1 Ação Principal + Movimento + 1 Ação Curta + até 1 Reação.",
+      "sectionId": "turno"
+    },
+    {
+      "label": "Ataque",
+      "detail": "Corpo a corpo usa FOR + Luta; à distância usa AGI + Pontaria.",
+      "sectionId": "ataques"
+    },
+    {
+      "label": "Defesa",
+      "detail": "Quando acertarem sua CA, escolha Bloqueio, Esquiva ou Contra-ataque usando sua Reacao.",
+      "sectionId": "defesas"
+    },
+    {
+      "label": "Coreografia",
+      "detail": "Sacrifique dados de acerto para adicionar dados de dano.",
+      "sectionId": "coreografia"
+    },
+    {
+      "label": "0 Vida",
+      "detail": "Você desmaia; o Mestre conduz até três tentativas de estabilização.",
+      "sectionId": "recursos"
+    },
+    {
+      "label": "0 FUSHI",
+      "detail": "Você fica paralisado e incapaz de agir, mas ainda pode perceber e falar.",
+      "sectionId": "recursos"
+    },
+    {
+      "label": "0 Determinação",
+      "detail": "Você perde o controle; o Mestre conduz suas ações até a recuperação.",
+      "sectionId": "recursos"
+    }
+  ],
+  "sections": [
+    {
+      "id": "comecar",
+      "number": "01",
+      "label": "Comece aqui",
+      "summary": "O acordo de mesa e a forma mais rápida de transformar intenção em ação.",
+      "status": "canon",
+      "tags": [
+        "essencial",
+        "mesa",
+        "sem spoiler"
+      ],
+      "searchTerms": [
+        "começar",
+        "ação",
+        "intenção",
+        "regra de ouro"
+      ],
+      "blocks": [
+        {
+          "kind": "lead",
+          "tone": "info",
+          "title": "Você pode tentar qualquer coisa",
+          "text": "Descreva o que seu personagem quer alcançar. O Mestre informa a rolagem, o risco e a consequência possível antes de resolver a ação. Este livro explica as opções mais frequentes para que estratégia não dependa de adivinhação."
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Ciclo de uma ação",
+          "items": [
+            "Declare a intenção: o que você quer mudar na cena.",
+            "Escolha o método: força, precisão, conhecimento, conversa, habilidade, ritual ou uso do ambiente.",
+            "O Mestre informa teste, alvo e risco quando houver dúvida real.",
+            "Role, aplique o resultado e deixe a consequência mudar a cena."
+          ]
+        },
+        {
+          "kind": "bullets",
+          "title": "O que este livro garante",
+          "items": [
+            "As mesmas regras públicas valem para todos os jogadores.",
+            "Uma ideia criativa pode gerar vantagem, posição, cobertura, condição ou nova oportunidade.",
+            "Somente ataques de Luta, Pontaria ou efeitos que declarem dano causam dano direto.",
+            "Uma decisão improvisada em sessão vale para aquela cena; depois o Mestre consolida a regra se ela virar padrão.",
+            "Informações ainda não descobertas surgem no livro quando forem liberadas."
+          ]
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "Exemplo: derrubar uma estante",
+          "text": "Você pode usar Intelecto + Investigação para achar o ponto fraco, Força + Atletismo para empurrar ou Agilidade + Acrobacia para passar por cima. O teste não vira um ataque alternativo: ele muda posição, cria cobertura ou concede vantagem para o próximo ataque."
+        }
+      ]
+    },
+    {
+      "id": "ficha",
+      "number": "02",
+      "label": "Sua ficha",
+      "summary": "Atributos, Perícias, defesas e recursos que descrevem o que você consegue sustentar.",
+      "status": "canon",
+      "tags": [
+        "atributos",
+        "perícias",
+        "ficha"
+      ],
+      "searchTerms": [
+        "força",
+        "agilidade",
+        "vigor",
+        "intelecto",
+        "presença",
+        "CA"
+      ],
+      "blocks": [
+        {
+          "kind": "table",
+          "title": "Os cinco Atributos",
+          "table": {
+            "columns": [
+              "Atributo",
+              "O que representa",
+              "Usos frequentes"
+            ],
+            "rows": [
+              [
+                "Força (FOR)",
+                "Potência física e imposição corporal",
+                "Luta, Atletismo, agarrar, empurrar"
+              ],
+              [
+                "Agilidade (AGI)",
+                "Precisão, velocidade e coordenação",
+                "Pontaria, Reflexos, Acrobacia, Furtividade"
+              ],
+              [
+                "Vigor (VIG)",
+                "Resistência e capacidade de suportar pressão",
+                "Fortitude, veneno, exaustão, esforço prolongado"
+              ],
+              [
+                "Intelecto (INT)",
+                "Análise, memória e leitura técnica",
+                "Investigação, Ciências, Medicina, Ocultismo"
+              ],
+              [
+                "Presença (PRE)",
+                "Vontade, percepção social e força de identidade",
+                "Intuição, Diplomacia, Enganação, Intimidação"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Atributo e Perícia fazem trabalhos diferentes",
+          "text": "O Atributo define quantos d20 você rola. A Perícia representa treino e soma um bônus fixo ao dado escolhido. Uma ficha pode ter bom potencial sem treino, ou treino alto com pouco potencial natural."
+        },
+        {
+          "kind": "table",
+          "title": "Campos de combate",
+          "table": {
+            "columns": [
+              "Campo",
+              "Uso na mesa"
+            ],
+            "rows": [
+              [
+                "CA base",
+                "Numero que um ataque precisa alcancar antes de uma Reacao defensiva."
+              ],
+              [
+                "Bloqueio V2",
+                "Reducao por Fortitude: 0, 5, 10 ou 15; teto normal 15."
+              ],
+              [
+                "Esquiva V2",
+                "Valor fixo: CA atual + AGI + Reflexos. Gasta Reacao e nao usa dados."
+              ],
+              [
+                "Deslocamento",
+                "Quantidade de metros que voce pode mover no turno."
+              ],
+              [
+                "Vida",
+                "Quanto dano o corpo suporta antes de desmaiar."
+              ],
+              [
+                "FUSHI",
+                "Recurso de poder usado por Habilidades e Rituais liberados."
+              ],
+              [
+                "Determinacao",
+                "Recurso mental para sustentar controle, tecnicas e resistencia interna."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "O valor escrito na ficha é a fonte da mesa",
+          "text": "Vida não aumenta automaticamente com Vigor. Vida, FUSHI, Determinação, CA e Deslocamento usam os valores registrados na ficha e podem mudar por corpo, item, habilidade ou efeito aprovado."
+        }
+      ]
+    },
+    {
+      "id": "testes",
+      "number": "03",
+      "label": "Testes e dificuldade",
+      "summary": "Como montar a rolagem, interpretar críticos e resolver disputas.",
+      "status": "canon",
+      "tags": [
+        "d20",
+        "DT",
+        "crítico"
+      ],
+      "searchTerms": [
+        "rolagem",
+        "dado",
+        "vantagem",
+        "desvantagem",
+        "falha crítica",
+        "perícia"
+      ],
+      "blocks": [
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Teste padrão",
+          "formula": "resultado = d20 escolhido + Perícia + bônus de item + bônus de cena",
+          "items": [
+            "Atributo 0: role 2d20 e escolha o pior.",
+            "Atributo 1: role 1d20.",
+            "Atributo 2 ou mais: role a quantidade indicada e escolha o maior.",
+            "Sem treino: +0; Treinado: +5; Expert: +10; Veterano: +15."
+          ]
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Vantagem e desvantagem",
+          "text": "Vantagem adiciona +1d20 ao conjunto. Desvantagem remove -1d20. Bônus de cena iguais não se acumulam acima de +2d20 ou -2d20, salvo Habilidade, Ritual ou item que diga o contrário. Se a penalidade deixaria você sem dado, role 2d20 e pegue o pior."
+        },
+        {
+          "kind": "table",
+          "title": "Escala pública de dificuldade",
+          "table": {
+            "columns": [
+              "DT",
+              "Leitura",
+              "Exemplo"
+            ],
+            "rows": [
+              [
+                "10",
+                "Rotina sob pressão",
+                "Manter equilíbrio em situação incômoda"
+              ],
+              [
+                "15",
+                "Comum para alguém treinado",
+                "Primeiros socorros ou obstáculo simples"
+              ],
+              [
+                "20",
+                "Difícil",
+                "Ação arriscada em combate ou sob oposição séria"
+              ],
+              [
+                "25",
+                "Muito difícil",
+                "Feito de elite ou condição desfavorável"
+              ],
+              [
+                "30",
+                "Extraordinário",
+                "Ação sobrenatural ou de altíssimo risco"
+              ],
+              [
+                "32+",
+                "Além do comum",
+                "Exige preparo, ajuda, item, ritual ou condição especial"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Críticos",
+          "items": [
+            "20 natural no dado escolhido de um ataque e critico.",
+            "O critico dobra somente os dados de dano; bonus fixo, custo e condicao nao dobram por padrao.",
+            "Em Coreografia extrema, so e critico se o dado escolhido continuar sendo 20.",
+            "Fora de ataque, um critico melhora efeito, tempo ou posicao; ele nao cria informacao impossivel."
+          ]
+        },
+        {
+          "kind": "rule",
+          "title": "Teste oposto",
+          "text": "Quando duas vontades agem diretamente uma contra a outra, ambos rolam. O maior resultado vence. Em empate, prevalece quem estava defendendo a situação existente, salvo regra específica."
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "Exemplo: Atributo 3 e Perícia treinada",
+          "text": "Você rola 3d20 e obtém 8, 14 e 19. Escolhe 19, soma +5 de treino e alcança 24. Contra DT 20, é sucesso; contra DT 25, falta 1."
+        }
+      ]
+    },
+    {
+      "id": "turno",
+      "number": "04",
+      "label": "Seu turno",
+      "summary": "Economia de ações clara para decidir rápido durante o combate.",
+      "status": "canon",
+      "tags": [
+        "ação",
+        "movimento",
+        "reação"
+      ],
+      "searchTerms": [
+        "ação principal",
+        "ação curta",
+        "falar",
+        "iniciativa",
+        "preparar"
+      ],
+      "blocks": [
+        {
+          "kind": "table",
+          "title": "O que você recebe por turno",
+          "table": {
+            "columns": [
+              "Parte",
+              "Serve para",
+              "Exemplos"
+            ],
+            "rows": [
+              [
+                "Ação Principal",
+                "Mudar a cena de forma relevante",
+                "Atacar, usar Habilidade, fazer manobra, ajudar, preparar, ritual"
+              ],
+              [
+                "Movimento",
+                "Deslocar até o valor da ficha",
+                "Andar, correr, levantar, atravessar terreno"
+              ],
+              [
+                "Ação Curta",
+                "Interação simples e rápida",
+                "Sacar item, abrir porta, recarregar, desengajar"
+              ],
+              [
+                "Reação",
+                "Responder fora do seu turno",
+                "Bloquear, esquivar, contra-atacar ou executar ação preparada"
+              ],
+              [
+                "Fala breve",
+                "Comunicar intenção ou aviso",
+                "Uma frase, comando ou resposta coerente com o tempo da cena"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Uma Reação por rodada",
+          "text": "Depois de usar uma Reação, você não pode usar outra até a iniciativa voltar ao seu turno. Bloqueio, Esquiva, Contra-ataque, ataque de oportunidade e ação preparada disputam essa mesma Reação."
+        },
+        {
+          "kind": "bullets",
+          "title": "Ações frequentes",
+          "items": [
+            "Atacar ou usar Habilidade ofensiva: Ação Principal.",
+            "Ajudar de forma decisiva: Ação Principal.",
+            "Preparar um gatilho: Ação Principal; executar exige sua Reação.",
+            "Desengajar de uma manada: Ação Curta.",
+            "Trocar entre itens já acessíveis: Ação Curta; procurar algo guardado pode exigir Ação Principal.",
+            "Interação complexa, ritual ou mecanismo perigoso: Ação Principal."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Não divida uma Ação Principal em vários ataques",
+          "text": "Ataques extras só existem quando uma Habilidade, item ou efeito declara isso. Para transformar precisão em mais dano dentro de um ataque, use Coreografia."
+        }
+      ]
+    },
+    {
+      "id": "movimento",
+      "number": "05",
+      "label": "Movimento e posição",
+      "summary": "Grid, cobertura, terreno, cercos e leitura tática do mapa.",
+      "status": "canon",
+      "tags": [
+        "grid",
+        "cobertura",
+        "terreno"
+      ],
+      "searchTerms": [
+        "metro",
+        "diagonal",
+        "linha de visão",
+        "cercado",
+        "manada",
+        "altura"
+      ],
+      "blocks": [
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "A régua da mesa é a medida oficial",
+          "items": [
+            "Cada quadrado do grid representa 1 metro.",
+            "A distância diagonal usa a medida mostrada pela régua do app.",
+            "Você pode dividir o Movimento antes e depois da Ação Principal.",
+            "Levantar-se de Caído custa 3 metros de Movimento.",
+            "Terreno difícil custa 2 metros de deslocamento para avançar 1 metro."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Cobertura e linha de visão",
+          "table": {
+            "columns": [
+              "Situação",
+              "Efeito"
+            ],
+            "rows": [
+              [
+                "Cobertura parcial",
+                "+2 CA contra ataques à distância"
+              ],
+              [
+                "Cobertura forte",
+                "+5 CA contra ataques à distância"
+              ],
+              [
+                "Cobertura total",
+                "Não pode ser alvo direto sem reposicionamento ou efeito que ignore a barreira"
+              ],
+              [
+                "Posição elevada e estável",
+                "+1d20 em Pontaria se a linha de visão estiver limpa"
+              ],
+              [
+                "Disparo com inimigo adjacente",
+                "-1d20 em Pontaria, salvo arma ou Habilidade apropriada"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Espaços ocupados",
+          "items": [
+            "Você atravessa o espaço de aliado com permissão, mas não termina no mesmo espaço.",
+            "Você não atravessa o espaço de inimigo sem Habilidade, manobra ou teste aprovado.",
+            "Objetos, paredes, altura e corpos grandes podem bloquear movimento e visão separadamente."
+          ]
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Cercado e manada",
+          "text": "Quando dois ou mais oponentes ameaçam o mesmo alvo em corpo a corpo por lados diferentes, o alvo está Cercado. Ataques corpo a corpo contra ele recebem +1d20. Se ele sair do alcance sem Desengajar, um dos oponentes com Reação disponível pode realizar um ataque de oportunidade. Em um duelo 1 contra 1 não existe ataque de oportunidade, salvo Passiva ou Habilidade específica."
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "Exemplo: abrir espaço para o Atirador",
+          "text": "O Lutador empurra um inimigo para longe do Atirador. O Atirador deixa de sofrer -1d20 por pressão corpo a corpo e pode usar a altura para ganhar +1d20, desde que mantenha linha de visão."
+        }
+      ]
+    },
+    {
+      "id": "inventario-carga",
+      "number": "05B",
+      "label": "Inventário, porte e mochila",
+      "summary": "Quanto cada personagem carrega e como a carga altera o deslocamento.",
+      "status": "canon",
+      "tags": [
+        "inventário",
+        "porte",
+        "mochila",
+        "deslocamento"
+      ],
+      "searchTerms": [
+        "pequeno",
+        "médio",
+        "grande",
+        "grande+",
+        "mochila+",
+        "carga"
+      ],
+      "blocks": [
+        {
+          "kind": "table",
+          "tone": "rule",
+          "title": "Conversão de porte",
+          "table": {
+            "columns": [
+              "Porte",
+              "Espaço ocupado",
+              "Referência visual"
+            ],
+            "rows": [
+              [
+                "Pequeno",
+                "3 pequenos = 1 médio",
+                "Cabe na mão ou junto ao corpo"
+              ],
+              [
+                "Médio",
+                "1 espaço médio",
+                "Aproximadamente o tamanho de um braço"
+              ],
+              [
+                "Grande",
+                "2 espaços médios",
+                "Aproximadamente metade do corpo"
+              ],
+              [
+                "Grande+",
+                "Regra exclusiva",
+                "Do tamanho do corpo ou maior; exige foco para carregar"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Inventário comum",
+          "items": [
+            "Sem mochila, todo personagem possui 3 espaços médios.",
+            "Isso equivale a 9 pequenos, 3 médios, 1 grande + 1 médio ou 1 grande + 3 pequenos.",
+            "Um Grande+ remove todos os médios e grandes do inventário, mas permite até 3 pequenos.",
+            "O porte é informado na ficha. Item ainda sem porte definido conta como médio por segurança."
+          ]
+        },
+        {
+          "kind": "rule",
+          "title": "Mochila normal",
+          "items": [
+            "Adiciona 3 espaços médios, totalizando 6.",
+            "Cada espaço médio equivalente ocupado acima dos 3 espaços comuns reduz 2 m de deslocamento.",
+            "Com os 6 espaços médios ocupados, a penalidade total é -6 m.",
+            "Pequenos além da capacidade comum são agrupados de três em três; qualquer grupo parcial já conta para a penalidade."
+          ]
+        },
+        {
+          "kind": "rule",
+          "title": "Mochila+",
+          "items": [
+            "Rompe o limite da mochila normal e transforma deslocamento em capacidade.",
+            "Cada espaço médio equivalente acima dos 3 comuns reduz 1 m de deslocamento.",
+            "O deslocamento nunca cai abaixo de 1 m.",
+            "A referência de carga antes do piso é 3 + (deslocamento base - 1) médios equivalentes.",
+            "Com 12 m de deslocamento base, 14 médios equivalentes correspondem a 42 pequenos; ao chegar a 1 m, a carga adicional continua permitida."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Grande+ continua exclusivo",
+          "text": "Mesmo com mochila, Grande+ não pode dividir o inventário com médio ou grande. Ele pode dividir espaço apenas com pequenos, respeitando a cota de pequenos disponível."
+        }
+      ]
+    },
+    {
+      "id": "ataques",
+      "number": "06",
+      "label": "Ataque e dano",
+      "summary": "As duas rotas de dano direto e como ideias táticas se conectam a elas.",
+      "status": "canon",
+      "tags": [
+        "Luta",
+        "Pontaria",
+        "dano"
+      ],
+      "searchTerms": [
+        "corpo a corpo",
+        "distância",
+        "arma",
+        "crítico",
+        "ataque de oportunidade"
+      ],
+      "blocks": [
+        {
+          "kind": "lead",
+          "tone": "rule",
+          "title": "Dano direto tem duas portas",
+          "text": "Ataques físicos corpo a corpo usam Força + Luta. Ataques físicos à distância usam Agilidade + Pontaria. Outro Atributo ou Perícia pode criar vantagem, condição, abertura, cobertura ou mudança de posição, mas não causa dano direto por conta própria. Habilidades, Rituais e itens podem declarar exceções."
+        },
+        {
+          "kind": "rule",
+          "title": "Ataque padrão",
+          "formula": "ataque = d20 escolhido + Luta ou Pontaria + bonus; acerta se ataque >= CA",
+          "items": [
+            "Declare alvo, arma, intencao e Coreografia antes de rolar.",
+            "Corpo a corpo causa dano por FOR + Luta; distancia causa dano por AGI + Pontaria.",
+            "Se o ataque errar ou for evitado, o dano nao acontece e os recursos declarados sao gastos quando a regra disser.",
+            "20 natural no dado escolhido e critico: dobre os dados de dano e aplique Bloqueio depois."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Dano físico de referência",
+          "table": {
+            "columns": [
+              "Ataque",
+              "Dano base",
+              "Leitura"
+            ],
+            "rows": [
+              [
+                "Golpe desarmado",
+                "1d2",
+                "Soco, chute ou impacto sem arma; Luta define o acerto, nao aumenta o dado base."
+              ],
+              [
+                "Arma leve",
+                "1d6",
+                "Faca, bastao leve, arco simples."
+              ],
+              [
+                "Arma maior ou afiada",
+                "1d8",
+                "Exige mais espaco, preparo ou risco."
+              ],
+              [
+                "Acima de 1d8",
+                "Regra nomeada",
+                "Precisa custo, condicao, preparo, habilidade, item ou fase."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Ataque de oportunidade",
+          "items": [
+            "Gatilho padrão: sair de uma manada de dois ou mais oponentes sem Desengajar.",
+            "Apenas um oponente elegível realiza o ataque padrão, gastando a própria Reação.",
+            "Em 1 contra 1, só ocorre se uma Passiva, Habilidade ou efeito de provocação criar o gatilho.",
+            "Ataque de oportunidade não usa Coreografia, salvo regra específica."
+          ]
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "Exemplo: estratégia sem dano alternativo",
+          "text": "Você usa Presença + Intimidação para forçar o inimigo a olhar para você. Em sucesso, o Mestre pode conceder +1d20 ao próximo ataque de um aliado ou impor -1d20 ao alvo. O teste de Intimidação não causa dano; ele constrói a oportunidade para Luta ou Pontaria."
+        }
+      ]
+    },
+    {
+      "id": "coreografia",
+      "number": "07",
+      "label": "Coreografia de luta",
+      "summary": "A regra central que troca precisão por impacto e dá identidade aos golpes.",
+      "status": "canon",
+      "tags": [
+        "multi-hit",
+        "risco",
+        "dano"
+      ],
+      "searchTerms": [
+        "sacrificar dados",
+        "dados de dano",
+        "ataque coreografado"
+      ],
+      "blocks": [
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Troque dados de acerto por dados de dano",
+          "formula": "cada d20 sacrificado = +1 dado de dano da arma ou efeito",
+          "items": [
+            "Se os sacrifícios forem menores que o Atributo, role os d20 restantes e pegue o maior.",
+            "Se os sacrifícios forem iguais ou maiores que o Atributo, role a quantidade sacrificada e pegue o pior.",
+            "Não há limite duro, mas todo o dano se perde se o ataque falhar.",
+            "Coreografia precisa ser declarada antes do ataque."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Exemplo: Força 3 e arma 1d6",
+          "table": {
+            "columns": [
+              "Sacrifício",
+              "Rolagem de acerto",
+              "Dano"
+            ],
+            "rows": [
+              [
+                "0",
+                "3d20, pega o maior",
+                "1d6"
+              ],
+              [
+                "1",
+                "2d20, pega o maior",
+                "2d6"
+              ],
+              [
+                "2",
+                "1d20",
+                "3d6"
+              ],
+              [
+                "3",
+                "3d20, pega o pior",
+                "4d6"
+              ],
+              [
+                "4",
+                "4d20, pega o pior",
+                "5d6"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Coreografia extrema abre sua postura",
+          "text": "Quando você pega o pior d20, um resultado 1 escolhido é falha crítica. A consequência pode derrubar arma, gastar Reação, deixar você Exposto, quebrar postura ou criar vantagem para o inimigo."
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "Quando vale a pena",
+          "text": "Use pouca Coreografia quando precisa acertar. Use mais quando recebeu vantagem, o alvo está Cercado, a CA é baixa ou o golpe precisa encerrar a ameaça. Precisão e impacto são escolhas, não uma resposta automática."
+        }
+      ]
+    },
+    {
+      "id": "defesas",
+      "number": "08",
+      "label": "Defesa e Reações",
+      "summary": "Bloquear, sair do golpe ou devolver o ataque são escolhas diferentes.",
+      "status": "canon",
+      "tags": [
+        "Bloqueio",
+        "Esquiva",
+        "Contra-ataque"
+      ],
+      "searchTerms": [
+        "CA",
+        "reação defensiva",
+        "redução de dano"
+      ],
+      "blocks": [
+        {
+          "kind": "table",
+          "title": "As três Reações defensivas",
+          "table": {
+            "columns": [
+              "Reação",
+              "Cálculo",
+              "Resultado"
+            ],
+            "rows": [
+              [
+                "Bloqueio",
+                "Fortitude: 0/5/10/15, teto normal 15",
+                "Gasta Reacao e reduz apenas dano; nao apaga condicao sem regra."
+              ],
+              [
+                "Esquiva",
+                "CA atual + AGI + Reflexos vs ataque",
+                "Gasta Reacao; se o valor fixo igualar ou superar o ataque, evita o dano e move 3 m seguros."
+              ],
+              [
+                "Contra-ataque",
+                "ataque inimigo falha contra CA",
+                "Gasta Reacao para fazer um ataque normal sem Coreografia."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Escolha antes de saber o dano",
+          "text": "Depois de um ataque alcancar sua CA, escolha uma Reacao antes de rolar dano. Bloqueio garante reducao. Esquiva pode evitar tudo, mas precisa igualar ou superar o ataque. Contra-ataque so aparece quando o ataque inimigo falha contra sua CA."
+        },
+        {
+          "kind": "bullets",
+          "title": "Como decidir",
+          "items": [
+            "Bloqueie quando o ataque provavelmente acertará e a redução salvará Vida.",
+            "Esquive quando sua Agilidade e Reflexos elevarem bastante a CA.",
+            "Contra-ataque quando sua CA base já for suficiente para fazer o agressor errar.",
+            "Se estiver sem Reação, o ataque usa sua CA base e você não escolhe outra defesa."
+          ]
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Regra V2 ja aplicada",
+          "text": "Bloqueio agora depende de Fortitude, nao da metade da CA. Itens futuramente podem dar bonus temporario, mas o teto normal continua 15. Nao use item para compensar uma defesa que nao faz sentido."
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "Exemplo: CA 16, AGI 2 e Reflexos +5",
+          "text": "Um ataque 18 alcanca CA 16. Bloqueio de Fortitude 5 reduz 5 do dano. A Esquiva fixa vale 23: CA 16 + AGI 2 + Reflexos 5. Ao gastar a Reacao, ela evita esse ataque sem rolar dados. Contra-ataque nao dispara porque o ataque alcancou sua CA."
+        }
+      ]
+    },
+    {
+      "id": "manobras",
+      "number": "09",
+      "label": "Manobras táticas",
+      "summary": "Controle de espaço e vantagem sem transformar toda ideia em dano.",
+      "status": "playtest",
+      "tags": [
+        "agarrar",
+        "empurrar",
+        "ajudar"
+      ],
+      "searchTerms": [
+        "puxar",
+        "derrubar",
+        "desarmar",
+        "desengajar",
+        "preparar ação"
+      ],
+      "blocks": [
+        {
+          "kind": "lead",
+          "tone": "info",
+          "title": "Manobras criam estado tático",
+          "text": "Uma manobra usa a Ação Principal e normalmente não causa dano. Ela abre posição, impõe condição ou concede vantagem para que um ataque de Luta, Pontaria, Habilidade ou Ritual aproveite a oportunidade."
+        },
+        {
+          "kind": "table",
+          "title": "Manobras universais - Combat V2",
+          "table": {
+            "columns": [
+              "Manobra",
+              "Teste",
+              "Efeito em sucesso"
+            ],
+            "rows": [
+              [
+                "Agarrar",
+                "FOR + Luta vs FOR + Fortitude ou AGI + Acrobacia",
+                "Alvo Agarrado: deslocamento 0; escapar exige Acao Principal."
+              ],
+              [
+                "Empurrar",
+                "FOR + Luta vs FOR + Fortitude ou AGI + Acrobacia",
+                "Move 3 m; terreno perigoso cria consequencia narrada."
+              ],
+              [
+                "Puxar",
+                "FOR + Luta com pegada, corda ou gancho vs defesa fisica",
+                "Move 3 m na sua direcao; sem pegada ou ferramenta a tentativa falha."
+              ],
+              [
+                "Derrubar",
+                "FOR ou AGI + Luta vs AGI + Acrobacia",
+                "Alvo Caido; gasta Movimento para levantar."
+              ],
+              [
+                "Desarmar",
+                "AGI + Luta vs AGI + Acrobacia",
+                "Item cai em celula adjacente; nao e destruido."
+              ],
+              [
+                "Ajudar",
+                "Acao coerente com a cena",
+                "Aliado recebe +1d20 na proxima acao declarada."
+              ],
+              [
+                "Desengajar",
+                "Sem teste",
+                "Sai de manada sem provocar oportunidade."
+              ],
+              [
+                "Preparar",
+                "Gatilho declarado",
+                "Reserva a Reacao para uma resposta especifica."
+              ],
+              [
+                "Agro",
+                "Acao Completa; PRE + Intimidacao vs CA de cada alvo visivel",
+                "Sucesso obriga o proximo ataque legal do alvo a priorizar voce. O custo em Determinacao e resolvido por alvo."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Agro: custo e resolucao",
+          "text": "Declare os alvos visiveis antes do teste. Resolva PRE + Intimidacao contra a CA atual de cada alvo separadamente. Em sucesso, o proximo ataque legal daquele alvo deve priorizar voce e voce perde metade da Determinacao atual dele, arredondada para cima. Em falha, nao ha Agro e voce perde a Determinacao atual inteira daquele alvo. A Acao Completa e gasta mesmo se todos os testes falharem; Agro nao obriga movimento ou ataque impossivel."
+        },
+        {
+          "kind": "rule",
+          "title": "Limites de vantagem",
+          "items": [
+            "Ajuda de aliados diferentes acumula até +2d20, desde que cada método contribua de verdade.",
+            "Uma manobra não afeta alvo de tamanho ou escala incompatível sem preparo, item ou fraqueza.",
+            "Mover alguém contra perigo ambiental não gera dano automático de ataque; o Mestre resolve o perigo separadamente.",
+            "Falhar por 5 ou mais pode deixar o autor Exposto, fora de posição ou sem Ação Curta, conforme o risco anunciado."
+          ]
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "Exemplo: preparar uma queda",
+          "text": "Um personagem usa Investigação para identificar a tábua fraca e concede +1d20. Outro usa Empurrar com FOR + Luta. O primeiro teste não causa dano; ele torna a manobra seguinte mais confiável e pode transformar o terreno."
+        }
+      ]
+    },
+    {
+      "id": "recursos",
+      "number": "10",
+      "label": "Recursos, queda e condições",
+      "summary": "O que acontece quando Vida, FUSHI ou Determinação chegam a zero.",
+      "status": "canon",
+      "tags": [
+        "Vida",
+        "FUSHI",
+        "Determinação"
+      ],
+      "searchTerms": [
+        "desmaio",
+        "estabilizar",
+        "paralisado",
+        "perder controle",
+        "condições"
+      ],
+      "blocks": [
+        {
+          "kind": "table",
+          "title": "Os três estados de zero",
+          "table": {
+            "columns": [
+              "Recurso em 0",
+              "Estado",
+              "O que ainda pode fazer"
+            ],
+            "rows": [
+              [
+                "Vida",
+                "Desmaiado",
+                "Nada; inicia o teste contra a morte"
+              ],
+              [
+                "FUSHI",
+                "Exausto",
+                "Perceber, pensar e falar brevemente, sem agir ou se mover"
+              ],
+              [
+                "Determinacao",
+                "Descontrolado",
+                "O Mestre conduz as acoes ate alguma recuperacao"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Queda a 0 Vida",
+          "items": [
+            "Voce desmaia imediatamente e nao fala, move, reage ou mantem concentracao.",
+            "O Mestre conduz ate tres tentativas de estabilizacao.",
+            "Um aliado pode usar Acao Principal e Medicina, item ou Habilidade apropriada para ajudar.",
+            "Tres sucessos recuperam 1 Vida, mas o personagem continua Desmaiado.",
+            "Chegar a 2 Vida encerra Desmaiado e permite acordar, conforme a cena.",
+            "Tres falhas significam morte; as consequencias seguintes pertencem a conducao do Mestre."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Todo estado informa como termina",
+          "text": "A ficha mostra origem, duracao, acumulos e forma de encerramento. O personagem que criou uma marca Especial pode cancelar apenas essa marca; estados comuns sao encerrados pelo Mestre conforme a regra."
+        },
+        {
+          "kind": "table",
+          "title": "Estados canonicos - debuffs e condicoes",
+          "table": {
+            "columns": [
+              "Estado",
+              "Efeito",
+              "Causa",
+              "Como encerrar"
+            ],
+            "rows": [
+              [
+                "Sangrando",
+                "Perde 1 Vida no inicio de cada turno. O dano nao aumenta sozinho.",
+                "Ferimento grave, corte profundo ou regra que abra sangramento.",
+                "Medicina leve, estancar o sangramento ou efeito que feche a ferida."
+              ],
+              [
+                "Cansado",
+                "Recebe -1 dado em todas as jogadas.",
+                "Fome, falta de sono ou tarefa fisica prolongada.",
+                "Descanso ou cuidados medicos apropriados."
+              ],
+              [
+                "Quebrado",
+                "No inicio do turno, VIG + Fortitude DT 15. Sucesso: -1 dado em acoes fisicas e metade do Deslocamento. Falha: perde a Acao Principal e o Movimento.",
+                "Fratura, esmagamento ou pressao extrema sobre o corpo.",
+                "Cuidados medicos maximos, imobilizacao e descanso longo seguro."
+              ],
+              [
+                "Exausto",
+                "Nao pode agir nem se mover; ainda pode perceber, pensar e falar brevemente.",
+                "Chegar a 0 de FUSHI.",
+                "Recuperar ao menos 1 FUSHI, normalmente com descanso curto."
+              ],
+              [
+                "Desmaiado",
+                "Nao fala, move, reage ou mantem concentracao. Tres falhas causam morte; tres sucessos recuperam 1 Vida, mas o personagem continua desmaiado.",
+                "Chegar a 0 de Vida ou sofrer um efeito que apague a consciencia.",
+                "Chegar a 2 de Vida e receber cuidados maiores ou descanso longo."
+              ],
+              [
+                "Descontrolado",
+                "O Mestre assume o personagem e conduz suas acoes enquanto durar o estado.",
+                "Chegar a 0 de Determinacao.",
+                "Recuperar Determinacao por cuidados de sanidade e contato com algo que acalme o personagem."
+              ],
+              [
+                "Desnorteado",
+                "Perde o proximo turno. Novas perdas exigem reaplicar o estado.",
+                "Concussao, impacto sensorial ou efeito que atrase a consciencia.",
+                "Encerra depois do turno perdido ou por efeito que remova atordoamento."
+              ],
+              [
+                "Enfraquecido",
+                "Remove 1 dado da rolagem de dano.",
+                "Fraqueza fisica, ferimento debilitante ou efeito de habilidade.",
+                "Cuidados medicos leves ou fim indicado pela fonte."
+              ],
+              [
+                "Vulneravel",
+                "Dobra o dano final recebido depois dos demais bonus e reducoes.",
+                "Guarda aberta, ponto fraco exposto ou efeito que amplifique dano recebido.",
+                "Fim da duracao da fonte, protecao adequada ou efeito que remova a abertura."
+              ],
+              [
+                "Lento",
+                "Metade do Deslocamento, arredondada para baixo, e nao pode usar Disparada.",
+                "Terreno, frio, peso ou efeito que limite o corpo.",
+                "Sair da causa ou encerrar a duracao indicada pela fonte."
+              ],
+              [
+                "Amedrontado",
+                "Nao pode atacar nem se aproximar voluntariamente da fonte. PRE + Vontade DT 15 ao fim do turno para encerrar, salvo DT propria da fonte.",
+                "Presenca, trauma ou efeito que imponha medo.",
+                "Passar no teste contra a fonte, afastar a fonte ou receber efeito que remova medo."
+              ],
+              [
+                "Paralisado",
+                "Perde a Acao Principal e o Movimento.",
+                "Veneno, gelo completo, choque ou poder de imobilizacao.",
+                "Fim da duracao ou tratamento indicado pela fonte."
+              ],
+              [
+                "Envenenado",
+                "Sofre 1d4 de dano no inicio de cada turno.",
+                "Veneno, toxina ou efeito contaminante.",
+                "Tratamento, vacina, antidoto ou regra especifica da toxina."
+              ],
+              [
+                "Queimando",
+                "Sofre 1d4 de dano no inicio do turno. Com 3 Acumulos, o dano passa a 2d4 enquanto o aquecimento completo durar.",
+                "Fogo, calor extremo ou acumulacao de aquecimento.",
+                "Apagar as chamas e resfriar o corpo."
+              ],
+              [
+                "Congelado",
+                "Sofre 1d4 de dano no inicio do turno. Ao chegar a 3 Acumulos, tambem fica Paralisado ate perder ao menos 1 Acumulo.",
+                "Frio extremo, gelo ou acumulacao de congelamento.",
+                "Aquecer o corpo e remover os Acumulos de frio."
+              ],
+              [
+                "Confuso",
+                "Ao mover, role 1d4: 1 frente, 2 tras, 3 direita, 4 esquerda. Para executar outra intencao, cara realiza e coroa falha.",
+                "Efeito que altere sentidos, direcao ou leitura do ambiente.",
+                "Fim da duracao da fonte ou efeito que restaure os sentidos."
+              ],
+              [
+                "Especial",
+                "Pode combinar mais de um debuff conforme a habilidade que o criou.",
+                "Poder especial de FUSHI.",
+                "Definida explicitamente pela habilidade ou pelo Mestre."
+              ],
+              [
+                "Agro",
+                "PRE + Intimidacao contra a CA atual de cada alvo. Sucesso: o proximo ataque legal prioriza o usuario e ele perde metade da Determinacao atual do alvo, arredondada para cima. Falha: nao aplica Agro e perde a Determinacao atual inteira do alvo.",
+                "Acao Completa de provocacao contra alvos visiveis.",
+                "Encerra depois do proximo ataque legal do alvo ou quando a fonte deixa de ser alvo valido."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Estados canonicos - buffs",
+          "table": {
+            "columns": [
+              "Estado",
+              "Efeito",
+              "Causa",
+              "Como encerrar"
+            ],
+            "rows": [
+              [
+                "Aura",
+                "Recupera 1 FUSHI no inicio de cada turno, salvo valor proprio da fonte.",
+                "Habilidade, campo ou local com fluxo natural elevado de FUSHI.",
+                "Encerra ao sair do campo ou ao acabar a duracao."
+              ],
+              [
+                "Protecao",
+                "Recebe +2 CA, salvo valor proprio da fonte.",
+                "Feitico, campo, item ou intencao defensiva.",
+                "Encerra com a duracao, quebra da fonte ou dissipacao."
+              ],
+              [
+                "Rapidez",
+                "Dobra o Deslocamento padrao.",
+                "Habilidade, item ou campo que acelere o corpo.",
+                "Encerra no fim da duracao indicada pela fonte."
+              ],
+              [
+                "Vacina",
+                "Anula os demais buffs e debuffs enquanto durar e impede receber novos estados.",
+                "Vacina, antidoto avancado ou efeito protetor equivalente.",
+                "Encerra no fim da duracao definida pela fonte."
+              ],
+              [
+                "Cura",
+                "Recupera 1d4 Vida no inicio de cada turno, salvo valor proprio da fonte.",
+                "Habilidade, item ou efeito sustentado de cura.",
+                "Encerra com a duracao, quebra da fonte ou Vida maxima."
+              ],
+              [
+                "Especial",
+                "Pode combinar mais de um buff conforme a habilidade que o criou.",
+                "Poder especial de FUSHI.",
+                "Definida explicitamente pela habilidade ou pelo Mestre."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Todo estado informa como termina",
+          "text": "A ficha mostra origem, duracao, acumulos e forma de encerramento. O personagem que criou uma marca Especial pode cancelar apenas essa marca; estados comuns sao encerrados pelo Mestre conforme a regra."
+        }
+      ]
+    },
+    {
+      "id": "fushi",
+      "number": "11",
+      "label": "FUSHI público",
+      "summary": "O recurso de poder, suas regras visíveis e o que a ficha precisa declarar.",
+      "status": "canon",
+      "tags": [
+        "poder",
+        "habilidades",
+        "rituais"
+      ],
+      "searchTerms": [
+        "custo",
+        "liberado pelo mestre",
+        "descubra mais",
+        "energia"
+      ],
+      "blocks": [
+        {
+          "kind": "lead",
+          "tone": "info",
+          "title": "FUSHI é poder com custo",
+          "text": "FUSHI é o recurso usado para ativar Habilidades e Rituais liberados na ficha. Ele transforma o que já existe e nunca deve ser tratado como efeito sem limite. A forma exata de cada poder aparece quando seu personagem a compreende."
+        },
+        {
+          "kind": "rule",
+          "title": "Toda Habilidade ou Ritual liberado precisa mostrar",
+          "items": [
+            "Gatilho ou momento de ativação.",
+            "Tipo de ação exigida.",
+            "Rolagem ou alvo, quando houver.",
+            "Custo em FUSHI, Determinação ou outro recurso.",
+            "Efeito e duração.",
+            "Limite por turno, cena ou descanso.",
+            "Risco, falha e forma de encerrar o efeito."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Não improvise poder ainda não liberado",
+          "text": "Você pode descrever a intenção e investigar o próprio potencial, mas o efeito mecânico só entra quando o Mestre liberar a regra correspondente. Chegar a 0 FUSHI paralisa o corpo até o recurso voltar acima de zero."
+        },
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Descubra mais",
+          "text": "Entenda mais sobre si mesmo para liberar novas informações, usos e páginas deste capítulo."
+        }
+      ]
+    },
+    {
+      "id": "builds",
+      "number": "12",
+      "label": "Builds por itens",
+      "summary": "Papéis flexíveis construídos por escolhas permanentes, sem classes rígidas.",
+      "status": "canon",
+      "tags": [
+        "itens",
+        "arquetipos",
+        "integracao permanente",
+        "raridade oculta"
+      ],
+      "searchTerms": [
+        "tank",
+        "assassino",
+        "suporte",
+        "lutador",
+        "atirador",
+        "ocultista",
+        "absorver"
+      ],
+      "blocks": [
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Sistema aplicado",
+          "text": "Cada item integra um ganho, um custo e, quando existir, uma passiva. Os numeros dependem da raridade revelada depois da absorcao e da afinidade da build dominante registrada na ficha."
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Integração permanente",
+          "items": [
+            "Ao aceitar a integracao, o ganho, o custo e a passiva passam a fazer parte da identidade.",
+            "O objeto fisico continua existindo e pode ser integrado por outras identidades.",
+            "Cada identidade integra a mesma matriz apenas uma vez; nao existe remover ou resetar por rotina.",
+            "A raridade somente e revelada depois que voce confirma a absorcao. Depois de vinculada, a matriz nao pode ser removida por rotina.",
+            "Misturar arquetipos e permitido. Todos os ganhos e custos se somam literalmente."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Arquétipos públicos",
+          "table": {
+            "columns": [
+              "Caminho",
+              "Tende a ganhar",
+              "Tende a perder"
+            ],
+            "rows": [
+              [
+                "Tank",
+                "Vida, proteção, Bloqueio e controle de espaço",
+                "Mobilidade e dano explosivo"
+              ],
+              [
+                "Assassino",
+                "Dano em alvo isolado, furtividade, iniciativa e crítico",
+                "Vida e segurança quando erra"
+              ],
+              [
+                "Suporte",
+                "Cura, proteção, remoção de condição e posicionamento",
+                "Dano direto"
+              ],
+              [
+                "Lutador",
+                "Corpo a corpo, manobra e dano consistente",
+                "Alcance"
+              ],
+              [
+                "Atirador",
+                "Alcance, precisão, preparo e uso de terreno",
+                "Defesa sob pressão corpo a corpo"
+              ],
+              [
+                "Ocultista",
+                "Controle, informação, Ritual e poder de FUSHI",
+                "Estabilidade e segurança sem recurso"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Exemplos publicos de tradeoff",
+          "table": {
+            "columns": [
+              "Caminho",
+              "Exemplo Comum",
+              "Orcamento comparavel de 10 pontos",
+              "Passiva constante"
+            ],
+            "rows": [
+              [
+                "Tank",
+                "Casca de Vigia",
+                "-3 Dano; +7 Vida",
+                "A primeira fonte de dano de cada cena causa 1 a menos."
+              ],
+              [
+                "Assassino",
+                "Dente do Primeiro Lobo",
+                "+3 Dano; -7 Vida",
+                "Causa +1 dano contra alvo isolado."
+              ],
+              [
+                "Suporte",
+                "Fita de Memória",
+                "-5 Dano; +3 Determinacao; +2 Cura",
+                "A primeira cura da cena recupera +1 Vida."
+              ],
+              [
+                "Lutador",
+                "Punho de Estrada",
+                "-6 FUSHI; +2 Vida; +2 Dano corpo a corpo",
+                "Manobras corpo a corpo recebem +1 no total."
+              ],
+              [
+                "Atirador",
+                "Mira de Vidro Claro",
+                "-5 Dano adjacente; +5 Dano a distancia",
+                "A mais de 6 m, o primeiro disparo da cena causa +1 dano."
+              ],
+              [
+                "Ocultista",
+                "Pedra de Foco FUSHI",
+                "+6 FUSHI; -4 Vida",
+                "A primeira Habilidade da cena custa 1 FUSHI a menos."
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Raridade revelada apos absorcao",
+          "text": "Um item pode ser Comum, Raro, Epico, Lendario ou Mitico. Voce conhece a matriz e decide se quer absorve-la antes de descobrir a raridade obtida. Existem itens Secretos capazes de elevar ou rerrolar a raridade de uma absorcao, mas eles pertencem a descobertas da campanha."
+        },
+        {
+          "kind": "rule",
+          "tone": "warning",
+          "title": "Saturacao de cura em combate",
+          "text": "O primeiro efeito de cura recebido por um alvo na rodada usa todo o bonus de Cura da build. Curas seguintes no mesmo alvo e na mesma rodada usam metade desse bonus, arredondada para baixo. O dado e o valor base da cura nao sao reduzidos."
+        },
+        {
+          "kind": "rule",
+          "title": "Build não limita criatividade",
+          "text": "Arquétipo é direção, não classe. Qualquer personagem pode atacar, ajudar, manobrar ou usar o ambiente. Os itens tornam algumas escolhas mais eficientes e outras mais custosas."
+        }
+      ]
+    },
+    {
+      "id": "niveis-poder",
+      "number": "13",
+      "label": "Níveis de Poder",
+      "summary": "Uma linguagem pública de risco, escala e preparação sem revelar fichas ocultas.",
+      "status": "development",
+      "tags": [
+        "Básico",
+        "Avançado",
+        "Ascensão",
+        "Cataclisma"
+      ],
+      "searchTerms": [
+        "escala de perigo",
+        "risco",
+        "nível",
+        "poder"
+      ],
+      "blocks": [
+        {
+          "kind": "lead",
+          "tone": "info",
+          "title": "Nível de Poder não é nível de personagem",
+          "text": "É uma leitura de escala: quanto preparo, coordenação e recursos uma ameaça exige. A Vida, a CA e os números exatos de criaturas não são públicos por padrão."
+        },
+        {
+          "kind": "table",
+          "title": "Escala pública de perigo",
+          "table": {
+            "columns": [
+              "Nível",
+              "Leitura para o jogador",
+              "Postura recomendada"
+            ],
+            "rows": [
+              [
+                "Básico",
+                "Conflito humano, criatura comum ou primeiro domínio real",
+                "Use posição, Reação e trabalho em grupo"
+              ],
+              [
+                "Avançado",
+                "Ameaça capaz de superar alguém Básico com clareza",
+                "Prepare recursos, papéis e rota de saída"
+              ],
+              [
+                "Ascensão",
+                "Força que muda uma cena inteira",
+                "Descubra condição, terreno, custo e ponto fraco"
+              ],
+              [
+                "Cataclisma",
+                "Evento ou entidade de escala coletiva",
+                "Não confronte sem preparação, objetivo e plano de sobrevivência"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "rule",
+          "title": "Itens e builds alteram sua escala",
+          "text": "Itens integrados, Habilidades, Rituais, vínculos e preparação podem mudar o que seu personagem sustenta. A fórmula final dessa progressão ainda está em construção e será atualizada sem apagar escolhas já feitas."
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Cataclisma não significa apenas mais Vida",
+          "text": "Uma ameaça Cataclisma pode ter fases, arena, regras próprias, consequências de mundo ou objetivos que não se resolvem apenas reduzindo Vida."
+        }
+      ]
+    },
+    {
+      "id": "exemplos",
+      "number": "14",
+      "label": "Exemplos táticos",
+      "summary": "Cenas curtas para aplicar as regras sem interromper a narração.",
+      "status": "playtest",
+      "tags": [
+        "exemplos",
+        "estratégia",
+        "combate"
+      ],
+      "searchTerms": [
+        "como jogar",
+        "cenário",
+        "tática",
+        "decisão"
+      ],
+      "blocks": [
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "1. Ataque simples",
+          "text": "FOR 3 + Luta +5 contra CA 18. Os d20 são 8, 14 e 19; o resultado final é 24. O golpe acerta e uma arma 1d6 causa 1d6 de dano."
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "2. Coreografia com abertura",
+          "text": "O alvo está Cercado, então você recebe +1d20. Com FOR 3, sacrifica 2 dados para ganhar +2d6 de dano. A vantagem mantém 2d20 para o acerto e o golpe causa 3d6 se acertar."
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "3. Sair de uma manada",
+          "text": "Dois inimigos estão adjacentes. Você usa Ação Curta para Desengajar e move normalmente. Sem Desengajar, um deles poderia gastar a Reação para um ataque de oportunidade."
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "4. Criar vantagem sem causar dano",
+          "text": "INT + Investigação revela uma corda que sustenta o lustre. Em sucesso, o Mestre concede +1d20 ao aliado que usar Pontaria para romper a corda ou muda o terreno quando ela cai. Investigação não vira dano direto."
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "5. Escolher a defesa",
+          "text": "Contra um ataque alto, Contra-ataque é arriscado; Esquiva pode evitar tudo; Bloqueio garante redução. A melhor resposta depende do número de inimigos ainda por agir e de sua Reação disponível."
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "6. Salvar um aliado caído",
+          "text": "O aliado está a 0 Vida. Você usa Ação Principal para Medicina ou aplica um item de cura. Reposicionar o corpo para cobertura antes pode impedir novos ataques e ser mais importante do que atacar."
+        }
+      ]
+    },
+    {
+      "id": "referencia",
+      "number": "15",
+      "label": "Referência rápida",
+      "summary": "As fórmulas e decisões que precisam caber em uma consulta de segundos.",
+      "status": "canon",
+      "tags": [
+        "resumo",
+        "fórmulas",
+        "consulta"
+      ],
+      "searchTerms": [
+        "cola",
+        "escudo",
+        "rápido",
+        "resumo"
+      ],
+      "blocks": [
+        {
+          "kind": "table",
+          "title": "Seu turno em uma linha",
+          "table": {
+            "columns": [
+              "Recurso",
+              "Quantidade"
+            ],
+            "rows": [
+              [
+                "Ação Principal",
+                "1"
+              ],
+              [
+                "Movimento",
+                "Até o Deslocamento"
+              ],
+              [
+                "Ação Curta",
+                "1"
+              ],
+              [
+                "Reação",
+                "1 até seu próximo turno"
+              ],
+              [
+                "Fala",
+                "Breve e coerente com a cena"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "table",
+          "title": "Fórmulas essenciais",
+          "table": {
+            "columns": [
+              "Regra",
+              "Fórmula"
+            ],
+            "rows": [
+              [
+                "Teste",
+                "d20 escolhido + Pericia + bonus"
+              ],
+              [
+                "Ataque corpo a corpo",
+                "FOR + Luta vs CA"
+              ],
+              [
+                "Ataque a distancia",
+                "AGI + Pontaria vs CA"
+              ],
+              [
+                "Bloqueio",
+                "dano - Fortitude (0/5/10/15; teto 15)"
+              ],
+              [
+                "Esquiva",
+                "CA atual + AGI + Reflexos vs total do ataque; sem dados"
+              ],
+              [
+                "Contra-ataque",
+                "ataque inimigo falha contra CA"
+              ],
+              [
+                "Critico",
+                "20 escolhido: dobra dados de dano"
+              ],
+              [
+                "Coreografia",
+                "-1d20 de acerto = +1 dado de dano"
+              ],
+              [
+                "Agro",
+                "Acao Completa; PRE + Intimidacao vs CA por alvo visivel"
+              ]
+            ]
+          }
+        },
+        {
+          "kind": "bullets",
+          "title": "Antes de terminar sua vez",
+          "items": [
+            "Estou em cobertura ou oferecendo cobertura para alguém?",
+            "Ainda tenho Reação para o próximo ataque?",
+            "Posso Cercar, Desengajar, Ajudar ou Preparar em vez de apenas causar dano?",
+            "Declare custos e Coreografia antes da rolagem.",
+            "Se a regra não estiver clara, diga intenção e risco desejado ao Mestre."
+          ]
+        }
+      ]
+    }
+  ]
+}

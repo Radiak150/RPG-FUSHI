@@ -5,6 +5,9 @@ import type {
   CharacterInventoryItem,
   CharacterSheet,
 } from '../data/types'
+import { getInitialTrainingRewardByFeatureId } from '../data/training/initialTrainingRewards'
+import { getCombatDodgeValue } from './combatV2'
+import { getInventoryProfile } from './inventoryCapacity'
 import { createAttributeRollConfig } from './rolls'
 import { createDefaultSkills, ensureGeneralSkills } from './skillCatalog'
 
@@ -30,7 +33,25 @@ function buildInventoryDetails(items: string[]): CharacterInventoryItem[] {
     nome: item,
     descricao: '',
     efeitos: [],
+    quantidade: 1,
   }))
+}
+
+function normalizeInventorySize(
+  value: CharacterInventoryItem['porte'],
+): CharacterInventoryItem['porte'] {
+  return value === 'pequeno' ||
+    value === 'medio' ||
+    value === 'grande' ||
+    value === 'grande_plus'
+    ? value
+    : undefined
+}
+
+function normalizeInventoryQuantity(value: number | undefined) {
+  return Number.isFinite(value)
+    ? Math.max(1, Math.floor(value as number))
+    : 1
 }
 
 function cloneFeatureAutomation(
@@ -43,9 +64,30 @@ function cloneFeatureAutomation(
   return {
     ...automation,
     costs: automation.costs?.map((cost) => ({ ...cost })),
+    combat: automation.combat
+      ? {
+          ...automation.combat,
+          alcance: automation.combat.alcance
+            ? { ...automation.combat.alcance }
+            : undefined,
+          teste: automation.combat.teste ? { ...automation.combat.teste } : undefined,
+          dano: automation.combat.dano ? { ...automation.combat.dano } : undefined,
+          resolucao: automation.combat.resolucao
+            ? { ...automation.combat.resolucao }
+            : undefined,
+        }
+      : undefined,
     effects: automation.effects?.map((effect) => ({ ...effect })),
     roll: automation.roll ? { ...automation.roll } : undefined,
     tags: automation.tags ? [...automation.tags] : undefined,
+    presentation: automation.presentation
+      ? {
+          ...automation.presentation,
+          area: automation.presentation.area
+            ? { ...automation.presentation.area }
+            : undefined,
+        }
+      : undefined,
   }
 }
 
@@ -56,13 +98,66 @@ function cloneFeatureDetail(item: CharacterFeatureDetail): CharacterFeatureDetai
   }
 }
 
-function normalizeFeatureDetail(item: CharacterFeatureDetail): CharacterFeatureDetail {
-  const automation = cloneFeatureAutomation(item.automation)
+export function normalizeCharacterFeatureDetail(
+  item: CharacterFeatureDetail,
+): CharacterFeatureDetail {
+  const canonicalTrainingReward = getInitialTrainingRewardByFeatureId(item.id)
+  const canonicalAutomation = canonicalTrainingReward?.feature.automation
+  const currentAutomation = item.automation
+  const hydratedItem =
+    canonicalAutomation
+      ? currentAutomation
+        ? {
+          ...item,
+          automation: {
+            ...canonicalAutomation,
+            ...currentAutomation,
+            combat: canonicalAutomation.combat
+              ? {
+                  ...canonicalAutomation.combat,
+                  ...currentAutomation.combat,
+                  alcance:
+                    currentAutomation.combat?.alcance ??
+                    canonicalAutomation.combat.alcance,
+                  dano: canonicalAutomation.combat.dano
+                    ? {
+                        ...canonicalAutomation.combat.dano,
+                        ...currentAutomation.combat?.dano,
+                      }
+                    : currentAutomation.combat?.dano,
+                  resolucao:
+                    currentAutomation.combat?.resolucao ??
+                    canonicalAutomation.combat.resolucao,
+                  teste: canonicalAutomation.combat.teste
+                    ? {
+                        ...canonicalAutomation.combat.teste,
+                        ...currentAutomation.combat?.teste,
+                      }
+                    : currentAutomation.combat?.teste,
+                }
+              : currentAutomation.combat,
+            presentation: canonicalAutomation.presentation
+              ? {
+                  ...canonicalAutomation.presentation,
+                  ...currentAutomation.presentation,
+                  area:
+                    currentAutomation.presentation?.area ??
+                    canonicalAutomation.presentation.area,
+                }
+              : currentAutomation.presentation,
+          },
+        }
+        : {
+            ...item,
+            automation: cloneFeatureAutomation(canonicalAutomation),
+          }
+      : item
+  const automation = cloneFeatureAutomation(hydratedItem.automation)
 
   return {
-    ...item,
-    nome: item.nome.trim(),
-    descricao: item.descricao.trim(),
+    ...hydratedItem,
+    nome: hydratedItem.nome.trim(),
+    descricao: hydratedItem.descricao.trim(),
     automation: automation
       ? {
           ...automation,
@@ -152,10 +247,11 @@ export function prepareCharacterForEditing(character: CharacterSheet): Character
     origem: character.origem ?? '',
     tier: character.tier ?? 0,
     combatRole: character.combatRole ?? '',
+    combatProfile: character.combatProfile ? { ...character.combatProfile } : undefined,
     nivel: character.nivel ?? 1,
     deslocamento: character.deslocamento ?? '9 m',
     bloqueio: character.bloqueio ?? 0,
-    esquiva: character.esquiva ?? 0,
+    esquiva: getCombatDodgeValue(character) ?? 0,
     protecao: character.protecao ?? '',
     resistencia: character.resistencia ?? '',
     proficiencias: [...(character.proficiencias ?? [])],
@@ -169,8 +265,12 @@ export function prepareCharacterForEditing(character: CharacterSheet): Character
         ? character.inventarioDetalhado.map((item) => ({
             ...item,
             efeitos: [...item.efeitos],
+            porte: normalizeInventorySize(item.porte),
+            quantidade: normalizeInventoryQuantity(item.quantidade),
+            automation: cloneFeatureAutomation(item.automation),
           }))
         : buildInventoryDetails(character.inventario),
+    inventarioPerfil: getInventoryProfile(character.inventarioPerfil),
     descricao: {
       historia: description.historia ?? '',
       objetivo: description.objetivo ?? '',
@@ -191,7 +291,10 @@ export function prepareCharacterForEditing(character: CharacterSheet): Character
       : undefined,
     status: [...character.status],
     pericias: ensureGeneralSkills(character.pericias).map((skill) => ({ ...skill })),
-    ataques: character.ataques.map((attack) => ({ ...attack })),
+    ataques: character.ataques.map((attack) => ({
+      ...attack,
+      automation: cloneFeatureAutomation(attack.automation),
+    })),
     atributos: { ...character.atributos },
     recursos: { ...character.recursos },
     rolagemBase: { ...character.rolagemBase },
@@ -214,7 +317,7 @@ export function getCharacterSheetModel(character: CharacterSheet) {
     nivel: character.nivel ?? 1,
     deslocamento: character.deslocamento?.trim() || '9 m',
     bloqueio: character.bloqueio ?? 0,
-    esquiva: character.esquiva ?? 0,
+    esquiva: getCombatDodgeValue(character) ?? 0,
     protecao: character.protecao?.trim() || 'Sem protecao',
     resistencia: character.resistencia?.trim() || 'Sem resistencia',
     proficiencias: character.proficiencias ?? [],
@@ -227,6 +330,7 @@ export function getCharacterSheetModel(character: CharacterSheet) {
       character.inventarioDetalhado && character.inventarioDetalhado.length > 0
         ? character.inventarioDetalhado
         : buildInventoryDetails(character.inventario),
+    inventarioPerfil: getInventoryProfile(character.inventarioPerfil),
     descricao: getCharacterDescription(character),
     pericias: mergedSkills,
   }
@@ -244,6 +348,10 @@ export function createEmptyCharacter(factionId: string): CharacterSheet {
     origem: '',
     tier: 0,
     combatRole: '',
+    combatProfile: {
+      versao: 2,
+      podeEsquivar: true,
+    },
     tipo: 'player',
     faccao: factionId,
     localAtual: 'Sem local definido',
@@ -252,7 +360,7 @@ export function createEmptyCharacter(factionId: string): CharacterSheet {
     nivel: 1,
     deslocamento: '9 m',
     bloqueio: 0,
-    esquiva: 0,
+    esquiva: 14,
     protecao: '',
     resistencia: '',
     proficiencias: [],
@@ -261,6 +369,9 @@ export function createEmptyCharacter(factionId: string): CharacterSheet {
     rituais: [],
     inventario: [],
     inventarioDetalhado: [],
+    inventarioPerfil: {
+      mochila: 'nenhuma',
+    },
     descricao: {
       historia: '',
       objetivo: '',
@@ -307,6 +418,7 @@ export function normalizeCharacterSheet(draft: CharacterSheet): CharacterSheet {
   const detailedSkills = editableDraft.habilidadesDetalhadas ?? []
   const rituals = editableDraft.rituais ?? []
   const inventory = editableDraft.inventarioDetalhado ?? []
+  const inventoryProfile = getInventoryProfile(editableDraft.inventarioPerfil)
   const description = editableDraft.descricao ?? {
     historia: '',
     objetivo: '',
@@ -328,12 +440,22 @@ export function normalizeCharacterSheet(draft: CharacterSheet): CharacterSheet {
     origem: editableDraft.origem?.trim() || undefined,
     tier: editableDraft.tier ?? 0,
     combatRole: editableDraft.combatRole?.trim() || undefined,
+    combatProfile: editableDraft.combatProfile
+      ? {
+          ...editableDraft.combatProfile,
+          bloqueioBonus: editableDraft.combatProfile.bloqueioBonus ?? undefined,
+          bloqueioCap: editableDraft.combatProfile.bloqueioCap ?? undefined,
+          papelBuild: editableDraft.combatProfile.papelBuild?.trim() || undefined,
+          podeEsquivar: editableDraft.combatProfile.podeEsquivar !== false,
+          versao: 2,
+        }
+      : undefined,
     localAtual: draft.localAtual.trim() || 'Sem local definido',
     notas: draft.notas.trim(),
     nivel: editableDraft.nivel,
     deslocamento: editableDraft.deslocamento?.trim() || undefined,
     bloqueio: editableDraft.bloqueio,
-    esquiva: editableDraft.esquiva,
+    esquiva: getCombatDodgeValue(editableDraft) ?? 0,
     protecao: editableDraft.protecao?.trim() || undefined,
     resistencia: editableDraft.resistencia?.trim() || undefined,
     proficiencias: proficiencies
@@ -343,10 +465,10 @@ export function normalizeCharacterSheet(draft: CharacterSheet): CharacterSheet {
       .map((item) => item.nome.trim())
       .filter(Boolean),
     habilidadesDetalhadas: detailedSkills
-      .map(normalizeFeatureDetail)
+      .map(normalizeCharacterFeatureDetail)
       .filter((item) => item.nome),
     rituais: rituals
-      .map(normalizeFeatureDetail)
+      .map(normalizeCharacterFeatureDetail)
       .filter((item) => item.nome),
     inventario: inventory
       .map((item) => item.nome.trim())
@@ -358,8 +480,12 @@ export function normalizeCharacterSheet(draft: CharacterSheet): CharacterSheet {
         descricao: item.descricao.trim(),
         imagemUrl: item.imagemUrl?.trim() ? item.imagemUrl.trim() : undefined,
         efeitos: item.efeitos.map((effect) => effect.trim()).filter(Boolean),
+        porte: normalizeInventorySize(item.porte),
+        quantidade: normalizeInventoryQuantity(item.quantidade),
+        automation: cloneFeatureAutomation(item.automation),
       }))
       .filter((item) => item.nome),
+    inventarioPerfil: inventoryProfile,
     descricao: {
       historia: description.historia.trim(),
       objetivo: description.objetivo.trim(),

@@ -1,0 +1,546 @@
+{
+  "anchors": {
+    "tank": {
+      "damage": -1,
+      "life": 7
+    },
+    "assassino": {
+      "damage": 2,
+      "life": -3
+    },
+    "suporte": {
+      "damage": -1,
+      "healing": 5
+    },
+    "lutador": {
+      "fushi": -2,
+      "life": 2,
+      "meleeDamage": 1
+    },
+    "atirador": {
+      "adjacentDamage": -2,
+      "rangedDamage": 2
+    },
+    "ocultista": {
+      "fushi": 5,
+      "life": -3
+    }
+  },
+  "generatedAt": "2026-07-15T07:22:55.610Z",
+  "equalCountSpecialists": {
+    "tank": {
+      "block": 4,
+      "ca": 2,
+      "damage": -2,
+      "determination": 5,
+      "fushi": -4,
+      "initiative": -1,
+      "life": 14,
+      "movement": -1
+    },
+    "assassino": {
+      "abilityDamage": 2,
+      "block": -1,
+      "damage": 2,
+      "determination": -2,
+      "fushi": -2,
+      "initiative": 2,
+      "life": -9,
+      "meleeDamage": 4,
+      "movement": 2,
+      "rangedDamage": 2
+    },
+    "suporte": {
+      "ca": -1,
+      "damage": -2,
+      "determination": 7,
+      "fushi": 3,
+      "healing": 17,
+      "life": -3,
+      "movement": -1
+    },
+    "lutador": {
+      "block": 2,
+      "ca": -1,
+      "damage": 3,
+      "fushi": -4,
+      "initiative": 2,
+      "life": 6,
+      "meleeDamage": 2,
+      "movement": 1,
+      "rangedDamage": -1
+    },
+    "atirador": {
+      "adjacentDamage": -2,
+      "block": -1,
+      "ca": -1,
+      "determination": -2,
+      "fushi": -2,
+      "initiative": 2,
+      "life": -3,
+      "movement": 2,
+      "rangedDamage": 8
+    },
+    "ocultista": {
+      "abilityDamage": 4,
+      "block": -1,
+      "ca": -1,
+      "determination": 3,
+      "fushi": 15,
+      "life": -6,
+      "movement": -1
+    }
+  },
+  "mixedSets": {
+    "1": {
+      "adjacentDamage": -2,
+      "fushi": 3,
+      "healing": 5,
+      "life": 3,
+      "meleeDamage": 1,
+      "rangedDamage": 2
+    },
+    "2": {
+      "adjacentDamage": -2,
+      "fushi": 4,
+      "healing": 6,
+      "life": 4,
+      "meleeDamage": 1,
+      "rangedDamage": 2
+    },
+    "5": {
+      "adjacentDamage": -4,
+      "damage": -1,
+      "fushi": 5,
+      "healing": 9,
+      "life": 3,
+      "meleeDamage": 1,
+      "rangedDamage": 3
+    },
+    "8": {
+      "adjacentDamage": -5,
+      "fushi": 7,
+      "healing": 12,
+      "life": 5,
+      "meleeDamage": 2,
+      "rangedDamage": 4
+    },
+    "10": {
+      "adjacentDamage": -6,
+      "damage": -1,
+      "fushi": 8,
+      "healing": 14,
+      "life": 5,
+      "meleeDamage": 2,
+      "rangedDamage": 5
+    }
+  },
+  "specialistSets": {
+    "tank": {
+      "1": {
+        "block": 4,
+        "ca": 4,
+        "damage": -2,
+        "determination": 7,
+        "fushi": -4,
+        "initiative": -1,
+        "life": 16,
+        "movement": -2,
+        "rangedDamage": -1
+      },
+      "2": {
+        "block": 4,
+        "ca": 4,
+        "damage": -2,
+        "determination": 8,
+        "fushi": -4,
+        "initiative": -1,
+        "life": 18,
+        "movement": -2,
+        "rangedDamage": -1
+      },
+      "5": {
+        "block": 6,
+        "ca": 4,
+        "damage": -4,
+        "determination": 12,
+        "fushi": -8,
+        "initiative": -2,
+        "life": 25,
+        "movement": -2,
+        "rangedDamage": -2
+      },
+      "8": {
+        "block": 6,
+        "ca": 6,
+        "damage": -4,
+        "determination": 15,
+        "fushi": -10,
+        "initiative": -2,
+        "life": 31,
+        "movement": -4,
+        "rangedDamage": -2
+      },
+      "10": {
+        "block": 8,
+        "ca": 6,
+        "damage": -6,
+        "determination": 18,
+        "fushi": -12,
+        "initiative": -3,
+        "life": 36,
+        "movement": -4,
+        "rangedDamage": -3
+      }
+    },
+    "assassino": {
+      "1": {
+        "abilityDamage": 2,
+        "block": -1,
+        "ca": -1,
+        "damage": 6,
+        "determination": -2,
+        "fushi": -2,
+        "healingReceived": -1,
+        "initiative": 2,
+        "life": -9,
+        "meleeDamage": 4,
+        "movement": 2,
+        "rangedDamage": 2
+      },
+      "2": {
+        "abilityDamage": 2,
+        "block": -1,
+        "ca": -1,
+        "damage": 6,
+        "determination": -2,
+        "fushi": -2,
+        "healingReceived": -1,
+        "initiative": 2,
+        "life": -9,
+        "meleeDamage": 4,
+        "movement": 2,
+        "rangedDamage": 2
+      },
+      "5": {
+        "abilityDamage": 3,
+        "block": -2,
+        "ca": -1,
+        "damage": 9,
+        "determination": -4,
+        "fushi": -4,
+        "healingReceived": -2,
+        "initiative": 3,
+        "life": -15,
+        "meleeDamage": 5,
+        "movement": 2,
+        "rangedDamage": 3
+      },
+      "8": {
+        "abilityDamage": 4,
+        "block": -2,
+        "ca": -2,
+        "damage": 12,
+        "determination": -5,
+        "fushi": -5,
+        "healingReceived": -2,
+        "initiative": 3,
+        "life": -18,
+        "meleeDamage": 7,
+        "movement": 3,
+        "rangedDamage": 4
+      },
+      "10": {
+        "abilityDamage": 5,
+        "block": -3,
+        "ca": -2,
+        "damage": 15,
+        "determination": -6,
+        "fushi": -6,
+        "healingReceived": -3,
+        "initiative": 4,
+        "life": -21,
+        "meleeDamage": 8,
+        "movement": 3,
+        "rangedDamage": 5
+      }
+    },
+    "suporte": {
+      "1": {
+        "ca": -1,
+        "damage": -3,
+        "determination": 12,
+        "fushi": 8,
+        "healing": 17,
+        "initiative": -1,
+        "life": -3,
+        "movement": -1
+      },
+      "2": {
+        "ca": -1,
+        "damage": -3,
+        "determination": 14,
+        "fushi": 10,
+        "healing": 20,
+        "initiative": -1,
+        "life": -3,
+        "movement": -1
+      },
+      "5": {
+        "ca": -1,
+        "damage": -6,
+        "determination": 21,
+        "fushi": 14,
+        "healing": 30,
+        "initiative": -2,
+        "life": -5,
+        "movement": -1
+      },
+      "8": {
+        "ca": -2,
+        "damage": -6,
+        "determination": 27,
+        "fushi": 19,
+        "healing": 39,
+        "initiative": -2,
+        "life": -6,
+        "movement": -2
+      },
+      "10": {
+        "ca": -2,
+        "damage": -9,
+        "determination": 32,
+        "fushi": 22,
+        "healing": 46,
+        "initiative": -3,
+        "life": -7,
+        "movement": -2
+      }
+    },
+    "lutador": {
+      "1": {
+        "abilityDamage": -1,
+        "block": 4,
+        "ca": -1,
+        "damage": 5,
+        "fushi": -4,
+        "initiative": 1,
+        "life": 8,
+        "meleeDamage": 2,
+        "movement": 1,
+        "rangedDamage": -1
+      },
+      "2": {
+        "abilityDamage": -1,
+        "block": 4,
+        "ca": -1,
+        "damage": 5,
+        "fushi": -4,
+        "initiative": 1,
+        "life": 8,
+        "meleeDamage": 2,
+        "movement": 1,
+        "rangedDamage": -1
+      },
+      "5": {
+        "abilityDamage": -2,
+        "block": 4,
+        "ca": -1,
+        "damage": 5,
+        "determination": -2,
+        "fushi": -8,
+        "life": 8,
+        "meleeDamage": 2,
+        "movement": 1,
+        "rangedDamage": -2
+      },
+      "8": {
+        "abilityDamage": -2,
+        "block": 6,
+        "ca": -2,
+        "damage": 10,
+        "determination": -2,
+        "fushi": -10,
+        "initiative": 1,
+        "life": 12,
+        "meleeDamage": 4,
+        "movement": 1,
+        "rangedDamage": -2
+      },
+      "10": {
+        "abilityDamage": -3,
+        "block": 6,
+        "ca": -2,
+        "damage": 10,
+        "determination": -3,
+        "fushi": -12,
+        "life": 12,
+        "meleeDamage": 4,
+        "movement": 1,
+        "rangedDamage": -3
+      }
+    },
+    "atirador": {
+      "1": {
+        "adjacentDamage": -2,
+        "block": -1,
+        "ca": -1,
+        "determination": -2,
+        "fushi": -2,
+        "healingReceived": -1,
+        "initiative": 4,
+        "life": -3,
+        "meleeDamage": -2,
+        "movement": 2,
+        "rangedDamage": 10
+      },
+      "2": {
+        "adjacentDamage": -2,
+        "block": -1,
+        "ca": -1,
+        "determination": -2,
+        "fushi": -2,
+        "healingReceived": -1,
+        "initiative": 4,
+        "life": -3,
+        "meleeDamage": -2,
+        "movement": 2,
+        "rangedDamage": 10
+      },
+      "5": {
+        "adjacentDamage": -4,
+        "block": -2,
+        "ca": -1,
+        "determination": -4,
+        "fushi": -4,
+        "healingReceived": -2,
+        "initiative": 6,
+        "life": -5,
+        "meleeDamage": -4,
+        "movement": 2,
+        "rangedDamage": 15
+      },
+      "8": {
+        "adjacentDamage": -5,
+        "block": -2,
+        "ca": -2,
+        "determination": -5,
+        "fushi": -5,
+        "healingReceived": -2,
+        "initiative": 6,
+        "life": -6,
+        "meleeDamage": -5,
+        "movement": 3,
+        "rangedDamage": 20
+      },
+      "10": {
+        "adjacentDamage": -6,
+        "block": -3,
+        "ca": -2,
+        "determination": -6,
+        "fushi": -6,
+        "healingReceived": -3,
+        "initiative": 8,
+        "life": -7,
+        "meleeDamage": -6,
+        "movement": 3,
+        "rangedDamage": 25
+      }
+    },
+    "ocultista": {
+      "1": {
+        "abilityDamage": 6,
+        "block": -1,
+        "ca": -1,
+        "damage": -1,
+        "determination": 8,
+        "fushi": 13,
+        "life": -6,
+        "movement": -1
+      },
+      "2": {
+        "abilityDamage": 6,
+        "block": -1,
+        "ca": -1,
+        "damage": -1,
+        "determination": 10,
+        "fushi": 16,
+        "life": -6,
+        "movement": -1
+      },
+      "5": {
+        "abilityDamage": 9,
+        "block": -2,
+        "ca": -1,
+        "damage": -2,
+        "determination": 14,
+        "fushi": 23,
+        "life": -10,
+        "movement": -1
+      },
+      "8": {
+        "abilityDamage": 12,
+        "block": -2,
+        "ca": -2,
+        "damage": -2,
+        "determination": 19,
+        "fushi": 31,
+        "life": -12,
+        "movement": -2
+      },
+      "10": {
+        "abilityDamage": 15,
+        "block": -3,
+        "ca": -2,
+        "damage": -3,
+        "determination": 22,
+        "fushi": 36,
+        "life": -14,
+        "movement": -2
+      }
+    }
+  },
+  "stress": {
+    "tank": {
+      "advancedWinRate": 1,
+      "basicWinRate": 0,
+      "drawRate": 0,
+      "iterations": 10000
+    },
+    "assassino": {
+      "advancedWinRate": 1,
+      "basicWinRate": 0,
+      "drawRate": 0,
+      "iterations": 10000
+    },
+    "suporte": {
+      "advancedWinRate": 1,
+      "basicWinRate": 0,
+      "drawRate": 0,
+      "iterations": 10000
+    },
+    "lutador": {
+      "advancedWinRate": 1,
+      "basicWinRate": 0,
+      "drawRate": 0,
+      "iterations": 10000
+    },
+    "atirador": {
+      "advancedWinRate": 0.9999,
+      "basicWinRate": 0.0001,
+      "drawRate": 0,
+      "iterations": 10000
+    },
+    "ocultista": {
+      "advancedWinRate": 1,
+      "basicWinRate": 0,
+      "drawRate": 0,
+      "iterations": 10000
+    }
+  },
+  "totals": {
+    "archetypes": 6,
+    "biomes": 8,
+    "items": 48
+  }
+}

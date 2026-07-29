@@ -1,6 +1,11 @@
 const fs = require('node:fs')
 const path = require('node:path')
 const {
+  getCombatV2Block,
+  getCombatV2Dodge,
+  getCombatV2Profile,
+} = require('./lib/combat-v2.cjs')
+const {
   normalizeText,
   parseLoreNpcDirectory,
   slugify,
@@ -180,8 +185,13 @@ function preserveFeatureIds(nextFeatures, currentFeatures) {
   return (nextFeatures ?? []).map((feature, index) => {
     const current = currentByName.get(normalizeText(feature.nome))
 
+    const nextFeature = cloneValue(feature)
+    if (!nextFeature.automation && current?.automation) {
+      nextFeature.automation = cloneValue(current.automation)
+    }
+
     return {
-      ...cloneValue(feature),
+      ...nextFeature,
       id: current?.id ?? feature.id ?? `feature-${index + 1}-${slugify(feature.nome)}`,
     }
   })
@@ -257,6 +267,8 @@ function buildBalanceNotes(character) {
 
 function buildMissingCharacter(record) {
   const draft = record.appDraft
+  const pericias = ensureGeneralSkills([], record.skills)
+  const combatProfile = getCombatV2Profile({})
   const nextCharacter = {
     id: `npc-lore-${slugify(record.name)}`,
     nome: record.name,
@@ -275,8 +287,9 @@ function buildMissingCharacter(record) {
     defesa: draft.defesa,
     nivel: getExpectedLevelForPower(inferPowerLevel(draft)),
     deslocamento: draft.deslocamento ?? '9 m',
-    bloqueio: draft.bloqueio ?? Math.floor((draft.defesa ?? 10) / 2),
-    esquiva: draft.esquiva ?? draft.defesa,
+    bloqueio: 0,
+    esquiva: 0,
+    combatProfile,
     protecao: draft.protecao,
     resistencia: undefined,
     proficiencias: [],
@@ -301,13 +314,16 @@ function buildMissingCharacter(record) {
       notes: '',
     },
     status: ['Ativo'],
-    pericias: ensureGeneralSkills([], record.skills),
+    pericias,
     ataques: [],
     atributos: draft.atributos,
     recursos: draft.recursos,
     rolagemBase: buildRollBase(draft.atributos),
     tone: 'steady',
   }
+
+  nextCharacter.bloqueio = getCombatV2Block(nextCharacter)
+  nextCharacter.esquiva = getCombatV2Dodge(nextCharacter) ?? 0
 
   return nextCharacter
 }
@@ -332,26 +348,33 @@ function mergeLoreIntoCharacter(currentCharacter, record) {
     current.habilidadesDetalhadas,
   )
   const nextRituals = preserveFeatureIds(sourceRituals, current.rituais)
-
-  return {
+  const pericias = ensureGeneralSkills(current.pericias, record.skills)
+  const combatProfile = getCombatV2Profile(current)
+  const nextCharacter = {
     ...current,
     nome: record.name,
     faccao: record.factionId,
     defesa: draft.defesa,
     deslocamento: draft.deslocamento ?? current.deslocamento,
-    bloqueio: draft.bloqueio ?? current.bloqueio ?? Math.floor((draft.defesa ?? current.defesa ?? 10) / 2),
-    esquiva: draft.esquiva ?? current.esquiva,
+    bloqueio: 0,
+    esquiva: 0,
+    combatProfile,
     protecao: draft.protecao ?? current.protecao,
     habilidades: nextFeatures.map((feature) => feature.nome),
     habilidadesDetalhadas: nextFeatures,
     rituais: nextRituals,
     inventario: nextInventory.map((item) => item.nome),
     inventarioDetalhado: nextInventory,
-    pericias: ensureGeneralSkills(current.pericias, record.skills),
+    pericias,
     atributos: draft.atributos,
     recursos: mergeResources(current.recursos, draft.recursos),
     rolagemBase: buildRollBase(draft.atributos),
   }
+
+  nextCharacter.bloqueio = getCombatV2Block(nextCharacter)
+  nextCharacter.esquiva = getCombatV2Dodge(nextCharacter) ?? 0
+
+  return nextCharacter
 }
 
 function summarizeCharacterDiff(before, after) {
@@ -424,7 +447,7 @@ function renderReport(plan, input) {
     '',
     '## Regras Aplicadas',
     '',
-    '- Lore em `01_LORE/npcs` e a fonte para atributos, pericias, recursos, defesa, bloqueio, esquiva, inventario, habilidades e rituais.',
+    '- Lore em `01_LORE/npcs` e a fonte para atributos, pericias, recursos, defesa, inventario, habilidades e rituais; Bloqueio e Esquiva sao derivados das regras canonicas.',
     '- IDs, imagens, permissoes, vinculos, descricao e ataques existentes sao preservados.',
     '- Recursos atuais so resetam para o novo maximo se a ficha estava cheia; se estava ferida/gastou recurso, o valor atual e preservado e travado no novo maximo.',
     '- Balanceamento automatico fica restrito a sincronizar a ficha com a lore e marcar escala de Nivel de Poder; mudanca numerica criativa fica no relatorio, nao na ficha.',

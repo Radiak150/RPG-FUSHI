@@ -1,6 +1,10 @@
 import { createContext } from 'react'
 import type { CharacterSheet, TabletopCell } from '../data/types'
-import type { TabletopLogEntry, TabletopMeasurement } from '../lib/tabletopSession'
+import type {
+  TabletopLogEntry,
+  TabletopMeasurement,
+  TabletopTurnActionRequest,
+} from '../lib/tabletopSession'
 import type {
   FushiAccessProfile,
   FushiAccessProfileId,
@@ -36,6 +40,7 @@ export interface MultiplayerHostStatus {
   campaignId?: string
   clients: Array<{
     admissionStatus?: 'accepted' | 'anonymous' | 'kicked' | 'pending' | 'rejected'
+    clientInstanceId?: string
     connectedAt: string
     id: string
     latencyMs?: number | null
@@ -84,6 +89,15 @@ export interface MultiplayerContextValue {
   networkLatencyMs: number | null
   moveToken: (tokenId: string, cell: TabletopCell) => void
   addLogEntry: (entry: TabletopLogEntry) => void
+  cancelCombatEffect: (effectId: string) => void
+  setCharacterEditLock: (input: {
+    characterId: string
+    mode: 'full' | 'quick'
+    release?: boolean
+  }) => void
+  requestTurnAction: (
+    request: Omit<TabletopTurnActionRequest, 'id' | 'playerId' | 'status'>,
+  ) => void
   updateCharacter: (character: CharacterSheet) => void
   updateMeasurement: (
     measurement: Pick<TabletopMeasurement, 'end' | 'start' | 'visualColor'> | null,

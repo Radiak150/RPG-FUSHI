@@ -1,5 +1,9 @@
 import type { CharacterSheet, RollConfig } from '../../data/types'
 import { useViewMode } from '../../hooks/useViewMode'
+import {
+  formatInventoryMovement,
+  getInventoryCapacitySummary,
+} from '../../lib/inventoryCapacity'
 import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 import { ResourceMeter } from '../ui/ResourceMeter'
 import { StatusPill } from '../ui/StatusPill'
@@ -31,6 +35,7 @@ export function CharacterSheetCard({
 }: CharacterSheetCardProps) {
   const { viewMode } = useViewMode()
   const isMobSheet = character.tipo === 'mob'
+  const inventorySummary = getInventoryCapacitySummary(character)
 
   return (
     <article className="sheet-card">
@@ -140,7 +145,11 @@ export function CharacterSheetCard({
               </div>
               <div className="tag-row">
                 <span className="tag">{character.faccao || factionName}</span>
-                <span className="tag">{character.deslocamento}</span>
+                <span className="tag">
+                  {inventorySummary.movementPenaltyMeters > 0
+                    ? formatInventoryMovement(inventorySummary)
+                    : character.deslocamento}
+                </span>
                 <span className="tag">{character.status[0] ?? 'ativo'}</span>
               </div>
               <p className="support-copy">

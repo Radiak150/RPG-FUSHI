@@ -1,6 +1,6 @@
 # FUSHI NPC Math Balance Report
 
-Gerado em: 2026-06-05T17:28:04.998Z
+Gerado em: 2026-07-12T15:31:51.127Z
 Modo: DRY-RUN
 Workspace fonte: C:\Users\danie\AppData\Roaming\FUSHI\workspace.json (workspace)
 Backup: nao criado em dry-run
@@ -8,14 +8,14 @@ Backup: nao criado em dry-run
 ## Regras de seguranca
 
 - Nao altera nome, conceito, lore, imagem, permissao, vinculo ou identidade do poder.
-- Aplica apenas matematica: CA minima por escala, Bloqueio derivado, Esquiva derivada, DT minima por escala e rolagem atributo/pericia.
+- Aplica apenas matematica: CA minima por escala, Bloqueio por Fortitude, Esquiva como Reacao ativa, DT minima por escala e rolagem atributo/pericia.
 - Atributo define quantidade de d20; pericia entra como bonus fixo.
 - Dano Cataclisma direto com dado abaixo da base `3d12 + 10` sobe para essa base sem mudar o conceito do poder.
 - Vida/FUSHI/Determinacao abaixo da faixa ficam apenas como aviso para nao reescrever personagem autoral sem revisao individual.
 
 ## Resumo
 
-- Fichas analisadas: 44
+- Fichas analisadas: 49
 - Fichas com alteracao matematica: 0
 - Avisos preservados: 3
 

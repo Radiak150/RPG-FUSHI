@@ -29,6 +29,8 @@ const { FushiMultiplayerServer } = require('./multiplayer-server.cjs')
 
 const DEV_URL = process.env.ELECTRON_RENDERER_URL
 const VALID_PROFILES = new Set(['gm', 'player1', 'player2', 'player3', 'player4', 'player5'])
+const VALID_LAUNCH_ROUTES = new Set(['/launcher', '/multiplayer', '/jogar', '/jogar/mesa'])
+const VALID_VISUAL_QUALITIES = new Set(['low', 'balanced', 'ultra'])
 const UPDATE_FEED_URL_ENV = 'FUSHI_UPDATE_FEED_URL'
 const UPDATE_FEED_CONFIG_FILENAME = 'update-feed.json'
 const CAMPAIGN_PACKAGE_REGISTRY_FILENAME = 'campaign-packages.json'
@@ -67,6 +69,11 @@ let updateDownloadInFlight = null
 let campaignPackageDownloadInFlight = null
 const windowByLaunchKey = new Map()
 
+if (process.env.FUSHI_TV_LITE === '1' || process.argv.includes('--fushi-tv-lite')) {
+  app.commandLine.appendSwitch('disable-renderer-backgrounding')
+  app.commandLine.appendSwitch('disable-background-timer-throttling')
+}
+
 protocol.registerSchemesAsPrivileged([
   {
     privileges: {
@@ -92,14 +99,22 @@ protocol.registerSchemesAsPrivileged([
   },
 ])
 
-function buildWindowUrl(profileId) {
-  const hash = profileId && profileId !== 'gm' ? '/jogar/mesa' : '/'
+function buildWindowUrl(profileId, routePath = '', launchOptions = {}) {
+  const hash = routePath || getDefaultLaunchRoute(profileId)
 
   if (DEV_URL) {
     const url = new URL(DEV_URL)
 
     if (profileId) {
       url.searchParams.set('fushiProfile', profileId)
+    }
+
+    if (launchOptions.visualQuality) {
+      url.searchParams.set('fushiQuality', launchOptions.visualQuality)
+    }
+
+    if (launchOptions.tvLite) {
+      url.searchParams.set('fushiTvLite', '1')
     }
 
     url.hash = hash
@@ -116,8 +131,125 @@ function getProfileArg(argv) {
   return VALID_PROFILES.has(profileId) ? profileId : ''
 }
 
+function getRouteArg(argv = process.argv) {
+  const routeArg = argv.find((argument) => argument.startsWith('--fushi-route='))
+  const routePath = routeArg ? routeArg.split('=').slice(1).join('=').trim() : ''
+
+  return VALID_LAUNCH_ROUTES.has(routePath) ? routePath : ''
+}
+
+function getVisualQualityArg(argv = process.argv) {
+  const qualityArg = argv.find((argument) => argument.startsWith('--fushi-quality='))
+  const visualQuality = qualityArg ? qualityArg.split('=').slice(1).join('=').trim() : ''
+
+  return VALID_VISUAL_QUALITIES.has(visualQuality) ? visualQuality : ''
+}
+
+function shouldUseTvLite(argv = process.argv) {
+  return process.env.FUSHI_TV_LITE === '1' || argv.includes('--fushi-tv-lite')
+}
+
+function getLaunchOptions(argv = process.argv) {
+  const tvLite = shouldUseTvLite(argv)
+
+  return {
+    tvLite,
+    visualQuality: getVisualQualityArg(argv) || (tvLite ? 'low' : ''),
+  }
+}
+
+function getProcessProfileArg(argv = process.argv) {
+  const cliProfile = getProfileArg(argv)
+
+  if (cliProfile) {
+    return cliProfile
+  }
+
+  return VALID_PROFILES.has(process.env.FUSHI_ELECTRON_PROFILE)
+    ? process.env.FUSHI_ELECTRON_PROFILE
+    : ''
+}
+
+function isPlayerProfile(profileId) {
+  return Boolean(profileId && profileId !== 'gm')
+}
+
 function shouldOpenMultiWindow(argv) {
   return process.env.FUSHI_ELECTRON_MULTI === '1' || argv.includes('--fushi-multi')
+}
+
+function shouldUseIsolatedProcess(argv = process.argv) {
+  if (shouldOpenMultiWindow(argv) || argv.includes('--fushi-same-process')) {
+    return false
+  }
+
+  if (
+    process.env.FUSHI_ELECTRON_ISOLATED === '1' ||
+    argv.includes('--fushi-secondary-instance') ||
+    argv.includes('--fushi-isolated-instance')
+  ) {
+    return true
+  }
+
+  return isPlayerProfile(getProcessProfileArg(argv))
+}
+
+function sanitizeLaunchId(value, fallback = 'player') {
+  const sanitized = String(value || fallback)
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80)
+
+  return sanitized || fallback
+}
+
+function configureIsolatedProcess(argv = process.argv) {
+  if (!shouldUseIsolatedProcess(argv)) {
+    return {
+      appDataRoot: '',
+      enabled: false,
+      profileId: '',
+      userDataRoot: '',
+    }
+  }
+
+  const profileId = getProcessProfileArg(argv) || 'player'
+  const safeProfileId = sanitizeLaunchId(profileId)
+  const appDataRoot = app.getPath('appData')
+  const userDataRoot = path.join(
+    appDataRoot,
+    'FUSHI',
+    'electron-profiles',
+    safeProfileId,
+  )
+  const profileAppDataRoot = path.join(
+    appDataRoot,
+    'FUSHI',
+    'isolated-appdata',
+    safeProfileId,
+  )
+
+  app.setPath('userData', userDataRoot)
+
+  if (!process.env.FUSHI_APPDATA_ROOT) {
+    process.env.FUSHI_APPDATA_ROOT = profileAppDataRoot
+  }
+
+  return {
+    appDataRoot: process.env.FUSHI_APPDATA_ROOT,
+    enabled: true,
+    profileId,
+    userDataRoot,
+  }
+}
+
+function getDefaultLaunchRoute(profileId) {
+  if (isolatedLaunch.enabled && isPlayerProfile(profileId)) {
+    return '/multiplayer'
+  }
+
+  return profileId && profileId !== 'gm' ? '/jogar/mesa' : '/launcher'
 }
 
 function getLaunchProfiles(argv = process.argv) {
@@ -1443,7 +1575,25 @@ async function extractAudioFromMedia(request) {
   }
 }
 
-function createWindow(profileId = '', index = 0) {
+function buildLoadFileQuery(profileId, launchOptions = {}) {
+  const query = {}
+
+  if (profileId) {
+    query.fushiProfile = profileId
+  }
+
+  if (launchOptions.visualQuality) {
+    query.fushiQuality = launchOptions.visualQuality
+  }
+
+  if (launchOptions.tvLite) {
+    query.fushiTvLite = '1'
+  }
+
+  return query
+}
+
+function createWindow(profileId = '', index = 0, routePath = '', launchOptions = {}) {
   const launchKey = getWindowLaunchKey(profileId)
   const existingWindow = windowByLaunchKey.get(launchKey)
 
@@ -1453,20 +1603,22 @@ function createWindow(profileId = '', index = 0) {
   }
 
   const profileLabel = profileId ? ` - ${profileId}` : ''
+  const isTvLiteWindow = launchOptions.tvLite === true
   const mainWindow = new BrowserWindow({
-    height: 900,
-    minHeight: 720,
-    minWidth: 1024,
+    height: isTvLiteWindow ? 720 : 900,
+    minHeight: isTvLiteWindow ? 560 : 720,
+    minWidth: isTvLiteWindow ? 900 : 1024,
     show: false,
-    title: `RPG FUSHI${profileLabel}`,
+    title: `RPG FUSHI${isTvLiteWindow ? ' TV' : ''}${profileLabel}`,
     webPreferences: {
+      backgroundThrottling: !isTvLiteWindow,
       contextIsolation: true,
       nodeIntegration: false,
       preload: path.join(__dirname, 'preload.cjs'),
       sandbox: true,
       webSecurity: true,
     },
-    width: 1440,
+    width: isTvLiteWindow ? 1280 : 1440,
     x: 80 + index * 42,
     y: 60 + index * 42,
   })
@@ -1483,7 +1635,7 @@ function createWindow(profileId = '', index = 0) {
   })
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
 
-  const windowUrl = buildWindowUrl(profileId)
+  const windowUrl = buildWindowUrl(profileId, routePath, launchOptions)
 
   if (windowUrl) {
     void mainWindow.loadURL(windowUrl)
@@ -1491,22 +1643,25 @@ function createWindow(profileId = '', index = 0) {
   }
 
   void mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'), {
-    hash: profileId && profileId !== 'gm' ? '/jogar/mesa' : '/launcher',
-    query: profileId ? { fushiProfile: profileId } : {},
+    hash: routePath || getDefaultLaunchRoute(profileId),
+    query: buildLoadFileQuery(profileId, launchOptions),
   })
 
   return mainWindow
 }
 
-const hasSingleInstanceLock = app.requestSingleInstanceLock()
+const isolatedLaunch = configureIsolatedProcess()
+const hasSingleInstanceLock = isolatedLaunch.enabled || app.requestSingleInstanceLock()
 
 if (!hasSingleInstanceLock) {
   app.quit()
-} else {
+} else if (!isolatedLaunch.enabled) {
   app.on('second-instance', (_event, argv) => {
     const profiles = getLaunchProfiles(argv)
+    const routePath = getRouteArg(argv)
+    const launchOptions = getLaunchOptions(argv)
 
-    profiles.forEach((profileId, index) => createWindow(profileId, index))
+    profiles.forEach((profileId, index) => createWindow(profileId, index, routePath, launchOptions))
   })
 }
 
@@ -1666,6 +1821,118 @@ ipcMain.handle('fushi-desktop:ai-test-ollama', (_event, config) => testOllamaCon
 
 ipcMain.handle('fushi-desktop:ai-run-ollama-chat', (_event, request) => runOllamaChat(request))
 
+ipcMain.handle('fushi-desktop:inspect-rendered-region', async (event, inputRect) => {
+  try {
+    const ownerWindow = BrowserWindow.fromWebContents(event.sender)
+    const contentBounds = event.sender.getOwnerBrowserWindow()?.getContentBounds()
+
+    if (!ownerWindow || ownerWindow.isDestroyed() || !contentBounds) {
+      return {
+        blank: false,
+        error: 'Janela indisponivel para inspecao.',
+        ok: false,
+      }
+    }
+
+    const rawRect = inputRect && typeof inputRect === 'object' ? inputRect : {}
+    const x = Math.max(0, Math.floor(Number(rawRect.x) || 0))
+    const y = Math.max(0, Math.floor(Number(rawRect.y) || 0))
+    const width = Math.max(
+      1,
+      Math.min(Math.floor(Number(rawRect.width) || 1), Math.max(1, contentBounds.width - x)),
+    )
+    const height = Math.max(
+      1,
+      Math.min(Math.floor(Number(rawRect.height) || 1), Math.max(1, contentBounds.height - y)),
+    )
+    const capture = await event.sender.capturePage({ height, width, x, y })
+    const sample = capture.resize({
+      height: Math.min(96, height),
+      quality: 'good',
+      width: Math.min(96, width),
+    })
+    const bitmap = sample.getBitmap()
+    const pixelCount = Math.floor(bitmap.length / 4)
+
+    if (!pixelCount) {
+      return {
+        blank: false,
+        error: 'Captura sem pixels.',
+        ok: false,
+      }
+    }
+
+    let nearWhitePixels = 0
+    let brightnessTotal = 0
+    let brightnessSquaredTotal = 0
+
+    for (let offset = 0; offset < bitmap.length; offset += 4) {
+      const blue = bitmap[offset] ?? 0
+      const green = bitmap[offset + 1] ?? 0
+      const red = bitmap[offset + 2] ?? 0
+      const brightness = (red + green + blue) / 3
+
+      if (red >= 246 && green >= 246 && blue >= 246) {
+        nearWhitePixels += 1
+      }
+
+      brightnessTotal += brightness
+      brightnessSquaredTotal += brightness * brightness
+    }
+
+    const meanBrightness = brightnessTotal / pixelCount
+    const variance = Math.max(
+      0,
+      brightnessSquaredTotal / pixelCount - meanBrightness * meanBrightness,
+    )
+    const nearWhiteRatio = nearWhitePixels / pixelCount
+
+    return {
+      blank: nearWhiteRatio >= 0.94 && variance <= 220,
+      meanBrightness,
+      nearWhiteRatio,
+      ok: true,
+      sampleCount: pixelCount,
+      variance,
+    }
+  } catch (error) {
+    return {
+      blank: false,
+      error: error instanceof Error ? error.message : 'Falha ao inspecionar a mesa.',
+      ok: false,
+    }
+  }
+})
+
+ipcMain.handle('fushi-desktop:reload-renderer', (event) => {
+  try {
+    const ownerWindow = BrowserWindow.fromWebContents(event.sender)
+
+    if (!ownerWindow || ownerWindow.isDestroyed() || event.sender.isDestroyed()) {
+      return {
+        error: 'Janela indisponivel para recuperacao.',
+        ok: false,
+      }
+    }
+
+    setTimeout(() => {
+      if (!event.sender.isDestroyed()) {
+        event.sender.reloadIgnoringCache()
+      }
+    }, 60)
+
+    return { ok: true }
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Falha ao recarregar o renderizador.',
+      ok: false,
+    }
+  }
+})
+
 ipcMain.on('fushi-desktop:asset-exists', (event, assetUrl) => {
   event.returnValue = assetExists(app, assetUrl)
 })
@@ -1781,9 +2048,9 @@ ipcMain.on('fushi-desktop:multiplayer-status', (event) => {
     isRunning: false,
     localIps: [],
     port: 3030,
-    protocolVersion: 2,
+    protocolVersion: 3,
     serverInstanceId: '',
-    serverVersion: 'multiplayer-v2',
+    serverVersion: 'multiplayer-v3',
     sessionCode: '',
     startedAt: null,
     stateVersion: 0,
@@ -1791,8 +2058,12 @@ ipcMain.on('fushi-desktop:multiplayer-status', (event) => {
 })
 
 app.whenReady().then(() => {
-  configureAutoUpdater()
-  updateState.feedUrl = configureUpdateFeedUrl()
+  if (!isolatedLaunch.enabled) {
+    configureAutoUpdater()
+    updateState.feedUrl = configureUpdateFeedUrl()
+  } else {
+    updateState.message = `Instancia isolada para ${isolatedLaunch.profileId || 'jogador'}.`
+  }
 
   protocol.handle('fushi-asset', (request) => readAssetResponse(app, request))
   protocol.handle('fushi-library', (request) => readRuntimeAssetResponse(app, request))
@@ -1802,11 +2073,13 @@ app.whenReady().then(() => {
   }
 
   const profiles = getLaunchProfiles()
-  profiles.forEach((profileId, index) => createWindow(profileId, index))
+  const routePath = getRouteArg()
+  const launchOptions = getLaunchOptions()
+  profiles.forEach((profileId, index) => createWindow(profileId, index, routePath, launchOptions))
 
   if (process.env.FUSHI_ELECTRON_SMOKE === '1') {
     setTimeout(() => app.quit(), 2500)
-  } else {
+  } else if (!isolatedLaunch.enabled) {
     setTimeout(() => {
       void checkForFushiUpdates()
     }, 1800)

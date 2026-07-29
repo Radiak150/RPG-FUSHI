@@ -1,13 +1,23 @@
 {
   "version": "campanha-controle-v1",
-  "updatedAt": "2026-06-17",
+  "updatedAt": "2026-07-26",
   "purpose": "Painel simples de producao da campanha. Use OK para pronto/estavel, FOCO para atencao atual e CRITICO para bloqueio/placeholder.",
   "rules": [
     "O app estavel vem antes de conteudo novo.",
     "Lore completa nao precisa aparecer inteira no app; o app deve conter apenas o que o jogador pode ver.",
     "Mecanica nova precisa de gatilho, rolagem, custo, efeito, limite, risco, reversao/log e teste.",
     "Ritual e Boss Cataclisma nao sao habilidades simples: precisam de ficha avancada, fases, mapa/topdown/3D, VFX, audio, interludio e controle de estado.",
-    "Tudo novo precisa de fallback leve para low/balanced e teste no release empacotado."
+    "Tudo novo precisa de fallback leve para low/balanced e teste no release empacotado.",
+    "Antes de explicar ou alterar lore canonica, buscar a fonte primaria em 01_LORE/docs; nao substituir explicacao existente por suposicao.",
+    "Livro do Jogador deve conter apenas regra publica de mesa; nao expor lore secreta, XP oculto, reencarnacao, natureza real dos protagonistas ou metaplot.",
+    "Livro no app e PDFs devem nascer de src/data/rulebook; mudanca de regra nao pode ser digitada separadamente em cada formato.",
+    "Toda frente nova deve comecar com pergunta guiada para o mestre aprovar: o que existe hoje, o que incomoda, sugestao conservadora, decisao aprovada e teste.",
+    "Combat V2 e a fonte ativa para CA, Bloqueio, Esquiva, critico, manobras, escala de mobs e simulacao; a correcao canonica de 2026-07-13 tornou Esquiva fixa, mas runtime/Livros aguardam o checkmate da matematica.",
+    "O Treino Inicial e administrado pelo EVE. Desativar remove mapa/painel temporario e preserva progresso; reiniciar e uma acao separada.",
+    "Eventos temporarios coexistem no EVE e nunca podem aceitar substituicao completa da sessao enviada por Jogador.",
+    "Aceite multiplayer vale pela conexao viva do app: navegar entre Mesa, Fluxo, Livro e Multiplayer nao pode recarregar a pagina nem voltar o Jogador para pending.",
+    "Fechar uma apresentacao visual do EVE e local a janela e nunca apaga o resultado canonico; um novo drawId deve abrir novamente.",
+    "Combat V2 e a fonte ativa para CA, Bloqueio, Esquiva, critico, manobras, escala de mobs e simulacao; FUSHI_COMBAT_V2.md prevalece sobre regra V1 conflitante."
   ],
   "lanes": [
     {
@@ -72,17 +82,49 @@
       "area": "Mesa",
       "item": "Mesa Mestre carrega",
       "status": "OK",
-      "acceptance": "Entrar como Mestre, mapa e tokens aparecem, sem readiness preso.",
-      "evidence": "Teste fisico recente estavel.",
-      "next": "Manter smoke:ui e smoke:release."
+      "acceptance": "Entrar como Mestre, mapa e tokens aparecem, sem readiness preso; Ctrl+A recupera apenas a arte visual sem trocar mapa, tokens, camera ou sessao.",
+      "evidence": "Alpha.88: smoke:ui e smoke:release aprovados; smoke:interludes confirmou epoch visual 0 -> 1 com o mesmo mapa e o mesmo conjunto de tokens.",
+      "next": "Testar Ctrl+A fisicamente somente se surgir imagem branca; manter smoke:ui e smoke:release."
     },
     {
       "area": "Multiplayer",
       "item": "Mestre > Jogador e Jogador > Mestre",
       "status": "OK",
-      "acceptance": "Dados, ficha, chat/rolagem, regua e visibilidade sincronizam nos dois sentidos.",
-      "evidence": "Teste fisico com 2 jogadores respondeu bem.",
-      "next": "Soak maior antes de promover release."
+      "acceptance": "Dados, ficha, chat/rolagem, regua e visibilidade sincronizam nos dois sentidos; sair da Mesa sem fechar o app nao pede novo aceite.",
+      "evidence": "Alpha.85 valida socket novo da mesma instancia, instancia estrangeira pendente, 5 jogadores, 5 ciclos de soak e reentrada real no app empacotado.",
+      "next": "Manter smoke:multiplayer, smoke:multiplayer:soak e smoke:release como gate obrigatorio."
+    },
+    {
+      "area": "Multiplayer",
+      "item": "Reentrada da sessao aceita",
+      "status": "OK",
+      "acceptance": "Fluxo/Livro/Multiplayer e troca de socket nao exigem novo aceite enquanto a mesma instancia do app estiver aberta; fechar, recusar ou expulsar revoga a sessao.",
+      "evidence": "Protocolo v3 vincula a concessao ao playerId + clientInstanceId; smoke:multiplayer e smoke:release cobrem reconexao real e revogacao.",
+      "next": "Revalidar fisicamente em dois PCs na proxima sessao."
+    },
+    {
+      "area": "Ficha",
+      "item": "Ficha canonica bidirecional",
+      "status": "OK",
+      "acceptance": "Mestre atribui skill/build e jogador recebe; jogador altera campos permitidos e Mestre recebe sem apagar campos canonicos.",
+      "evidence": "Alpha.87 envia patches do jogador e protege skills, rituais, builds, permissoes e corpo compartilhado; o smoke multiplayer confirma Vida efetiva 17/17 (base 10 + Build 7) no Jogador e preserva o maximo apos o patch Jogador > Mestre.",
+      "next": "Nao aceitar build futura sem o gate Mestre > Jogador e Jogador > Mestre."
+    },
+    {
+      "area": "Ficha",
+      "item": "Efeitos e marcas canonicos",
+      "status": "OK",
+      "acceptance": "Origem ve Seus efeitos; alvo ve Efeitos aplicados; somente origem autorizada ou Mestre cancela; jogador nao recebe IDs internos.",
+      "evidence": "Alpha.88: Analise Cirurgica usa efeito estruturado com origem/alvo; smoke:multiplayer validou cancelamento Jogador > Mestre, ACK idempotente, persistencia canonica e sanitizacao publica.",
+      "next": "Playtest fisico com Davi aplicando e cancelando a marca em outro jogador."
+    },
+    {
+      "area": "Eventos",
+      "item": "EVE publico efemero",
+      "status": "OK",
+      "acceptance": "Sorteio atual aparece aos jogadores e pode ser dispensado; backlog e ultimo roll nao reaparecem ao voltar para a mesa.",
+      "evidence": "Alpha.87 cobre transmissao depois da reconexao, descarte pelo jogador e ausencia de replay nos smokes de eventos, multiplayer e release real.",
+      "next": "Todo novo EVE publico precisa de teste empacotado com visao de jogador."
     },
     {
       "area": "Dados",
@@ -113,24 +155,64 @@
       "item": "MUN e mapas com thumb/topdown",
       "status": "OK",
       "acceptance": "Abrir mapa nao fica branco/preto; interludio tem thumb e fallback coerente.",
-      "evidence": "119 interludios automaticos OK e 0 thumbs vazias.",
-      "next": "Revisao artistica por cena."
+      "evidence": "Alpha.88: 121/121 interludios automaticos possuem fonte valida no pacote, 0 thumbs vazias; Estatuas do Litoral usa a imagem semantica do MUN; cinco ciclos empacotados e 0 falhas de rede.",
+      "next": "Revisao artistica por cena; manter a auditoria semantica antes de cada release."
     },
     {
       "area": "Base/MUN",
       "item": "Liberar Base/MUN e preparar mapa",
       "status": "OK",
       "acceptance": "Mestre prepara sem puxar jogadores; ativar leva jogadores ao mapa correto.",
-      "evidence": "Corrigido e sem bug aparente depois.",
-      "next": "Revalidar no release empacotado."
+      "evidence": "Alpha.84 validada no release empacotado: preparar mapa, voltar ao submapa e liberar Base passaram no smoke:release:deep.",
+      "next": "Revalidar apenas se o protocolo MUN/Base mudar."
     },
     {
       "area": "Release",
       "item": "Build empacotado real",
       "status": "OK",
       "acceptance": "release/win-unpacked abre e smokes rodam isolados.",
-      "evidence": "Baseline alpha.83 estavel.",
-      "next": "Nao promover conteudo sem smoke:release."
+      "evidence": "Alpha.87 empacotada em release/win-unpacked e instaladores; build, lint, release:assets, smoke:ui, smoke:multiplayer, smoke:release e smoke:release:deep 11/11 aprovados.",
+      "next": "Nao promover conteudo sem smoke:release e o gate especifico da area alterada."
+    },
+    {
+      "area": "Livros",
+      "item": "Livro do Jogador e Livro do Mestre",
+      "status": "OK",
+      "acceptance": "Jogador consulta regras publicas no Fluxo e na Mesa sem ver reencarnacao/progressao oculta; Mestre consulta escudo e compendio real; PDFs passam auditoria visual e de sigilo.",
+      "evidence": "Combat V2: 15 capitulos publicos, 18 capitulos do Mestre, PDF Jogador 23 paginas, PDF Mestre 363 paginas; auditoria visual, sigilo e bordas aprovada.",
+      "next": "Atualizar src/data/rulebook a cada decisao aprovada; rodar books:build, books:audit e smoke:rulebooks:release."
+    },
+    {
+      "area": "Combate",
+      "item": "Combat V2 - defesa, critico e turnos",
+      "status": "FOCO",
+      "acceptance": "CA e passiva; Bloqueio usa Fortitude (0/5/10/15); Esquiva fixa usa CA atual + AGI + Reflexos como Reacao; critico dobra apenas dados; turnos mostram Principal, Curta, Movimento, Reacao e manobras.",
+      "evidence": "Alpha.88: 56 fichas Combat V2; fluxo visual ficha -> Dados de Combate -> dado -> Resolver -> confirmacao; recibo privado, impacto, marca e queda protegidos por smokes runtime, UI e multiplayer.",
+      "next": "Playtest fisico curto Mestre/Jogador para confirmar leitura e ritmo; manter Veyra e demais lacunas de conteudo como alerta ate revisao canonica do Mestre."
+    },
+    {
+      "area": "Builds",
+      "item": "Catalogo, raridades e vinculo BUI",
+      "status": "FOCO",
+      "acceptance": "48 itens, cinco raridades, conjuntos de NPC e vinculo canonico funcionam sem alterar lore ou aceitar sobrescrita do Jogador.",
+      "evidence": "Baseline canonico aprovado por smoke:builds: 48 itens, 240 raridades e 41 conjuntos 8/8. Alpha.87 separa valor base do efetivo: editar base reaplica o total da build e remover item restaura a base sem residuo; smoke:ui e multiplayer protegem o contrato.",
+      "next": "Em teste real: editar a Vida base de Connor para 20, confirmar 34 com Build +14, remover a build e confirmar retorno a 20. Ajustar numeros somente com evidencia de playtest."
+    },
+    {
+      "area": "Eventos",
+      "item": "Hub EVE e ciclo de vida",
+      "status": "OK",
+      "acceptance": "Mestre ativa dois ou mais eventos, desativa cada um isoladamente e a Mesa volta ao estado-base sem apagar progresso.",
+      "evidence": "Treino Inicial e Sorteio Raridade Build passaram em build, smoke:events, smoke:training:ui, smoke:multiplayer, smoke:release e smoke:release:deep 11/11; campos privados foram removidos do payload do Jogador e a revelacao agora fecha por clique sem alterar ficha/EVE.",
+      "next": "Manter em teste real; todo evento novo deve seguir FUSHI_EVENT_SYSTEM_V1 e ganhar smoke proprio."
+    },
+    {
+      "area": "Treinamento",
+      "item": "Circuito do Centro no Campo de Treinamento",
+      "status": "OK",
+      "acceptance": "Mestre ativa/desativa pelo EVE ou MUN; cinco jogadores veem quests e progresso; somente Mestre ve DT e aplica Marcas, Contratempos e Segundo Sino.",
+      "evidence": "smoke:training, smoke:training:ui e smoke:multiplayer aprovados; desativacao remove o painel em Mestre/Jogador, preserva a Marca e permite retomar.",
+      "next": "Teste real na proxima sessao; refinamento narrativo e habilidades continuam dependendo de aprovacao do Mestre."
     }
   ],
   "contentChecklist": [
@@ -146,14 +228,14 @@
       "item": "NPCs principais tem lore",
       "status": "FOCO",
       "acceptance": "Cada NPC tem funcao, local, faccao, imagem e ficha basica/avancada marcada.",
-      "next": "Ir NPC por NPC quando for produzir cena."
+      "next": "Solo de Kael implementado no Mundo dos Sonhos do Fragmentado, com mobs Eco de Kael/Kairos/Davi/Grim/Connor; usar como pista de corpo/alma sem revelar verdade inteira."
     },
     {
       "area": "Mobs",
       "item": "Mobs canonicos aprovados",
       "status": "FOCO",
       "acceptance": "Mobs existem na campanha ou foram aprovados como criaturas simples.",
-      "next": "Validar Lobo Cinzento, Lobo Marcado por FUSHI e Eco de Liora."
+      "next": "Lobo Cinzento (8 Vida) e Lobo Marcado por FUSHI (14 Vida) ja usam Combat V2; testar a Clareira com grupo real antes de criar outro mob."
     },
     {
       "area": "Boss",
@@ -167,7 +249,7 @@
       "item": "Biomas e pontos do MUN",
       "status": "FOCO",
       "acceptance": "Cada bioma mostra locais OK, falta lore, falta mapa, falta evento e faccoes.",
-      "next": "Organizar por bioma quando for criar cena."
+      "next": "Sessao 3 comeca com Fragmentado ferido voltando da Clareira; o solo de Kael fica ligado ao ponto MUN Mundo dos Sonhos do Fragmentado, fora dos biomas fisicos, enquanto Orian/Cartoteca, Campo de Treino, Nilo/Riacho e corpo/alma seguem como ganchos, nao trilhos."
     },
     {
       "area": "Audio",
@@ -219,6 +301,20 @@
       "required": "video leve, poster, fallback, minQuality, budget VRAM",
       "visualNeed": "movimento sutil sem roubar a mesa",
       "releaseGate": "perf:release em low/balanced/ultra"
+    },
+    {
+      "kind": "Item de build",
+      "sheetArea": "Inventario / integracao",
+      "required": "raridade, ganho, perda, passiva simples, origem MUN, log e estado permanente",
+      "visualNeed": "preview claro de tradeoff; VFX/audio apenas se a regra pedir",
+      "releaseGate": "Simuladores offline + smoke:multiplayer + release empacotado"
+    },
+    {
+      "kind": "Acao de combate transacional",
+      "sheetArea": "Combate / Habilidades / Rituais",
+      "required": "automation.combat com acao, teste, dano, alcance, resolucao, falha e reacao quando aplicaveis",
+      "visualNeed": "ficha prepara; Dados de Combate escolhe alvo; Resolver abre depois do dado; impacto e recibo sanitizados",
+      "releaseGate": "smoke:combat-runtime + smoke:combat-flow:ui + smoke:multiplayer + smoke:release"
     }
   ],
   "audioVfxBacklog": [
@@ -251,6 +347,147 @@
       "status": "FOCO",
       "need": "Lista de mapas que merecem topdown animado, video ou camada VFX.",
       "notes": "Priorizar mapas de boss, dominio, lava, agua, tempestade e memoria."
+    }
+  ],
+  "alpha84NearSessionBoard": [
+    {
+      "id": "treinamento_vila",
+      "label": "Arco de treinamento - Circuito do Centro",
+      "status": "FOCO",
+      "whyNow": "O grupo pode visitar o Campo de Treinamento nas proximas sessoes e precisa de progressao visivel sem aula abstrata.",
+      "whatGoodLooksLike": "Mestre narra livremente e usa um painel compacto para somar/remover pontos; jogadores veem barras individuais, impacto de resultado e progresso sem DT privada.",
+      "nextQuestion": "No teste real, quais controles ou informacoes ainda atrapalham o ritmo da narracao?",
+      "suggestedFirstMove": "Usar o Treino Inicial pelo EVE na proxima sessao e registrar somente falhas observadas antes de redesenhar."
+    },
+    {
+      "id": "mesa_hubs",
+      "label": "Hubs de mesa e navegacao",
+      "status": "FOCO",
+      "whyNow": "Durante narracao o mestre nao pode se perder procurando livro, MSC, mapas, fichas, interludio ou combate.",
+      "whatGoodLooksLike": "Mesa tem atalhos claros para jogar agora: mapa ativo, livro publico, livro mestre, MSC, combate, NPCs, interludio e preparacao.",
+      "nextQuestion": "Quais botoes voce mais usa durante uma sessao real e quais nunca deveriam aparecer no fluxo de narracao?",
+      "suggestedFirstMove": "Mapear os hubs atuais e propor uma reorganizacao pequena antes de redesenhar UI."
+    },
+    {
+      "id": "livro_jogador_combate",
+      "label": "Livro do Jogador - combate publico",
+      "status": "OK",
+      "whyNow": "Jogadores precisam saber o que podem fazer em combate sem depender de improviso do mestre.",
+      "whatGoodLooksLike": "Livro publica turno, ataque, dano, Critico V2, Bloqueio por Fortitude, Esquiva fixa, Contra-ataque, manobras e exemplos de build sem revelar lore secreta.",
+      "nextQuestion": "No proximo combate, qual regra ainda exigiu explicacao oral apesar do Livro e da Mesa?",
+      "suggestedFirstMove": "Registrar somente duvidas reais de sessao e atualizar uma regra estruturada por vez."
+    },
+    {
+      "id": "kit_morte_renascimento",
+      "label": "Kit secreto de morte e renascimento",
+      "status": "FOCO",
+      "whyNow": "Davi/Fragmentado quase morreu na S2 e a mesa ainda nao tem fluxo pratico, imagens, puzzle e consequencias prontas.",
+      "whatGoodLooksLike": "Mestre tem tela/roteiro secreto com quando acionar, pulsos, corpos proximos, disputa, consequencia, fallback animal, imagem/interludio e como revelar sem estragar segredo.",
+      "nextQuestion": "Como voce quer narrar a experiencia confusa da morte sem revelar a regra de renascimento?",
+      "suggestedFirstMove": "Runbook numerico e sigilo ja estao no Livro do Mestre; produzir agora assets, interludio/puzzle e tela de operacao sem expor o protocolo ao jogador."
+    },
+    {
+      "id": "combate_balanceamento",
+      "label": "Combate e balanceamento",
+      "status": "FOCO",
+      "whyNow": "Combat V2 eliminou Bloqueio por metade da CA e Esquiva com dados; agora a prioridade e medir encontros reais e preencher ataques/fases que ainda faltam.",
+      "whatGoodLooksLike": "Mesa resolve ataque, Reacao, dano e manobra sem interpretacao solta; Laboratorio mede taxa de vitoria, rodadas, dano, bloqueio, esquiva e critico.",
+      "nextQuestion": "Qual encontro real sera o primeiro playtest: Clareira dos Lobos, treino da Vila ou uma cena de NPC avancado?",
+      "suggestedFirstMove": "Usar o template com tokens ou a cena ativa, rodar 500 simulacoes e depois fazer uma luta curta Mestre/Jogador."
+    },
+    {
+      "id": "msc_audio_hub",
+      "label": "MSC / audio de sessao",
+      "status": "FOCO",
+      "whyNow": "Musica e som precisam ser encontrados rapido sem travar nem confundir durante narracao.",
+      "whatGoodLooksLike": "MSC separa cena, bioma, personagem, combate, tensao, descanso, boss, interludio e favoritos da sessao.",
+      "nextQuestion": "Voce quer organizar MSC por lugar da mesa, emocao da cena ou personagem?",
+      "suggestedFirstMove": "Criar taxonomia de audio antes de baixar/adicionar mais sons."
+    },
+    {
+      "id": "conteudo_proximas_sessoes",
+      "label": "Conteudo das proximas sessoes",
+      "status": "FOCO",
+      "whyNow": "Nao vale fechar todo o mundo agora; precisa preparar o que pode aparecer logo.",
+      "whatGoodLooksLike": "Sessao 03 tem estados de NPC, Kael solo/ecos, retorno ferido do Fragmentado, Vila reagindo, Orian/Cartoteca, Campo de Treino e Nilo/Riacho se o grupo puxar.",
+      "nextQuestion": "Qual caminho voce acha mais provavel os jogadores seguirem na proxima mesa?",
+      "suggestedFirstMove": "Priorizar ferramentas e assets dos ganchos proximos, nao dos arcos distantes."
+    }
+  ],
+  "session3CanonAndSession4Preparation": {
+    "source": "docs/planejamento/PLANICIE_SESSAO_03_RESULTADO_2026-07-18.md",
+    "status": "FOCO",
+    "confirmed": [
+      "Fragmentado/Davi saiu do receptaculo e o corpo ficou vazio e paralisado.",
+      "Caixinha do Ontem e esfera magica estao com o grupo.",
+      "Mapa Mundi foi liberado.",
+      "O grupo terminou seguindo para o Campo de Treinamento."
+    ],
+    "session4": [
+      "Treino Inicial completo.",
+      "Arma 1d6 e/ou escudo/lanca para cada jogador.",
+      "Um nivel para cada jogador.",
+      "Seis itens, um de cada arquetipo, para escolha e absorcao opcional.",
+      "Cinco habilidades individuais.",
+      "Cinco aparelhos de traducao simultanea.",
+      "Catalogar regiao, faccao, local e linguas dos NPCs.",
+      "Encontrar musica de treinamento e registrar licenca/origem."
+    ],
+    "playerBookGuard": "Nao expor a explicacao secreta de como os protagonistas entendem a lingua antiga."
+  },
+  "playerFacingRulebookScope": [
+    {
+      "section": "Pode mostrar",
+      "items": [
+        "Turno e economia de acoes",
+        "Ataque, dano e coreografia de luta",
+        "Bloqueio, Esquiva e Contra-ataque",
+        "Movimento, alcance, cobertura e terreno",
+        "Agarrar, empurrar, puxar, derrubar, ajudar e preparar",
+        "Condicoes leves e graves visiveis",
+        "Exemplos de estrategia sem lore secreta"
+      ]
+    },
+    {
+      "section": "Nao mostrar ate o mestre revelar",
+      "items": [
+        "XP por identidade e tabela completa de progressao",
+        "Reencarnacao, posse de corpo e qualquer tabela de morte real",
+        "Natureza real dos protagonistas",
+        "Segredos de FUSHI, Ryoku, Vhazaryon e Cataclismas",
+        "Ritual do Silencio e regras de dano de alma",
+        "Metaplot, simulacao de mundo e consequencias ocultas"
+      ]
+    }
+  ],
+  "masterOnlyEmergencyKits": [
+    {
+      "id": "quase_morte",
+      "label": "Quase morte",
+      "status": "OK",
+      "needs": "Runbook numerico disponivel no Livro do Mestre; validar em playtest a DT, 1 natural, 20 natural, dano em 0 Vida e Medicina.",
+      "sessionRisk": "Pode acontecer em qualquer combate mais perigoso."
+    },
+    {
+      "id": "morte_real",
+      "label": "Morte real",
+      "status": "FOCO",
+      "needs": "Runbook secreto, 3 pulsos, ordem de corpos e disputa estao documentados; ainda faltam imagem/interludio, puzzle e operacao audiovisual.",
+      "sessionRisk": "S2 quase disparou isso com Davi/Fragmentado."
+    },
+    {
+      "id": "combate_confuso",
+      "label": "Combate confuso",
+      "status": "OK",
+      "needs": "Cartao rapido publico e escudo do Mestre agora existem no app e PDF; coletar duvidas reais para revisar regras em teste.",
+      "sessionRisk": "Jogadores travam quando nao sabem se agarrar, puxar, empurrar ou defender e permitido."
+    },
+    {
+      "id": "npc_reacao_vila",
+      "label": "Reacao da Vila",
+      "status": "FOCO",
+      "needs": "Estados rapidos de NPCs da Vila quando alguem chega ferido, morre, some ou revela comportamento anormal.",
+      "sessionRisk": "Sessao 03 comeca com Fragmentado ferido voltando da Clareira."
     }
   ]
 }
