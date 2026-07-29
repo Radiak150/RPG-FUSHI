@@ -102,6 +102,12 @@ import { useTabletopReadiness, type TabletopReadinessAsset } from '../hooks/useT
 import { useViewMode } from '../hooks/useViewMode'
 import { normalizeCharacterSheet } from '../lib/characterSheet'
 import {
+  createCharacterStage,
+  deleteCharacterStage,
+  renameCharacterStage,
+  switchCharacterStage,
+} from '../lib/characterStages'
+import {
   formatInventoryMovement,
   getInventoryCapacitySummary,
 } from '../lib/inventoryCapacity'
@@ -1441,6 +1447,12 @@ interface TabletopTransitionOverlayState {
   triggerId: number
 }
 
+interface TabletopCharacterStageTransition {
+  id: string
+  previousTokenImageUrl?: string
+  previousPortraitUrl?: string
+}
+
 interface TabletopImagePreviewState {
   id: string
   src: string
@@ -2044,6 +2056,20 @@ export function TablePage() {
   const [sceneEntryId, setSceneEntryId] = useState(0)
   const [boardRenderEpoch, setBoardRenderEpoch] = useState(0)
   const [isBoardArtworkSuspended, setIsBoardArtworkSuspended] = useState(false)
+  const characterStageSnapshotsRef = useRef<
+    Record<
+      string,
+      {
+        activeStageId: string
+        avatarUrl?: string
+        revision: number
+        tokenImageUrl?: string
+      }
+    >
+  >({})
+  const [characterStageTransitions, setCharacterStageTransitions] = useState<
+    Record<string, TabletopCharacterStageTransition>
+  >({})
   const boardRecoveryTimerRef = useRef<number | null>(null)
   const boardAutoRecoveryRef = useRef({
     attempts: 0,
@@ -4583,6 +4609,76 @@ export function TablePage() {
     })
   }, [audioLibraryTracks, currentSceneId, session?.broadcastEvents, viewMode])
 
+  useLayoutEffect(() => {
+    const characters = data?.characters.items ?? []
+
+    if (!data) {
+      characterStageSnapshotsRef.current = {}
+      return
+    }
+
+    const nextSnapshots: typeof characterStageSnapshotsRef.current = {}
+    const discoveredTransitions: Record<
+      string,
+      TabletopCharacterStageTransition
+    > = {}
+
+    characters.forEach((character) => {
+      const stageState = character.stageState
+
+      if (!stageState) {
+        return
+      }
+
+      const currentSnapshot = {
+        activeStageId: stageState.activeStageId,
+        avatarUrl: character.avatarUrl,
+        revision: stageState.revision,
+        tokenImageUrl: character.tokenImageUrl,
+      }
+      const previousSnapshot = characterStageSnapshotsRef.current[character.id]
+
+      if (
+        previousSnapshot &&
+        (previousSnapshot.activeStageId !== currentSnapshot.activeStageId ||
+          previousSnapshot.revision !== currentSnapshot.revision)
+      ) {
+        discoveredTransitions[character.id] = {
+          id: `${character.id}:${currentSnapshot.revision}:${currentSnapshot.activeStageId}`,
+          previousPortraitUrl: previousSnapshot.avatarUrl,
+          previousTokenImageUrl: previousSnapshot.tokenImageUrl,
+        }
+      }
+
+      nextSnapshots[character.id] = currentSnapshot
+    })
+
+    characterStageSnapshotsRef.current = nextSnapshots
+
+    if (Object.keys(discoveredTransitions).length === 0) {
+      return
+    }
+
+    setCharacterStageTransitions((currentTransitions) => ({
+      ...currentTransitions,
+      ...discoveredTransitions,
+    }))
+
+    Object.entries(discoveredTransitions).forEach(([characterId, transition]) => {
+      window.setTimeout(() => {
+        setCharacterStageTransitions((currentTransitions) => {
+          if (currentTransitions[characterId]?.id !== transition.id) {
+            return currentTransitions
+          }
+
+          const nextTransitions = { ...currentTransitions }
+          delete nextTransitions[characterId]
+          return nextTransitions
+        })
+      }, 1600)
+    })
+  }, [data])
+
   const tokenViews = data
     ? visibleTokens
         .map((token) => {
@@ -4665,6 +4761,9 @@ export function TablePage() {
             combatImpact,
             combatMarks,
             deathState,
+            stageTransition: displayCharacter
+              ? characterStageTransitions[displayCharacter.id]
+              : undefined,
           }
         })
         .filter((token): token is NonNullable<typeof token> => Boolean(token))
@@ -11883,6 +11982,85 @@ export function TablePage() {
       })
   }
 
+  function canManageActiveCharacterStage() {
+    if (viewMode !== 'gm' || !activeCharacter) {
+      return false
+    }
+
+    const lock = session?.characterEditLocks?.[activeCharacter.id]
+
+    if (lock && lock.expiresAt > Date.now() && lock.ownerId !== 'gm') {
+      setTableFeedbackMessage(
+        `${lock.ownerLabel} esta atualizando esta ficha. Aguarde o salvamento.`,
+      )
+      return false
+    }
+
+    return true
+  }
+
+  function handleCreateCharacterStage(label: string) {
+    if (!canManageActiveCharacterStage() || !activeCharacter) {
+      return
+    }
+
+    const nextCharacter = normalizeCharacterSheet(
+      createCharacterStage(activeCharacter, label),
+    )
+    handleInspectorCharacterChange(nextCharacter)
+    setTableFeedbackMessage(
+      `Fase ${nextCharacter.stageState?.activeStageLabel ?? 'nova'} criada e ativada.`,
+    )
+  }
+
+  function handleSwitchCharacterStage(stageId: string) {
+    if (!canManageActiveCharacterStage() || !activeCharacter) {
+      return
+    }
+
+    const nextCharacter = normalizeCharacterSheet(
+      switchCharacterStage(activeCharacter, stageId),
+    )
+
+    if (nextCharacter === activeCharacter) {
+      return
+    }
+
+    handleInspectorCharacterChange(nextCharacter)
+    setTableFeedbackMessage(
+      `Estagio ativo: ${nextCharacter.stageState?.activeStageLabel ?? 'Padrao'}.`,
+    )
+  }
+
+  function handleRenameCharacterStage(stageId: string, label: string) {
+    if (!canManageActiveCharacterStage() || !activeCharacter) {
+      return
+    }
+
+    const nextCharacter = normalizeCharacterSheet(
+      renameCharacterStage(activeCharacter, stageId, label),
+    )
+    handleInspectorCharacterChange(nextCharacter)
+    setTableFeedbackMessage('Nome do estagio atualizado.')
+  }
+
+  function handleDeleteCharacterStage(stageId: string) {
+    if (!canManageActiveCharacterStage() || !activeCharacter) {
+      return
+    }
+
+    const nextCharacter = normalizeCharacterSheet(
+      deleteCharacterStage(activeCharacter, stageId),
+    )
+
+    if (nextCharacter === activeCharacter) {
+      return
+    }
+
+    handleInspectorCharacterChange(nextCharacter)
+    setTableFeedbackMessage('Estagio arquivado removido.')
+  }
+
   function consumeCombatReaction(token: TabletopToken) {
     const currentTurnState = session?.turnState
     const participant = currentTurnState?.participants.find(
@@ -16442,7 +16620,19 @@ export function TablePage() {
         identityResourceOptions={viewMode === 'gm' ? identityResourceOptions : []}
         onBroadcastImage={viewMode === 'gm' ? broadcastImagePreview : undefined}
         onCancelEffect={handleCancelCombatEffect}
+        onCreateStage={
+          viewMode === 'gm' ? handleCreateCharacterStage : undefined
+        }
+        onDeleteStage={
+          viewMode === 'gm' ? handleDeleteCharacterStage : undefined
+        }
         onOpenStatusGuide={handleOpenStatusGuide}
+        onRenameStage={
+          viewMode === 'gm' ? handleRenameCharacterStage : undefined
+        }
+        onSwitchStage={
+          viewMode === 'gm' ? handleSwitchCharacterStage : undefined
+        }
         onActivateFeature={handlePrepareCharacterFeature}
         onBeginCharacterEdit={() =>
           activeCharacter ? beginCharacterEdit(activeCharacter.id) : false

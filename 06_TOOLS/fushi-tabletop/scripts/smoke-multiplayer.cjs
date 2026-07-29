@@ -1715,6 +1715,10 @@ async function run() {
           character.recursos?.vidaAtual === 17 &&
           character.recursos?.vidaMaxima === 17 &&
           character.combatProfile?.build?.totals?.life === 7 &&
+          character.stageState?.activeStageId === 'stage-smoke-phase-2' &&
+          character.stageState?.activeStageLabel === 'Fase 2' &&
+          character.stageState?.revision === 1 &&
+          character.stageState?.catalog === undefined &&
           character.habilidadesDetalhadas?.some?.(
             (skill) => skill.id === 'gm-granted-skill-smoke',
           ),
@@ -1740,6 +1744,43 @@ async function run() {
       vidaAtual: 17,
       vidaMaxima: 17,
     },
+    stageState: {
+      activeStageId: 'stage-smoke-phase-2',
+      activeStageLabel: 'Fase 2',
+      revision: 1,
+      catalog: [
+        {
+          createdAt: Date.now(),
+          id: 'stage-default',
+          label: 'Padrao',
+          snapshot: {
+            ...workspaceWithGrantedSkill.characters[0],
+            nome: 'Forma Padrao Secreta',
+          },
+          updatedAt: Date.now(),
+        },
+        {
+          createdAt: Date.now(),
+          id: 'stage-smoke-phase-2',
+          label: 'Fase 2',
+          snapshot: {
+            ...workspaceWithGrantedSkill.characters[0],
+            nome: 'Forma Ativa',
+          },
+          updatedAt: Date.now(),
+        },
+        {
+          createdAt: Date.now(),
+          id: 'stage-smoke-future-secret',
+          label: 'Fase Secreta do Mestre',
+          snapshot: {
+            ...workspaceWithGrantedSkill.characters[0],
+            nome: 'Forma Futura Secreta',
+          },
+          updatedAt: Date.now(),
+        },
+      ],
+    },
   }
   saveJson(app, {
     data: workspaceWithGrantedSkill,
@@ -1751,7 +1792,13 @@ async function run() {
     scope: 'app',
     type: 'json',
   })
-  await gmSkillStatePromise
+  const gmSkillState = await gmSkillStatePromise
+  if (
+    JSON.stringify(gmSkillState.payload).includes('Fase Secreta do Mestre') ||
+    JSON.stringify(gmSkillState.payload).includes('Forma Futura Secreta')
+  ) {
+    throw new Error('Catalogo privado de Estagios vazou do Mestre para o Jogador.')
+  }
 
   const liveEventStatePromise = waitForMessage(
     socket,
@@ -1852,6 +1899,12 @@ async function run() {
         vidaAtual: 7,
         vidaMaxima: 10,
       },
+      stageState: {
+        activeStageId: 'stage-forged-player',
+        activeStageLabel: 'Fase forjada',
+        revision: 999,
+        catalog: [{ id: 'stage-forged-player', label: 'Fase forjada' }],
+      },
       tokenImageUrl:
         'https://temporary-smoke.trycloudflare.com/assets/library/campaign/default/images/hero-1.webp',
       tipo: 'player',
@@ -1910,6 +1963,12 @@ async function run() {
         ],
         recursos: {
           vidaAtual: 7,
+        },
+        stageState: {
+          activeStageId: 'stage-forged-player-patch',
+          activeStageLabel: 'Fase forjada pelo patch',
+          revision: 1000,
+          catalog: [],
         },
       },
     remoteActionId: 'smoke-action-character-ws',
@@ -2004,6 +2063,18 @@ async function run() {
     JSON.stringify(savedBuild).includes('999')
   ) {
     throw new Error('Jogador conseguiu sobrescrever a Build Absorvida canonica do Mestre.')
+  }
+
+  const savedStageState = savedWorkspace.characters[0].stageState
+  if (
+    savedStageState?.activeStageId !== 'stage-smoke-phase-2' ||
+    savedStageState?.activeStageLabel !== 'Fase 2' ||
+    savedStageState?.revision !== 1 ||
+    savedStageState?.catalog?.length !== 3 ||
+    savedStageState?.catalog?.[2]?.label !== 'Fase Secreta do Mestre' ||
+    JSON.stringify(savedStageState).includes('stage-forged-player')
+  ) {
+    throw new Error('Jogador conseguiu alterar o catalogo privado de Estagios do Mestre.')
   }
 
   const turnRequestResult = await postRemoteAction(
@@ -2253,7 +2324,7 @@ async function run() {
   })
   server.stop()
   fs.rmSync(tempRoot, { force: true, recursive: true })
-  console.log('Smoke multiplayer OK: 5 jogadores, socket novo da mesma instancia sem novo aceite, instancia nova pendente, expulsao revogada, HTTP vinculado a instancia, dados/ACK/fila/cooldown, EVE publico apos reconexao, recibo de combate privado por jogador, ficha Mestre > Jogador e patch Jogador > Mestre sem apagar skill/build canonicas, movimento de jogador bloqueado, regua, interludio, turnos e furtividade.')
+  console.log('Smoke multiplayer OK: 5 jogadores, socket novo da mesma instancia sem novo aceite, instancia nova pendente, expulsao revogada, HTTP vinculado a instancia, dados/ACK/fila/cooldown, EVE publico apos reconexao, recibo de combate privado por jogador, ficha Mestre > Jogador e patch Jogador > Mestre sem apagar skill/build/fases canonicas nem vazar catalogo privado, movimento de jogador bloqueado, regua, interludio, turnos e furtividade.')
 }
 
 run().catch((error) => {

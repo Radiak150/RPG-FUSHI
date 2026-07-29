@@ -450,6 +450,24 @@ export interface CharacterSheet {
   recursos: CharacterResources
   rolagemBase: RollConfig
   tone: Tone
+  stageState?: CharacterStageState
+}
+
+export type CharacterStageSnapshot = Omit<CharacterSheet, 'stageState'>
+
+export interface CharacterStageDefinition {
+  id: string
+  label: string
+  createdAt: number
+  updatedAt: number
+  snapshot: CharacterStageSnapshot
+}
+
+export interface CharacterStageState {
+  activeStageId: string
+  activeStageLabel: string
+  revision: number
+  catalog?: CharacterStageDefinition[]
 }
 
 export interface CharactersData {

@@ -1,4 +1,12 @@
 import { useState } from 'react'
+import {
+  Check,
+  Layers3,
+  Plus,
+  RefreshCw,
+  Save,
+  Trash2,
+} from 'lucide-react'
 import type {
   CharacterFeatureActivationRequest,
   CharacterSheet,
@@ -9,6 +17,11 @@ import type {
 } from '../../data/types'
 import type { FushiAccessProfile, FushiAccessProfileId } from '../../lib/playerAccess'
 import { prepareCharacterForEditing } from '../../lib/characterSheet'
+import {
+  DEFAULT_CHARACTER_STAGE_ID,
+  getCharacterStageState,
+} from '../../lib/characterStages'
+import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 import type {
   TabletopCharacterEditLock,
   TabletopPlayerDeathState,
@@ -32,7 +45,7 @@ interface IdentityResourceOption {
   profileId: FushiAccessProfileId
 }
 
-type MasterInspectorTab = 'token' | 'identity' | 'binding'
+type MasterInspectorTab = 'token' | 'identity' | 'binding' | 'stages'
 
 interface TokenInspectorProps {
   character: CharacterSheet | null
@@ -82,6 +95,10 @@ interface TokenInspectorProps {
   onDeathSaveSlotChange?: (slotIndex: number) => void
   onCancelEffect?: (effectId: string) => void
   onOpenStatusGuide?: (statusId?: string) => void
+  onCreateStage?: (label: string) => void
+  onSwitchStage?: (stageId: string) => void
+  onRenameStage?: (stageId: string, label: string) => void
+  onDeleteStage?: (stageId: string) => void
 }
 
 function getTokenControlPlayerIds(
@@ -150,6 +167,10 @@ export function TokenInspector({
   onClose,
   onDuplicateMobToken,
   onDeathSaveSlotChange,
+  onCreateStage,
+  onSwitchStage,
+  onRenameStage,
+  onDeleteStage,
 }: TokenInspectorProps) {
   const [editingSheetKey, setEditingSheetKey] = useState('')
   const [sheetDraft, setSheetDraft] = useState<CharacterSheet | null>(null)
@@ -163,6 +184,10 @@ export function TokenInspector({
   }>({ key: '', playerIds: [] })
   const [bodyBindingState, setBodyBindingState] =
     useState<TabletopOriginalConsciousnessState>('em_disputa')
+  const [newStageLabel, setNewStageLabel] = useState('')
+  const [stageLabelDrafts, setStageLabelDrafts] = useState<
+    Record<string, string>
+  >({})
   const bodyBindingKey = [
     token?.id ?? '',
     token?.persistentControl?.playerId ?? '',
@@ -194,6 +219,11 @@ export function TokenInspector({
       ? persistentPlayers.map((profile) => profile.label).join(', ')
       : 'sem vinculo'
   const canShowMasterPanel = showMasterControls && canEditToken
+  const stageState = getCharacterStageState(character)
+  const stageControlsLocked = Boolean(
+    sheetIsEditable ||
+      (editLock && editLock.ownerId !== 'gm'),
+  )
   const masterTabOptions: Array<{
     id: MasterInspectorTab
     label: string
@@ -201,7 +231,12 @@ export function TokenInspector({
     { id: 'token', label: 'Token em mesa' },
     { id: 'identity', label: 'Identidade' },
     { id: 'binding', label: 'Vinculo Permanente' },
+    { id: 'stages', label: 'Estagios' },
   ]
+  const stageSubtitle =
+    character.stageState?.activeStageLabel?.trim()
+      ? `${visibilityLabel} | Estagio: ${character.stageState.activeStageLabel}`
+      : visibilityLabel
 
   return (
     <FloatingWindow
@@ -215,7 +250,7 @@ export function TokenInspector({
         onClose()
       }}
       restoreSignal={restoreSignal}
-      subtitle={selectedCount > 1 ? `${selectedCount} tokens selecionados` : visibilityLabel}
+      subtitle={selectedCount > 1 ? `${selectedCount} tokens selecionados` : stageSubtitle}
       title={character.nome}
     >
       <div className="list-stack">
@@ -490,6 +525,177 @@ export function TokenInspector({
               >
                 Vincular como corpo de jogador
               </button>
+            </div>
+          </article>
+        ) : null}
+
+        {canShowMasterPanel &&
+        isMasterPanelOpen &&
+        masterInspectorTab === 'stages' ? (
+          <article className="list-card tabletop-stage-manager">
+            <div className="list-card__top">
+              <div>
+                <p className="eyebrow">Estagios e fases</p>
+                <h3>Variacoes privadas do Mestre</h3>
+              </div>
+              <span className="tag">
+                <Layers3 aria-hidden="true" size={14} />
+                {stageState.catalog.length} fase(s)
+              </span>
+            </div>
+
+            <p className="support-copy">
+              A fase ativa e a ficha real usada pela mesa. Criar uma fase copia o
+              estado atual e a ativa para edicao. Jogadores veem somente a fase
+              ativa.
+            </p>
+
+            {stageControlsLocked ? (
+              <p className="tabletop-stage-manager__notice" role="status">
+                Finalize a edicao da ficha antes de criar ou trocar de fase.
+              </p>
+            ) : null}
+
+            <div className="tabletop-stage-manager__create">
+              <label className="field">
+                <span>Nome da nova fase</span>
+                <input
+                  className="field__input"
+                  onChange={(event) => setNewStageLabel(event.target.value)}
+                  placeholder={`Fase ${stageState.catalog.length + 1}`}
+                  value={newStageLabel}
+                />
+              </label>
+              <button
+                className="button button--primary button--icon"
+                disabled={stageControlsLocked || !onCreateStage}
+                onClick={() => {
+                  onCreateStage?.(newStageLabel)
+                  setNewStageLabel('')
+                }}
+                title="Criar e ativar nova fase"
+                type="button"
+              >
+                <Plus aria-hidden="true" size={17} />
+                <span className="sr-only">Criar e ativar nova fase</span>
+              </button>
+            </div>
+
+            <div className="tabletop-stage-manager__list">
+              {stageState.catalog.map((stage) => {
+                const isActive = stage.id === stageState.activeStageId
+                const labelDraft = stageLabelDrafts[stage.id] ?? stage.label
+
+                return (
+                  <div
+                    className={`tabletop-stage-manager__item${
+                      isActive ? ' is-active' : ''
+                    }`}
+                    key={stage.id}
+                  >
+                    <div className="tabletop-stage-manager__identity">
+                      <span
+                        aria-hidden="true"
+                        className="tabletop-stage-manager__thumbnail"
+                      >
+                        {stage.snapshot.tokenImageUrl ||
+                        stage.snapshot.avatarUrl ? (
+                          <img
+                            alt=""
+                            src={resolveRuntimeAssetUrl(
+                              stage.snapshot.tokenImageUrl ??
+                                stage.snapshot.avatarUrl,
+                            )}
+                          />
+                        ) : (
+                          <Layers3 size={18} />
+                        )}
+                      </span>
+                      <label className="field">
+                        <span>
+                          {isActive ? 'Fase ativa' : 'Fase arquivada'}
+                        </span>
+                        <input
+                          className="field__input"
+                          onChange={(event) =>
+                            setStageLabelDrafts((currentDrafts) => ({
+                              ...currentDrafts,
+                              [stage.id]: event.target.value,
+                            }))
+                          }
+                          value={labelDraft}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="tabletop-stage-manager__actions">
+                      {isActive ? (
+                        <span className="tag tag--accent">
+                          <Check aria-hidden="true" size={13} />
+                          Ativa
+                        </span>
+                      ) : (
+                        <button
+                          className="button button--icon"
+                          disabled={stageControlsLocked || !onSwitchStage}
+                          onClick={() => onSwitchStage?.(stage.id)}
+                          title={`Ativar ${stage.label}`}
+                          type="button"
+                        >
+                          <RefreshCw aria-hidden="true" size={16} />
+                          <span className="sr-only">
+                            Ativar {stage.label}
+                          </span>
+                        </button>
+                      )}
+                      <button
+                        className="button button--icon"
+                        disabled={
+                          stageControlsLocked ||
+                          !onRenameStage ||
+                          !labelDraft.trim() ||
+                          labelDraft.trim() === stage.label
+                        }
+                        onClick={() => {
+                          onRenameStage?.(stage.id, labelDraft)
+                          setStageLabelDrafts((currentDrafts) => {
+                            const nextDrafts = { ...currentDrafts }
+                            delete nextDrafts[stage.id]
+                            return nextDrafts
+                          })
+                        }}
+                        title="Salvar nome da fase"
+                        type="button"
+                      >
+                        <Save aria-hidden="true" size={16} />
+                        <span className="sr-only">Salvar nome da fase</span>
+                      </button>
+                      {stage.id !== DEFAULT_CHARACTER_STAGE_ID ? (
+                        <button
+                          className="button button--danger button--icon"
+                          disabled={
+                            stageControlsLocked ||
+                            isActive ||
+                            !onDeleteStage
+                          }
+                          onClick={() => onDeleteStage?.(stage.id)}
+                          title={
+                            isActive
+                              ? 'Ative outra fase antes de excluir'
+                              : `Excluir ${stage.label}`
+                          }
+                          type="button"
+                        >
+                          <Trash2 aria-hidden="true" size={16} />
+                          <span className="sr-only">
+                            Excluir {stage.label}
+                          </span>
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </article>
         ) : null}

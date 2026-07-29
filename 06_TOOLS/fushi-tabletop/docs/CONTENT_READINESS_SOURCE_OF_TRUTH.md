@@ -17,6 +17,7 @@ otimizacao e conteudo novo do FUSHI Tabletop.
 | `docs/fushi-system/COMBAT_V2_SIMULATION_REPORT.md` | Auditoria de matematica, cenarios e alertas de ficha antes de ajustar Vida, dano ou item. |
 | `docs/fushi-system/FUSHI_TRAINING_ARC_V1.md` | Runbook canonico do Circuito do Centro: ativacao MUN, seis estacoes, Segundo Sino, privacidade e aceite manual. |
 | `docs/fushi-system/FUSHI_EVENT_SYSTEM_V1.md` | Protocolo do hub EVE: ciclo de vida, coexistencia, limpeza, privacidade e regras para eventos futuros. |
+| `docs/fushi-system/FUSHI_CHARACTER_STAGES_V1.md` | Contrato canonico de Estagios/Fases: snapshots privados do Mestre, fase ativa unica, troca atomica, VFX e multiplayer. |
 | `src/data/training/village-training-arc.json` | Fonte unica das regras exibidas pelo painel de treinamento; React apenas renderiza. |
 | `output/pdf/FUSHI_Livro_do_Jogador_Alpha84.pdf` | Volume publico diagramado; 23 paginas, destaques semanticos, diagramas taticos e bibliografia filtrada. |
 | `output/pdf/FUSHI_Livro_do_Mestre_Alpha84.pdf` | Volume confidencial; 364 paginas, regras publicas, escudo e snapshot de 55 fichas. |
@@ -181,6 +182,13 @@ Todo conteudo novo deve entrar com:
 - Preparar um mapa continua ocultando o tabuleiro dos jogadores, mas a camada
   de bloqueio nao cobre mais o menu superior nem impede a navegacao interna.
 - BUI e EVE usam icones proprios no HUD, sem fallback textual.
+- Estagios/Fases usam uma unica ficha ativa. O Mestre ve o catalogo privado;
+  Jogadores recebem somente fase ativa, label e revision. Criar/trocar/renomear
+  e excluir fase arquivada passa pelo salvamento canonico e preserva vinculo,
+  permissoes e corpo compartilhado.
+- A troca de fase publica uma transicao visual idempotente no token; a mesma
+  revision nao pode repetir o giro ao reconectar. O smoke dedicado e
+  `npm run smoke:stages`.
 - Mudancas exigem `npm run smoke:training`, `npm run smoke:training:ui` e
   `npm run smoke:events` + `npm run smoke:multiplayer` antes da release.
 - A alpha.84 tambem passou em `npm run smoke:release`, `release:assets` e no
@@ -207,6 +215,7 @@ npm run smoke:builds:live
 npm run smoke:training
 npm run smoke:training:ui
 npm run smoke:events
+npm run smoke:stages
 npm run smoke:release:deep
 npm run perf:release
 npm run base:diagnose

@@ -74,6 +74,11 @@ interface BoardTokenView {
   combatImpact?: TabletopCombatImpact
   combatMarks: TabletopCombatMark[]
   deathState?: TabletopPlayerDeathState
+  stageTransition?: {
+    id: string
+    previousTokenImageUrl?: string
+    previousPortraitUrl?: string
+  }
 }
 
 interface BoardObjectView {
@@ -110,6 +115,13 @@ function TokenArtwork({ token }: { token: BoardTokenView }) {
   const imageIndex = imageState.key === imageKey ? imageState.index : 0
 
   const currentImageUrl = imageUrls[imageIndex] ?? ''
+  const previousImageUrl = token.stageTransition
+    ? resolveRuntimeAssetUrl(
+        token.stageTransition.previousTokenImageUrl ??
+          token.stageTransition.previousPortraitUrl ??
+          '',
+      )
+    : ''
 
   if (!currentImageUrl) {
     return (
@@ -127,6 +139,14 @@ function TokenArtwork({ token }: { token: BoardTokenView }) {
         onError={() => setImageState({ index: imageIndex + 1, key: imageKey })}
         src={currentImageUrl}
       />
+      {previousImageUrl ? (
+        <img
+          alt=""
+          className="tabletop-token__stage-previous-image"
+          key={token.stageTransition?.id}
+          src={previousImageUrl}
+        />
+      ) : null}
       <span className="tabletop-token__badge">{token.label}</span>
     </div>
   )
@@ -1496,7 +1516,9 @@ export function TabletopBoard({
                   }${token.isStealthed ? ' tabletop-token--stealthed' : ''
                   }${draggingTokenId === token.id ? ' tabletop-token--dragging' : ''}${
                     tokenSpan.preset === 'custom' ? ' tabletop-token--custom' : ''
-                  }${token.deathState?.status === 'dead' ? ' tabletop-token--dead' : ''}`}
+                  }${token.deathState?.status === 'dead' ? ' tabletop-token--dead' : ''}${
+                    token.stageTransition ? ' tabletop-token--stage-transition' : ''
+                  }`}
                   data-state-label={token.isStealthed ? 'furtivo' : undefined}
                   key={token.id}
                   onPointerDown={(event) => {

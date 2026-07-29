@@ -51,6 +51,7 @@
     "smoke:training": "node scripts/smoke-training-arc.cjs",
     "smoke:training:ui": "node scripts/smoke-training-playwright.cjs",
     "smoke:events": "node scripts/smoke-events.cjs",
+    "smoke:stages": "node scripts/smoke-character-stages.cjs",
     "math:npc:apply": "node scripts/balance-npc-math.cjs --write",
     "math:npc:plan": "node scripts/balance-npc-math.cjs",
     "mun:interludes:audit": "node scripts/audit-mun-interludes.cjs",

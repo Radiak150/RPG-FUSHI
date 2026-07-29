@@ -67,6 +67,17 @@ Este arquivo e a regra de operacao para qualquer chat/agente que mexer no sistem
     Nao implementar MSC sem aprovacao direta do Mestre. Alteracoes exigem
     `npm run smoke:inventory`, `npm run smoke:multiplayer` e a atualizacao do
     documento `docs/planejamento/ALPHA88_INVENTORY_FOUNDATION_2026-07-28.md`.
+26. Estagios/Fases usam exclusivamente o protocolo
+    `docs/fushi-system/FUSHI_CHARACTER_STAGES_V1.md`. A fase ativa continua
+    sendo a unica `CharacterSheet` canonica consumida por combate, TURN,
+    inventario, Fluxo Principal e multiplayer. O catalogo do Mestre e formado
+    por snapshots privados sem `stageState` recursivo; o Jogador recebe apenas
+    `activeStageId`, `activeStageLabel` e `revision`. Trocas preservam id,
+    jogador, vinculo, permissoes e corpo compartilhado, bloqueiam edicao
+    concorrente e publicam uma transicao visual idempotente. Nao inferir fases
+    por texto/lore e nao criar uma segunda ficha viva. Alteracoes exigem
+    `npm run smoke:stages`, `npm run smoke:multiplayer`, `npm run smoke:ui` e
+    `npm run smoke:release`.
 
 ## Fonte de verdade operacional
 
@@ -80,6 +91,8 @@ Este arquivo e a regra de operacao para qualquer chat/agente que mexer no sistem
 - NPCs e mobs da planilha devem informar a fonte. Se a fonte nao for `workspace real`, a linha e critica e nao deve guiar producao.
 - `Protagonistas` separa player real de NPC com nome parecido.
 - `Bosses_Fases` separa boss/fases/Cataclisma de ficha basica com imagens de lore.
+- `FUSHI_CHARACTER_STAGES_V1.md` define o contrato tecnico de fases da ficha,
+  privacidade e sincronizacao da transformacao.
 - `Mundo_Biomas` deve acompanhar a organizacao real do MUN, mas focada no que falta produzir.
 
 ## Eixo matematico

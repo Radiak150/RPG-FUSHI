@@ -1,6 +1,6 @@
 {
   "version": "campanha-controle-v1",
-  "updatedAt": "2026-07-26",
+  "updatedAt": "2026-07-29",
   "purpose": "Painel simples de producao da campanha. Use OK para pronto/estavel, FOCO para atencao atual e CRITICO para bloqueio/placeholder.",
   "rules": [
     "O app estavel vem antes de conteudo novo.",
@@ -17,7 +17,8 @@
     "Eventos temporarios coexistem no EVE e nunca podem aceitar substituicao completa da sessao enviada por Jogador.",
     "Aceite multiplayer vale pela conexao viva do app: navegar entre Mesa, Fluxo, Livro e Multiplayer nao pode recarregar a pagina nem voltar o Jogador para pending.",
     "Fechar uma apresentacao visual do EVE e local a janela e nunca apaga o resultado canonico; um novo drawId deve abrir novamente.",
-    "Combat V2 e a fonte ativa para CA, Bloqueio, Esquiva, critico, manobras, escala de mobs e simulacao; FUSHI_COMBAT_V2.md prevalece sobre regra V1 conflitante."
+    "Combat V2 e a fonte ativa para CA, Bloqueio, Esquiva, critico, manobras, escala de mobs e simulacao; FUSHI_COMBAT_V2.md prevalece sobre regra V1 conflitante.",
+    "Estagios/Fases usam uma unica ficha canonica ativa; catalogo privado do Mestre fica em snapshots nao recursivos, Jogador recebe apenas fase ativa e revision, e toda troca precisa de VFX idempotente e teste Mestre > Jogador."
   ],
   "lanes": [
     {
@@ -109,6 +110,14 @@
       "acceptance": "Mestre atribui skill/build e jogador recebe; jogador altera campos permitidos e Mestre recebe sem apagar campos canonicos.",
       "evidence": "Alpha.87 envia patches do jogador e protege skills, rituais, builds, permissoes e corpo compartilhado; o smoke multiplayer confirma Vida efetiva 17/17 (base 10 + Build 7) no Jogador e preserva o maximo apos o patch Jogador > Mestre.",
       "next": "Nao aceitar build futura sem o gate Mestre > Jogador e Jogador > Mestre."
+    },
+    {
+      "area": "Ficha",
+      "item": "Estagios/Fases da ficha",
+      "status": "OK tecnico",
+      "acceptance": "Mestre cria, edita, renomeia, troca e arquiva fases; a fase ativa continua sendo a ficha canonica e jogadores recebem somente fase ativa, imagem atual e revision.",
+      "evidence": "Alpha.88: smoke:stages, smoke:multiplayer, smoke:ui, smoke:release e smoke:release:deep passaram; release empacotado criou, ativou e retornou de uma fase sem vazar catalogo.",
+      "next": "Playtest fisico com Mestre + Jogador: trocar fase, editar imagem/vida, confirmar VFX unico e retorno sem novo aceite."
     },
     {
       "area": "Ficha",

@@ -170,6 +170,89 @@ async function smokePackagedBuildManager(page) {
     .click()
 }
 
+async function smokePackagedCharacterStages(page) {
+  const token = page.locator('.tabletop-token--public').first()
+  await token.waitFor({ state: 'visible', timeout: 10_000 })
+  await token.dblclick()
+
+  const sheetWindow = page.locator('.floating-window--sheet')
+  await sheetWindow.waitFor({ state: 'visible', timeout: 10_000 })
+
+  const masterControlsButton = sheetWindow.getByRole('button', {
+    name: 'Mestre',
+    exact: true,
+  })
+  await masterControlsButton.waitFor({ state: 'visible', timeout: 5_000 })
+  await masterControlsButton.click()
+
+  const stagesTab = sheetWindow.locator('button').filter({ hasText: /^Estagios$/ }).first()
+  if ((await stagesTab.count()) === 0) {
+    const diagnostics = await sheetWindow.evaluate((element) => ({
+      buttons: Array.from(element.querySelectorAll('button')).map((button) => ({
+        text: button.textContent?.trim(),
+        aria: button.getAttribute('aria-label'),
+        title: button.getAttribute('title'),
+      })),
+      text: element.textContent?.slice(0, 1200),
+    }))
+    throw new Error(`Release Estagios nao abriu o painel reservado: ${JSON.stringify(diagnostics)}`)
+  }
+  await stagesTab.scrollIntoViewIfNeeded()
+  await stagesTab.click()
+
+  const manager = sheetWindow.locator('.tabletop-stage-manager')
+  await manager.waitFor({ state: 'visible', timeout: 5_000 })
+  assert(
+    (await manager.locator('.tabletop-stage-manager__item').count()) === 1,
+    'Release Estagios nao inicializou a fase Padrao unica.',
+  )
+
+  const stageNameInput = manager.locator('input[placeholder^="Fase"]').first()
+  await stageNameInput.fill('Fase Smoke')
+  await manager
+    .getByRole('button', { name: 'Criar e ativar nova fase', exact: true })
+    .click()
+
+  await manager
+    .locator('.tabletop-stage-manager__item')
+    .nth(1)
+    .waitFor({ state: 'visible', timeout: 5_000 })
+  assert(
+    (await manager.locator('.tabletop-stage-manager__item').count()) === 2,
+    'Release Estagios nao criou a segunda fase.',
+  )
+  assert(
+    (await manager.locator('input.field__input').evaluateAll((inputs) =>
+      inputs.some((input) => input.value === 'Fase Smoke'),
+    )),
+    'Release Estagios nao preservou o nome da fase criada.',
+  )
+  assert(
+    (await manager.getByText('Ativa', { exact: true }).count()) === 1,
+    'Release Estagios nao marcou a fase nova como ativa.',
+  )
+
+  await manager
+    .getByRole('button', { name: 'Ativar Padrao', exact: true })
+    .click()
+  await page.waitForFunction(() => {
+    const manager = document.querySelector('.tabletop-stage-manager')
+    return Boolean(
+      manager &&
+        Array.from(manager.querySelectorAll('input.field__input')).some(
+          (input) => input.value === 'Padrao',
+        ) &&
+        manager.textContent?.includes('Ativa'),
+    )
+  })
+  assert(
+    (await manager.getByText('Ativa', { exact: true }).count()) === 1,
+    'Release Estagios nao retornou para a fase Padrao.',
+  )
+
+  await sheetWindow.locator('button[aria-label="Fechar janela"]').click()
+}
+
 function getFreePort() {
   return new Promise((resolve, reject) => {
     const server = http.createServer()
@@ -1288,6 +1371,7 @@ async function main() {
 
     await openShortcutsRail(page)
     await smokePackagedBuildManager(page)
+    await smokePackagedCharacterStages(page)
     await openShortcutsRail(page)
 
     await page.getByRole('button', { name: 'Abrir anotacoes pessoais' }).click()

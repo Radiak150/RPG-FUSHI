@@ -13,6 +13,7 @@ Before changing systems, content, NPCs, mechanics, assets, or release workflow, 
 - `docs/fushi-system/FUSHI_RULEBOOK_CANON_V1.md`
 - `docs/fushi-system/FUSHI_EVENT_SYSTEM_V1.md`
 - `docs/fushi-system/FUSHI_STATUS_SYSTEM_V1.md`
+- `docs/fushi-system/FUSHI_CHARACTER_STAGES_V1.md`
 
 Para regras dos livros, o texto publicado no app/PDF sai de
 `src/data/rulebook/player-rulebook.json` e
@@ -77,6 +78,15 @@ protocol in `docs/fushi-system/FUSHI_STATUS_SYSTEM_V1.md`. Do not infer an
 automatic state from a keyword in NPC prose. Run `npm run status:audit` and
 `npm run smoke:statuses`; conditional, phase, choice and custom-value effects
 remain explicit review items until their own structured resolver exists.
+
+Character stages use `docs/fushi-system/FUSHI_CHARACTER_STAGES_V1.md`. The
+active stage remains the single canonical `CharacterSheet` used by combat,
+turn, inventory, Fluxo Principal and multiplayer. The GM-only stage catalog is
+stored as non-recursive snapshots; player payloads may contain only the active
+stage id, label and revision. A stage switch must preserve identity, player
+binding, permissions and shared-body fields, use the canonical ficha update
+path, and trigger an idempotent public token transition. Do not create a
+parallel live ficha or infer boss phases from prose.
 
 The Mesa `Ctrl+A` recovery preserves the persisted session. It first remounts
 the board and then, only if a real Electron pixel inspection still detects a

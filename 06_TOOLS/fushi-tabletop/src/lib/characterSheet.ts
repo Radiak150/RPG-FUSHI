@@ -8,6 +8,10 @@ import type {
 import { getInitialTrainingRewardByFeatureId } from '../data/training/initialTrainingRewards'
 import { getCombatDodgeValue } from './combatV2'
 import { getInventoryProfile } from './inventoryCapacity'
+import {
+  cloneCharacterStageState,
+  syncActiveCharacterStageSnapshot,
+} from './characterStages'
 import { createAttributeRollConfig } from './rolls'
 import { createDefaultSkills, ensureGeneralSkills } from './skillCatalog'
 
@@ -298,6 +302,7 @@ export function prepareCharacterForEditing(character: CharacterSheet): Character
     atributos: { ...character.atributos },
     recursos: { ...character.recursos },
     rolagemBase: { ...character.rolagemBase },
+    stageState: cloneCharacterStageState(character.stageState),
   }
 }
 
@@ -426,7 +431,7 @@ export function normalizeCharacterSheet(draft: CharacterSheet): CharacterSheet {
     personalidade: '',
   }
 
-  return {
+  return syncActiveCharacterStageSnapshot({
     ...draft,
     nome: draft.nome.trim() || 'Personagem sem nome',
     avatarUrl: draft.avatarUrl?.trim() ? draft.avatarUrl.trim() : undefined,
@@ -536,5 +541,6 @@ export function normalizeCharacterSheet(draft: CharacterSheet): CharacterSheet {
       highestAttribute,
       draft.rolagemBase.bonus ?? 0,
     ),
-  }
+    stageState: cloneCharacterStageState(draft.stageState),
+  })
 }

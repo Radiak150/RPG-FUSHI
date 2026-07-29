@@ -1250,7 +1250,30 @@ function sanitizeCharactersForPlayer(workspace, visibleCharacterIds) {
 
   return characters
     .filter((character) => isRecord(character) && visibleCharacterIds.has(character.id))
-    .map((character) => cloneValue(character))
+    .map((character) => {
+      const publicCharacter = cloneValue(character)
+
+      if (isRecord(publicCharacter.stageState)) {
+        publicCharacter.stageState = {
+          activeStageId:
+            typeof publicCharacter.stageState.activeStageId === 'string'
+              ? publicCharacter.stageState.activeStageId
+              : 'stage-default',
+          activeStageLabel:
+            typeof publicCharacter.stageState.activeStageLabel === 'string'
+              ? publicCharacter.stageState.activeStageLabel
+              : 'Padrao',
+          revision:
+            typeof publicCharacter.stageState.revision === 'number'
+              ? Math.max(0, Math.floor(publicCharacter.stageState.revision))
+              : 0,
+        }
+      } else {
+        delete publicCharacter.stageState
+      }
+
+      return publicCharacter
+    })
 }
 
 function findActiveMap(libraryState, publicSession) {
@@ -1503,6 +1526,7 @@ function sanitizePlayerCharacterUpdate(value, existingCharacter) {
   ;[
     'permissions',
     'sharedBody',
+    'stageState',
   ].forEach((field) => {
     if (existingCharacter[field] !== undefined) {
       nextCharacter[field] = cloneValue(existingCharacter[field])
