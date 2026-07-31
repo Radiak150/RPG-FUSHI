@@ -87,6 +87,10 @@ function validateBook(book, expectedAudience) {
 const player = readJson('src/data/rulebook/player-rulebook.json')
 const master = readJson('src/data/rulebook/master-rulebook.json')
 const bibliography = readJson('src/data/rulebook/bibliography.json')
+const statusCatalogSource = fs.readFileSync(
+  path.join(root, 'src/data/statusCatalog.ts'),
+  'utf8',
+)
 
 const requiredFontFiles = [
   'src/assets/fonts/fushi/Manrope-Regular.ttf',
@@ -118,6 +122,37 @@ for (const required of ['escudo', 'morte', 'reencarnacao', 'progressao', 'itens-
 }
 
 const playerRaw = normalize(JSON.stringify(player))
+const masterRaw = normalize(JSON.stringify(master))
+const staleCombatFragments = [
+  'floor(ca_base / 2)',
+  'piso(ca base / 2)',
+  'metade da ca base',
+  'bloqueio continua floor',
+]
+
+for (const fragment of staleCombatFragments) {
+  assert(!playerRaw.includes(fragment), `Livro do Jogador ainda contem regra Combat V1: ${fragment}`)
+  assert(!masterRaw.includes(fragment), `Livro do Mestre ainda contem regra Combat V1: ${fragment}`)
+}
+
+for (const required of [
+  'bloqueio agora depende de fortitude',
+  'ca atual + agi + reflexos',
+  'dobra somente os dados de dano',
+]) {
+  assert(playerRaw.includes(required), `Livro do Jogador perdeu regra Combat V2: ${required}`)
+}
+
+const statusLabels = [
+  ...statusCatalogSource.matchAll(/^\s*label:\s*'([^']+)'/gm),
+].map((match) => match[1])
+assert(statusLabels.length === 24, `Catalogo canonico exibiu ${statusLabels.length}/24 estados`)
+for (const label of statusLabels) {
+  const normalizedLabel = normalize(label)
+  assert(playerRaw.includes(normalizedLabel), `Livro do Jogador perdeu estado canonico: ${label}`)
+  assert(masterRaw.includes(normalizedLabel), `Livro do Mestre perdeu estado canonico: ${label}`)
+}
+
 const forbiddenPlayerFragments = [
   'reencarn',
   'novo corpo',
@@ -148,7 +183,6 @@ playerSecretBlocks.forEach((block) => {
 const masterSecretBlocks = master.sections.flatMap((section) => section.blocks).filter((block) => block.kind === 'secret' || block.tone === 'secret')
 assert(masterSecretBlocks.length > 0, 'Livro do Mestre perdeu os blocos secretos')
 
-const masterRaw = normalize(JSON.stringify(master))
 for (const required of [
   'catalogo oficial: 48 matrizes padrao',
   'comum',

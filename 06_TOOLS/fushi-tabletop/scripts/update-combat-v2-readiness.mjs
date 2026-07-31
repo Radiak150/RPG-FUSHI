@@ -2,7 +2,38 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const filePath = path.join(process.cwd(), 'docs', 'planejamento', 'campanha-controle.json')
+const playerBookPath = path.join(
+  process.cwd(),
+  'src',
+  'data',
+  'rulebook',
+  'player-rulebook.json',
+)
+const masterBookPath = path.join(
+  process.cwd(),
+  'src',
+  'data',
+  'rulebook',
+  'master-rulebook.json',
+)
+const rulebookQaPath = path.join(
+  process.cwd(),
+  'output',
+  'pdf',
+  'FUSHI_Rulebook_QA_Alpha84.json',
+)
 const control = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+const playerBook = JSON.parse(fs.readFileSync(playerBookPath, 'utf8'))
+const masterBook = JSON.parse(fs.readFileSync(masterBookPath, 'utf8'))
+const rulebookQa = fs.existsSync(rulebookQaPath)
+  ? JSON.parse(fs.readFileSync(rulebookQaPath, 'utf8'))
+  : null
+
+const playerChapterCount = playerBook.sections.length
+const masterChapterCount = masterBook.sections.length
+const pageEvidence = rulebookQa?.passed
+  ? `PDF Jogador ${rulebookQa.player.pages} paginas, PDF Mestre ${rulebookQa.master.pages} paginas`
+  : 'PDFs aguardam books:build e books:audit'
 
 function findBy(list, predicate, label) {
   const item = list.find(predicate)
@@ -27,7 +58,7 @@ const books = findBy(
   'appChecklist/Livros',
 )
 books.evidence =
-  'Combat V2: 15 capitulos publicos, 18 capitulos do Mestre, PDF Jogador 23 paginas, PDF Mestre 363 paginas; auditoria visual, sigilo e bordas aprovada.'
+  `Combat V2: ${playerChapterCount} capitulos publicos, ${masterChapterCount} capitulos do Mestre, ${pageEvidence}; auditoria visual, sigilo e bordas aprovada.`
 books.next =
   'Atualizar src/data/rulebook a cada decisao aprovada; rodar books:build, books:audit e smoke:rulebooks:release.'
 
@@ -108,7 +139,7 @@ combatRuntimeEntry.releaseGate =
   'smoke:combat-runtime + smoke:combat-flow:ui + smoke:multiplayer + smoke:release'
 if (!combatRuntimeProtocol) control.mechanicProtocol.push(combatRuntimeEntry)
 
-control.updatedAt = '2026-07-25'
+control.updatedAt = '2026-07-30'
 fs.writeFileSync(filePath, `${JSON.stringify(control, null, 2)}\n`)
 
 console.log(JSON.stringify({ filePath, status: 'Combat V2 readiness updated' }, null, 2))

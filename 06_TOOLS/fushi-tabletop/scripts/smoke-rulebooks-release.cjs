@@ -8,6 +8,14 @@ const executablePath = path.resolve(
   process.env.FUSHI_RELEASE_EXE || path.join(root, 'release/win-unpacked/RPG FUSHI.exe'),
 )
 const artifactRoot = path.join(root, '.codex-dev', 'rulebooks-release')
+const playerRulebook = JSON.parse(
+  fs.readFileSync(path.join(root, 'src/data/rulebook/player-rulebook.json'), 'utf8'),
+)
+const masterRulebook = JSON.parse(
+  fs.readFileSync(path.join(root, 'src/data/rulebook/master-rulebook.json'), 'utf8'),
+)
+const expectedPlayerChapterCount = playerRulebook.sections.length
+const expectedMasterChapterCount = masterRulebook.sections.length
 
 function assert(condition, message) {
   if (!condition) throw new Error(message)
@@ -115,7 +123,10 @@ async function auditPlayer(page) {
   const normalizedText = normalize(state.bodyText)
 
   assert(state.title.includes('Livro do Jogador'), 'Release Jogador abriu o volume incorreto.')
-  assert(state.chapterCount === 15, `Release Jogador exibiu ${state.chapterCount}/15 capitulos.`)
+  assert(
+    state.chapterCount === expectedPlayerChapterCount,
+    `Release Jogador exibiu ${state.chapterCount}/${expectedPlayerChapterCount} capitulos da fonte real.`,
+  )
   assert(state.diagramCount > 0, 'Release Jogador perdeu os diagramas dos exemplos.')
   assert(Object.values(state.fonts).every(Boolean), 'Release Jogador nao carregou a tipografia FUSHI embutida.')
   assert(!state.badPartialKeyword, 'Release Jogador destacou trecho parcial de palavra comum.')
@@ -144,7 +155,10 @@ async function auditMaster(page, expectedCharacterCount) {
   }))
 
   assert(initialState.title.includes('Livro do Mestre'), 'Release Mestre abriu o volume incorreto.')
-  assert(initialState.chapterCount === 18, `Release Mestre exibiu ${initialState.chapterCount}/18 capitulos.`)
+  assert(
+    initialState.chapterCount === expectedMasterChapterCount,
+    `Release Mestre exibiu ${initialState.chapterCount}/${expectedMasterChapterCount} capitulos da fonte real.`,
+  )
   assert(initialState.hasVolumeSwitch, 'Release Mestre perdeu o seletor dos dois volumes.')
   assert(!initialState.hasRouteError, 'Release Mestre abriu tela de recuperacao.')
   assert(!initialState.hasHorizontalOverflow, 'Release Mestre gerou overflow horizontal.')
@@ -323,8 +337,12 @@ async function main() {
   const masterAudit = await runProfile({ audience: 'master', label: 'Mestre', password: 'mestre1' })
 
   console.log('[rulebooks:release] PASS')
-  console.log('  jogador: 15 capitulos publicos, busca funcional e nenhum segredo detectado')
-  console.log(`  mestre: 18 capitulos, ${masterAudit.buildAudits.length} builds NPC e hub avancado acessiveis`)
+  console.log(
+    `  jogador: ${expectedPlayerChapterCount} capitulos publicos, busca funcional e nenhum segredo detectado`,
+  )
+  console.log(
+    `  mestre: ${expectedMasterChapterCount} capitulos, ${masterAudit.buildAudits.length} builds NPC e hub avancado acessiveis`,
+  )
   console.log(`  evidencias: ${path.relative(root, artifactRoot)}`)
 }
 

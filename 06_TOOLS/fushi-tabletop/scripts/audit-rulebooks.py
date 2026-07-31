@@ -169,6 +169,9 @@ def audit_volume(name: str, pdf: Path) -> dict[str, Any]:
     low_variance = [page["page"] for page in visual if page["luma_stddev"] < 2.0]
     edge_touch = [page["page"] for page in visual if page["edge_touch"]]
     all_text = "\n".join(texts)
+    raw_editorial_labels = [
+        label for label in ("DEVELOPMENT", "CONSTRUCTION") if label in all_text
+    ]
     player_leaks = []
     if name == "player":
         searchable = normalized(all_text)
@@ -186,8 +189,16 @@ def audit_volume(name: str, pdf: Path) -> dict[str, Any]:
         "low_variance_pages": low_variance,
         "body_edge_touch_pages": edge_touch,
         "player_secret_terms": player_leaks,
+        "raw_editorial_labels": raw_editorial_labels,
         "contact_sheets": [str(path) for path in sheets],
-        "passed": not blank_like and not low_variance and not edge_touch and not player_leaks and bool(metadata.get("/Title")),
+        "passed": (
+            not blank_like
+            and not low_variance
+            and not edge_touch
+            and not player_leaks
+            and not raw_editorial_labels
+            and bool(metadata.get("/Title"))
+        ),
     }
 
 
@@ -201,6 +212,7 @@ def main() -> int:
         print(
             f"{name}: pages={volume['pages']} blanks={volume['blank_like_pages']} "
             f"edges={volume['body_edge_touch_pages']} leaks={volume['player_secret_terms']} "
+            f"labels={volume['raw_editorial_labels']} "
             f"title={volume['metadata_title']!r}"
         )
     print(f"QA {'OK' if report['passed'] else 'FALHOU'}: {REPORT_PATH}")

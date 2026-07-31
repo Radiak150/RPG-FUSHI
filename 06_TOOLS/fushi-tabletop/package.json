@@ -1,7 +1,7 @@
 {
   "name": "fushi-tabletop",
   "private": true,
-  "version": "0.1.0-alpha.90",
+  "version": "0.1.0-alpha.91",
   "description": "Mesa virtual desktop do RPG FUSHI com campanha e multiplayer.",
   "author": {
     "name": "Projeto RPG FUSHI"

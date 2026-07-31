@@ -30,8 +30,8 @@ export const fushiRulebooks: FushiRulebooks = {
     master: masterRulebook,
     player: playerRulebook,
   },
-  updatedAt: '2026-07-10',
-  version: 'fushi-rulebooks-alpha84-v1',
+  updatedAt: '2026-07-30',
+  version: 'fushi-rulebooks-alpha91-v1',
 }
 
 export function getRulebookForAudience(audience: 'master' | 'player') {

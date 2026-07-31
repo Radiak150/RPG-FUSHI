@@ -1,6 +1,6 @@
 # Content Readiness - Fonte De Verdade
 
-Data: 2026-07-18
+Data: 2026-07-30
 
 Este arquivo aponta para os artefatos que devem guiar o trabalho de estabilidade,
 otimizacao e conteudo novo do FUSHI Tabletop.
@@ -11,16 +11,17 @@ otimizacao e conteudo novo do FUSHI Tabletop.
 | --- | --- |
 | `docs/planejamento/campanha-controle.json` | Modelo editavel e simples de producao da campanha: app, lore, protagonistas, NPCs, mobs, bosses, biomas, audio, VFX e protocolos. |
 | `docs/planejamento/ALPHA84_PROXIMAS_SESSOES_BOARD.md` | Board pratico para priorizar o que pode aparecer nas proximas sessoes: hubs, livro do jogador, combate, morte/renascimento, MSC e conteudo imediato. |
-| `docs/planejamento/LIVRO_JOGADOR_COMBATE_BLUEPRINT.md` | Blueprint de perguntas e decisoes para fechar o Livro do Jogador publico antes de implementar no app. |
+| `docs/planejamento/LIVRO_JOGADOR_COMBATE_BLUEPRINT.md` | Controle editorial ativo: fontes canonicas, regras publicas, sigilo, estados editoriais e portoes de fechamento dos livros. |
 | `src/data/rulebook/*.json` | Fonte unica dos Livros do Jogador e do Mestre usados pelo app e pelos PDFs. |
 | `docs/fushi-system/FUSHI_COMBAT_V2.md` | Fonte ativa para defesa, critico, manobras, mobs e builds; prevalece sobre regra V1 conflitante. |
 | `docs/fushi-system/COMBAT_V2_SIMULATION_REPORT.md` | Auditoria de matematica, cenarios e alertas de ficha antes de ajustar Vida, dano ou item. |
 | `docs/fushi-system/FUSHI_TRAINING_ARC_V1.md` | Runbook canonico do Circuito do Centro: ativacao MUN, seis estacoes, Segundo Sino, privacidade e aceite manual. |
 | `docs/fushi-system/FUSHI_EVENT_SYSTEM_V1.md` | Protocolo do hub EVE: ciclo de vida, coexistencia, limpeza, privacidade e regras para eventos futuros. |
 | `docs/fushi-system/FUSHI_CHARACTER_STAGES_V1.md` | Contrato canonico de Estagios/Fases: snapshots privados do Mestre, fase ativa unica, troca atomica, VFX e multiplayer. |
+| `docs/planejamento/ALPHA91_RULEBOOK_REFRESH_2026-07-30.md` | Registro do fechamento editorial alpha.91, portoes de PDF/release e limites do que nao foi alterado. |
 | `src/data/training/village-training-arc.json` | Fonte unica das regras exibidas pelo painel de treinamento; React apenas renderiza. |
-| `output/pdf/FUSHI_Livro_do_Jogador_Alpha84.pdf` | Volume publico diagramado; 23 paginas, destaques semanticos, diagramas taticos e bibliografia filtrada. |
-| `output/pdf/FUSHI_Livro_do_Mestre_Alpha84.pdf` | Volume confidencial; 364 paginas, regras publicas, escudo e snapshot de 55 fichas. |
+| `output/pdf/FUSHI_Livro_do_Jogador_Alpha84.pdf` | Caminho legado estavel do volume publico; conteudo alpha.91 com 28 paginas, destaques semanticos, diagramas taticos e bibliografia filtrada. |
+| `output/pdf/FUSHI_Livro_do_Mestre_Alpha84.pdf` | Caminho legado estavel do volume confidencial; conteudo alpha.91 com 392 paginas, regras publicas, escudo e compendio vivo. |
 | `output/pdf/FUSHI_Rulebook_QA_Alpha84.json` | Auditoria de metadados, render, paginas vazias/cortadas e vazamento de termos secretos. |
 | `docs/planejamento/FUSHI_App_Readiness_Alpha84.xlsx` | Planilha principal para ver o que esta estavel, o que falta e como testar. |
 | `.codex-dev/content-readiness-audit.json` | Snapshot tecnico gerado por `npm run content:audit`. |
@@ -53,9 +54,9 @@ otimizacao e conteudo novo do FUSHI Tabletop.
 | Fichas avancadas/boss em foco | 15 |
 | Boss Cataclisma | 9 |
 | Biomas MUN | 9 |
-| Capitulos publicos no app/PDF | 15 |
-| Capitulos confidenciais do Mestre | 18 |
-| Paginas PDF Jogador / Mestre | 23 / 364 |
+| Capitulos publicos no app/PDF | 16 |
+| Capitulos confidenciais do Mestre | 19 |
+| Paginas PDF Jogador / Mestre | 28 / 392 |
 | Fichas no snapshot do Mestre | 55 |
 | Vazamentos detectados no livro publico | 0 |
 
@@ -308,6 +309,7 @@ conteudo, atualizar esta fonte de verdade:
 npm run content:audit
 npm run books:build
 npm run books:audit
+node scripts/update-combat-v2-readiness.mjs
 & "C:\Users\danie\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe" ".codex-dev\artifact-work\build-alpha84-control-workbook.mjs"
 ```
 

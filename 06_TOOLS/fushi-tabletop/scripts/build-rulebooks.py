@@ -85,13 +85,13 @@ FONT_ACCENT_BOLD = "FushiAccentBold"
 STATUS_LABELS = {
     "canon": "CÂNONE",
     "playtest": "EM TESTE",
-    "construction": "EM CONSTRUÇÃO",
+    "development": "EM CONSTRUÇÃO",
 }
 
 STATUS_COLORS = {
     "canon": GREEN,
     "playtest": YELLOW,
-    "construction": RED,
+    "development": RED,
 }
 
 TONE_COLORS = {

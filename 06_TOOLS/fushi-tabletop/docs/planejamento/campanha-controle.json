@@ -12,7 +12,7 @@
     "Livro do Jogador deve conter apenas regra publica de mesa; nao expor lore secreta, XP oculto, reencarnacao, natureza real dos protagonistas ou metaplot.",
     "Livro no app e PDFs devem nascer de src/data/rulebook; mudanca de regra nao pode ser digitada separadamente em cada formato.",
     "Toda frente nova deve comecar com pergunta guiada para o mestre aprovar: o que existe hoje, o que incomoda, sugestao conservadora, decisao aprovada e teste.",
-    "Combat V2 e a fonte ativa para CA, Bloqueio, Esquiva, critico, manobras, escala de mobs e simulacao; a correcao canonica de 2026-07-13 tornou Esquiva fixa, mas runtime/Livros aguardam o checkmate da matematica.",
+    "Combat V2 e a base tecnica ativa para CA, Bloqueio, Esquiva, critico, manobras, escala de mobs e simulacao; balanceamento numerico continua em playtest e qualquer mudanca de regra exige aprovacao do Mestre.",
     "O Treino Inicial e administrado pelo EVE. Desativar remove mapa/painel temporario e preserva progresso; reiniciar e uma acao separada.",
     "Eventos temporarios coexistem no EVE e nunca podem aceitar substituicao completa da sessao enviada por Jogador.",
     "Aceite multiplayer vale pela conexao viva do app: navegar entre Mesa, Fluxo, Livro e Multiplayer nao pode recarregar a pagina nem voltar o Jogador para pending.",
@@ -189,7 +189,7 @@
       "item": "Livro do Jogador e Livro do Mestre",
       "status": "OK",
       "acceptance": "Jogador consulta regras publicas no Fluxo e na Mesa sem ver reencarnacao/progressao oculta; Mestre consulta escudo e compendio real; PDFs passam auditoria visual e de sigilo.",
-      "evidence": "Combat V2: 15 capitulos publicos, 18 capitulos do Mestre, PDF Jogador 23 paginas, PDF Mestre 363 paginas; auditoria visual, sigilo e bordas aprovada.",
+      "evidence": "Combat V2: 16 capitulos publicos, 19 capitulos do Mestre, PDF Jogador 28 paginas, PDF Mestre 392 paginas; auditoria visual, sigilo e bordas aprovada.",
       "next": "Atualizar src/data/rulebook a cada decisao aprovada; rodar books:build, books:audit e smoke:rulebooks:release."
     },
     {
