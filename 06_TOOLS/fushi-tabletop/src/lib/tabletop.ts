@@ -10,6 +10,7 @@ import type {
   TabletopTokenSizePreset,
   Tone,
 } from '../data/types'
+import { createDefaultTabletopSceneLighting } from './tabletopLighting'
 
 export const DEFAULT_TABLETOP_ZOOM = 0.9
 export const MIN_TABLETOP_ZOOM = 0.35
@@ -52,6 +53,7 @@ export function getTabletopScenes(tabletop: TabletopData): TabletopScene[] {
         cinematicId: '',
         cameraPresetId: '',
         notes: '',
+        lighting: createDefaultTabletopSceneLighting(),
       },
     },
   ]

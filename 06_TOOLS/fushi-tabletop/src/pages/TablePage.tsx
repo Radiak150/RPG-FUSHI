@@ -41,6 +41,8 @@ import { TabletopTrainingArc } from '../components/tabletop/TabletopTrainingArc'
 import { TabletopHelpPanel } from '../components/tabletop/TabletopHelpPanel'
 import { TabletopHud } from '../components/tabletop/TabletopHud'
 import { TabletopHudPanel } from '../components/tabletop/TabletopHudPanel'
+import { TabletopLightingControls } from '../components/tabletop/TabletopLightingControls'
+import { TabletopLightingLayer } from '../components/tabletop/TabletopLightingLayer'
 import { RulebookQuickReference } from '../components/product/RulebookContent'
 import {
   TabletopSessionLog,
@@ -82,6 +84,8 @@ import type {
   TabletopMediaAsset,
   TabletopMap,
   TabletopScene,
+  TabletopSceneLight,
+  TabletopSceneLighting,
   TabletopToken,
   TabletopTokenSize,
   TabletopTokenSizePreset,
@@ -187,6 +191,13 @@ import {
   syncTabletopAudioChannel,
   type TabletopAudioTransportState,
 } from '../lib/tabletopAudio'
+import {
+  createDefaultTabletopSceneLighting,
+  createTabletopSceneLight,
+  isTabletopNight,
+  normalizeTabletopSceneLighting,
+  TABLETOP_SCENE_LIGHT_LIMIT,
+} from '../lib/tabletopLighting'
 import {
   clearTabletopRarityDraw,
   clearTabletopRarityHistory,
@@ -1286,6 +1297,7 @@ function createEmptySceneMetadata(): TabletopScene['metadata'] {
     cinematicId: '',
     cameraPresetId: '',
     notes: '',
+    lighting: createDefaultTabletopSceneLighting(),
   }
 }
 
@@ -2056,6 +2068,18 @@ export function TablePage() {
   const [sceneEntryId, setSceneEntryId] = useState(0)
   const [boardRenderEpoch, setBoardRenderEpoch] = useState(0)
   const [isBoardArtworkSuspended, setIsBoardArtworkSuspended] = useState(false)
+  const [isLightingEditMode, setIsLightingEditMode] = useState(false)
+  const [selectedSceneLightId, setSelectedSceneLightId] = useState('')
+  const lightingWriteRef = useRef<{
+    pending: TabletopSceneLighting | null
+    sceneId: string
+    timerId: number | null
+  }>({
+    pending: null,
+    sceneId: '',
+    timerId: null,
+  })
+  const lightingPointerLastWriteRef = useRef(0)
   const characterStageSnapshotsRef = useRef<
     Record<
       string,
@@ -3338,6 +3362,19 @@ export function TablePage() {
   const boardScene = viewMode === 'gm' ? preparedScene : currentScene
   const boardSceneId = boardScene?.id ?? currentSceneId
   const hasBoardScene = Boolean(boardScene)
+  const boardLighting = useMemo(
+    () =>
+      normalizeTabletopSceneLighting(
+        boardScene?.metadata.lighting ?? createDefaultTabletopSceneLighting(),
+      ),
+    [boardScene?.metadata.lighting],
+  )
+  const activeSelectedSceneLightId = boardLighting.lights.some(
+    (light) => light.id === selectedSceneLightId,
+  )
+    ? selectedSceneLightId
+    : ''
+  const boardIsNight = isTabletopNight(worldMundiState.clock)
   const boardMap =
     availableMaps.find((map) => map.id === boardScene?.mapId) ?? data?.tabletop.map ?? null
   const boardMapCellSize =
@@ -3350,6 +3387,215 @@ export function TablePage() {
     () => (boardSceneRuntime?.uiTheme.variables ?? {}) as CSSProperties,
     [boardSceneRuntime?.uiTheme.variables],
   )
+
+  function getLightingForWrite() {
+    const pending = lightingWriteRef.current
+
+    if (pending.pending && pending.sceneId === boardSceneId) {
+      return pending.pending
+    }
+
+    return boardLighting
+  }
+
+  function commitSceneLighting(sceneId: string, lighting: TabletopSceneLighting) {
+    if (isRemotePlayerMode || viewMode !== 'gm' || !sceneId) {
+      return
+    }
+
+    updateSceneMetadata(sceneId, 'lighting', normalizeTabletopSceneLighting(lighting))
+  }
+
+  function flushLightingWrite() {
+    const pending = lightingWriteRef.current
+
+    if (pending.timerId !== null) {
+      window.clearTimeout(pending.timerId)
+      pending.timerId = null
+    }
+
+    const nextLighting = pending.pending
+    const sceneId = pending.sceneId
+    pending.pending = null
+
+    if (nextLighting && sceneId) {
+      commitSceneLighting(sceneId, nextLighting)
+    }
+  }
+
+  function queueLightingWrite(
+    nextLighting: TabletopSceneLighting,
+    options: { immediate?: boolean } = {},
+  ) {
+    if (isRemotePlayerMode || viewMode !== 'gm' || !boardScene) {
+      return
+    }
+
+    const pending = lightingWriteRef.current
+    pending.pending = normalizeTabletopSceneLighting(nextLighting)
+    pending.sceneId = boardScene.id
+
+    if (options.immediate) {
+      flushLightingWrite()
+      return
+    }
+
+    if (pending.timerId !== null) {
+      return
+    }
+
+    pending.timerId = window.setTimeout(() => {
+      pending.timerId = null
+      const value = pending.pending
+      const sceneId = pending.sceneId
+      pending.pending = null
+
+      if (value && sceneId) {
+        commitSceneLighting(sceneId, value)
+      }
+    }, 120)
+  }
+
+  function handleLightingPointerMove(input: { x: number; y: number }) {
+    if (
+      viewMode !== 'gm' ||
+      !boardIsNight ||
+      !boardLighting.enabled ||
+      !boardLighting.cursorLight.enabled
+    ) {
+      return
+    }
+
+    const now = performance.now()
+
+    if (now - lightingPointerLastWriteRef.current < 24) {
+      return
+    }
+
+    lightingPointerLastWriteRef.current = now
+    const currentLighting = getLightingForWrite()
+    const cursorLight = currentLighting.cursorLight
+
+    if (
+      Math.abs(cursorLight.x - input.x) < 0.004 &&
+      Math.abs(cursorLight.y - input.y) < 0.004
+    ) {
+      return
+    }
+
+    queueLightingWrite({
+      ...currentLighting,
+      cursorLight: {
+        ...cursorLight,
+        x: input.x,
+        y: input.y,
+      },
+    })
+  }
+
+  function handleToggleSceneLighting() {
+    const currentLighting = getLightingForWrite()
+    queueLightingWrite(
+      {
+        ...currentLighting,
+        enabled: !currentLighting.enabled,
+      },
+      { immediate: true },
+    )
+  }
+
+  function handleToggleCursorLight() {
+    const currentLighting = getLightingForWrite()
+    const cursorWillBeEnabled = !currentLighting.cursorLight.enabled
+    queueLightingWrite(
+      {
+        ...currentLighting,
+        enabled: cursorWillBeEnabled ? true : currentLighting.enabled,
+        cursorLight: {
+          ...currentLighting.cursorLight,
+          enabled: cursorWillBeEnabled,
+        },
+      },
+      { immediate: true },
+    )
+  }
+
+  function handleAddSceneLight() {
+    if (!boardScene || viewMode !== 'gm' || isRemotePlayerMode) {
+      return
+    }
+
+    const currentLighting = getLightingForWrite()
+
+    if (currentLighting.lights.length >= TABLETOP_SCENE_LIGHT_LIMIT) {
+      setTableFeedbackMessage('Limite de 24 pontos de luz por cena atingido.')
+      return
+    }
+
+    const nextLight = createTabletopSceneLight({
+      label: `Luz ${currentLighting.lights.length + 1}`,
+      x: 0.5,
+      y: 0.5,
+    })
+    const nextLighting = {
+      ...currentLighting,
+      enabled: true,
+      lights: [...currentLighting.lights, nextLight],
+    }
+
+    setSelectedSceneLightId(nextLight.id)
+    setIsLightingEditMode(true)
+    queueLightingWrite(nextLighting, { immediate: true })
+    setTableFeedbackMessage('Ponto de luz adicionado. Arraste o centro ou use Ctrl+T.')
+  }
+
+  function handleUpdateSceneLight(
+    lightId: string,
+    patch: Partial<TabletopSceneLight>,
+  ) {
+    const currentLighting = getLightingForWrite()
+    const nextLighting = {
+      ...currentLighting,
+      lights: currentLighting.lights.map((light) =>
+        light.id === lightId ? { ...light, ...patch } : light,
+      ),
+    }
+
+    queueLightingWrite(nextLighting)
+  }
+
+  function handleMoveSceneLight(lightId: string, input: { x: number; y: number }) {
+    handleUpdateSceneLight(lightId, input)
+  }
+
+  function handleResizeSceneLight(lightId: string, radius: number) {
+    handleUpdateSceneLight(lightId, { radius })
+  }
+
+  function handleRemoveSceneLight(lightId: string) {
+    const currentLighting = getLightingForWrite()
+    const nextLighting = {
+      ...currentLighting,
+      lights: currentLighting.lights.filter((light) => light.id !== lightId),
+    }
+
+    if (selectedSceneLightId === lightId) {
+      setSelectedSceneLightId('')
+    }
+
+    queueLightingWrite(nextLighting, { immediate: true })
+  }
+
+  useEffect(
+    () => () => {
+      if (lightingWriteRef.current.timerId !== null) {
+        window.clearTimeout(lightingWriteRef.current.timerId)
+        lightingWriteRef.current.timerId = null
+      }
+    },
+    [],
+  )
+
   const activeIntroCard = sceneRuntime?.introCard ?? null
   const activeTransitionOverlay =
     transitionOverlayState
@@ -5741,6 +5987,8 @@ export function TablePage() {
       setIntroOverlayState(null)
       setTransitionOverlayState(null)
       setCinematicOverlayState(null)
+      setIsLightingEditMode(false)
+      setSelectedSceneLightId('')
     }
 
     window.addEventListener('keydown', handleEscape)
@@ -5847,7 +6095,7 @@ export function TablePage() {
 
   const handleBoardArtworkBlank = useCallback(() => {
     if (
-      Date.now() - boardManualRecoveryRef.current.requestedAt < 4500
+      Date.now() - boardManualRecoveryRef.current.requestedAt < 18000
     ) {
       hardRecoverBoardRenderer()
       return
@@ -5855,6 +6103,18 @@ export function TablePage() {
 
     recoverBoardRendering('automatic')
   }, [hardRecoverBoardRenderer, recoverBoardRendering])
+
+  const handleBoardArtworkReady = useCallback(() => {
+    boardAutoRecoveryRef.current = {
+      attempts: 0,
+      mapId: boardMap?.id ?? currentSceneId ?? 'tabletop-map',
+      startedAt: Date.now(),
+    }
+    boardManualRecoveryRef.current = {
+      hardRecoveryStarted: false,
+      requestedAt: 0,
+    }
+  }, [boardMap?.id, currentSceneId])
 
   useEffect(() => {
     function handleBoardRenderRefresh(event: KeyboardEvent) {
@@ -5888,6 +6148,41 @@ export function TablePage() {
       window.removeEventListener('keydown', handleBoardRenderRefresh, true)
     }
   }, [recoverBoardRendering])
+
+  useEffect(() => {
+    function handleLightingEditorShortcut(event: KeyboardEvent) {
+      if (
+        !(event.ctrlKey || event.metaKey) ||
+        event.altKey ||
+        event.key.toLowerCase() !== 't' ||
+        viewMode !== 'gm' ||
+        isRemotePlayerMode
+      ) {
+        return
+      }
+
+      const target = event.target
+
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return
+      }
+
+      event.preventDefault()
+      event.stopPropagation()
+      setIsLightingEditMode((current) => !current)
+    }
+
+    window.addEventListener('keydown', handleLightingEditorShortcut, true)
+
+    return () => {
+      window.removeEventListener('keydown', handleLightingEditorShortcut, true)
+    }
+  }, [isRemotePlayerMode, viewMode])
 
   useEffect(() => {
     return () => {
@@ -13448,6 +13743,8 @@ export function TablePage() {
           isObjectPlacementActive={Boolean(objectPlacementPresetId)}
           map={boardMap ?? data.tabletop.map}
           onArtworkBlank={handleBoardArtworkBlank}
+          onArtworkReady={handleBoardArtworkReady}
+          onStagePointerMove={handleLightingPointerMove}
           renderEpoch={boardRenderEpoch}
           measurementColor={activeSessionDiceColor}
           measurementLabel={activeSessionAuthorLabel}
@@ -13481,6 +13778,18 @@ export function TablePage() {
           on3dObjectPlacementChange={handle3dObjectPlacementChange}
           onViewportCameraChange={handleViewportCameraChange}
           onWheelZoom={handleWheelZoom}
+          lightingOverlay={
+            <TabletopLightingLayer
+              isEditing={isLightingEditMode}
+              isGm={viewMode === 'gm' && !isRemotePlayerMode}
+              isNight={boardIsNight}
+              lighting={boardLighting}
+              onMoveLight={handleMoveSceneLight}
+              onResizeLight={handleResizeSceneLight}
+              onSelectLight={setSelectedSceneLightId}
+              selectedLightId={activeSelectedSceneLightId}
+            />
+          }
           overlay={
             <>
               <TabletopFxStage
@@ -13518,6 +13827,20 @@ export function TablePage() {
           tokens={tokenViews}
           viewportRef={viewportRef}
           zoom={effectiveZoom}
+        />
+        <TabletopLightingControls
+          isEditing={isLightingEditMode}
+          isGm={viewMode === 'gm' && !isRemotePlayerMode}
+          isNight={boardIsNight}
+          lighting={boardLighting}
+          onAddLight={handleAddSceneLight}
+          onRemoveLight={handleRemoveSceneLight}
+          onSelectLight={setSelectedSceneLightId}
+          onToggleCursor={handleToggleCursorLight}
+          onToggleEditing={() => setIsLightingEditMode((current) => !current)}
+          onToggleEnabled={handleToggleSceneLighting}
+          onUpdateLight={handleUpdateSceneLight}
+          selectedLightId={activeSelectedSceneLightId}
         />
         <TabletopDiceRollOverlay
           entryId={activeDiceRollEntry?.id}

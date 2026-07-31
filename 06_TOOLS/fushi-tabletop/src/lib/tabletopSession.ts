@@ -41,6 +41,10 @@ import {
   normalizeTabletopEventSystemState,
   type TabletopEventSystemState,
 } from './tabletopEvents'
+import {
+  createDefaultTabletopSceneLighting,
+  normalizeTabletopSceneLighting,
+} from './tabletopLighting'
 
 export const TABLETOP_SESSION_STORAGE_KEY = 'fushi-tabletop:mesa-session:v1'
 export const TABLETOP_VIEW_STORAGE_KEY = 'fushi-tabletop:mesa-view:v1'
@@ -1055,6 +1059,7 @@ function normalizeSceneMetadata(value: unknown): TabletopSceneMetadata {
       cinematicId: '',
       cameraPresetId: '',
       notes: '',
+      lighting: createDefaultTabletopSceneLighting(),
     }
   }
 
@@ -1073,6 +1078,7 @@ function normalizeSceneMetadata(value: unknown): TabletopSceneMetadata {
     cameraPresetId:
       typeof value.cameraPresetId === 'string' ? value.cameraPresetId : '',
     notes: typeof value.notes === 'string' ? value.notes : '',
+    lighting: normalizeTabletopSceneLighting(value.lighting),
   }
 }
 

@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -152,47 +153,118 @@ function TokenArtwork({ token }: { token: BoardTokenView }) {
   )
 }
 
+function preloadMapImage(url: string, timeoutMs = 12000) {
+  return new Promise<void>((resolve, reject) => {
+    const image = new Image()
+    let settled = false
+    const timeoutId = window.setTimeout(() => {
+      finishFailure(new Error('map-image-timeout'))
+    }, timeoutMs)
+
+    function settle() {
+      if (settled) {
+        return false
+      }
+
+      settled = true
+      window.clearTimeout(timeoutId)
+      return true
+    }
+
+    function finishSuccess() {
+      if (settle()) {
+        resolve()
+      }
+    }
+
+    function finishFailure(error: Error) {
+      if (settle()) {
+        reject(error)
+      }
+    }
+
+    image.decoding = 'async'
+    image.onload = () => {
+      if (image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+        finishFailure(new Error('map-image-empty'))
+        return
+      }
+
+      const decoded = image.decode ? image.decode().catch(() => undefined) : Promise.resolve()
+      void decoded.then(finishSuccess)
+    }
+    image.onerror = () => finishFailure(new Error('map-image-error'))
+    image.src = url
+  })
+}
+
 function MapArtwork({
   map,
   onRenderedBlank,
+  onRenderedReady,
   renderEpoch,
   visualQuality,
 }: {
   map: TabletopMap
   onRenderedBlank?: () => void
+  onRenderedReady?: () => void
   renderEpoch: number
   visualQuality: VisualQualityMode
 }) {
-  const imageUrls = [
-    resolveRuntimeAssetVariantUrl(map.image, {
-      kind: 'tabletop-map',
+  const imageUrls = useMemo(
+    () =>
+      [
+        resolveRuntimeAssetVariantUrl(map.image, {
+          kind: 'tabletop-map',
+          visualQuality,
+        }),
+        resolveRuntimeAssetUrl(map.image),
+        resolveRuntimeAssetVariantUrl(map.imageUrl, {
+          kind: 'tabletop-map',
+          visualQuality,
+        }),
+        resolveRuntimeAssetUrl(map.imageUrl),
+        resolveRuntimeAssetUrl(map.previewImage),
+        resolveRuntimeAssetUrl(map.thumbnailUrl),
+      ].filter(
+        (url, index, urls): url is string =>
+          Boolean(url) && urls.indexOf(url) === index,
+      ),
+    [
+      map.image,
+      map.imageUrl,
+      map.previewImage,
+      map.thumbnailUrl,
       visualQuality,
-    }),
-    resolveRuntimeAssetUrl(map.image),
-    resolveRuntimeAssetVariantUrl(map.imageUrl, {
-      kind: 'tabletop-map',
-      visualQuality,
-    }),
-    resolveRuntimeAssetUrl(map.imageUrl),
-    resolveRuntimeAssetUrl(map.previewImage),
-    resolveRuntimeAssetUrl(map.thumbnailUrl),
-  ].filter((url, index, urls): url is string => Boolean(url) && urls.indexOf(url) === index)
+    ],
+  )
   const imageKey = `${map.id}:${imageUrls.join('|')}`
-  const [imageState, setImageState] = useState({
+  const sourceKey = `${imageKey}:${renderEpoch}`
+  const [surface, setSurface] = useState<{
+    sourceKey: string
+    url: string
+    index: number
+  } | null>(null)
+  const [loadState, setLoadState] = useState<{
+    sourceKey: string
+    index: number
+    status: 'loading' | 'ready' | 'failed'
+  }>({
+    sourceKey: '',
     index: 0,
-    key: '',
-    loaded: false,
+    status: 'loading',
   })
-  const activeState =
-    imageState.key === imageKey
-      ? imageState
+  const activeLoadState =
+    loadState.sourceKey === sourceKey
+      ? loadState
       : {
+          sourceKey,
           index: 0,
-          key: imageKey,
-          loaded: false,
+          status: imageUrls.length > 0 ? ('loading' as const) : ('failed' as const),
         }
-  const currentImageUrl = imageUrls[activeState.index] ?? ''
-  const renderedImageUrl = appendRenderEpoch(currentImageUrl, renderEpoch)
+  const currentSurface =
+    surface?.sourceKey === sourceKey ? surface : null
+  const displaySurface = surface
   const imageRef = useRef<HTMLImageElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [videoState, setVideoState] = useState<{
@@ -213,47 +285,78 @@ function MapArtwork({
     ? resolveRuntimeAssetUrl(animatedSurface?.source)
     : ''
   const animatedPoster = resolveRuntimeAssetUrl(
-    animatedSurface?.poster ?? currentImageUrl,
+    animatedSurface?.poster ?? currentSurface?.url ?? map.image,
   )
-  const animatedKey = `${map.id}:${animatedSource}`
+  const animatedKey = `${sourceKey}:${animatedSource}`
   const videoStatus =
     videoState.key === animatedKey ? videoState.status : 'loading'
 
   useEffect(() => {
-    if (!currentImageUrl || activeState.loaded) {
+    if (imageUrls.length === 0) {
       return
     }
 
-    const expectedIndex = activeState.index
-    const timeoutId = window.setTimeout(() => {
-      setImageState((currentState) => {
-        const currentActiveState =
-          currentState.key === imageKey
-            ? currentState
-            : { index: 0, key: imageKey, loaded: false }
+    let cancelled = false
 
-        if (
-          currentActiveState.loaded ||
-          currentActiveState.index !== expectedIndex
-        ) {
-          return currentState
+    async function loadCandidates() {
+      for (let index = 0; index < imageUrls.length; index += 1) {
+        if (cancelled) {
+          return
         }
 
-        return {
-          index: expectedIndex + 1,
-          key: imageKey,
-          loaded: false,
-        }
-      })
-    }, 12000)
+        const url = appendRenderEpoch(imageUrls[index], renderEpoch)
 
-    return () => window.clearTimeout(timeoutId)
-  }, [activeState.index, activeState.loaded, currentImageUrl, imageKey])
+        try {
+          await preloadMapImage(url)
+
+          if (cancelled) {
+            return
+          }
+
+          setSurface({
+            sourceKey,
+            url,
+            index,
+          })
+          setLoadState({
+            sourceKey,
+            index,
+            status: 'ready',
+          })
+          return
+        } catch {
+          if (cancelled) {
+            return
+          }
+
+          setLoadState({
+            sourceKey,
+            index: index + 1,
+            status: 'loading',
+          })
+        }
+      }
+
+      if (!cancelled) {
+        setLoadState({
+          sourceKey,
+          index: imageUrls.length,
+          status: 'failed',
+        })
+      }
+    }
+
+    void loadCandidates()
+
+    return () => {
+      cancelled = true
+    }
+  }, [imageKey, imageUrls, renderEpoch, sourceKey])
 
   useEffect(() => {
     const video = videoRef.current
 
-    if (!video || !animatedSource) {
+    if (!video || !animatedSource || !currentSurface) {
       return
     }
 
@@ -282,13 +385,19 @@ function MapArtwork({
       activeVideo.removeAttribute('src')
       activeVideo.load()
     }
-  }, [animatedKey, animatedSource])
+  }, [animatedKey, animatedSource, currentSurface])
 
   useEffect(() => {
     const image = imageRef.current
     const inspector = window.fushiDesktop?.inspectRenderedRegion
 
-    if (!activeState.loaded || !image || !inspector || !onRenderedBlank) {
+    if (
+      !currentSurface ||
+      !image ||
+      !inspector ||
+      !onRenderedBlank ||
+      activeLoadState.status !== 'ready'
+    ) {
       return
     }
 
@@ -309,6 +418,7 @@ function MapArtwork({
           const visibleHeight = visibleBottom - visibleTop
 
           if (visibleWidth < 120 || visibleHeight < 120) {
+            onRenderedReady?.()
             return
           }
 
@@ -320,11 +430,24 @@ function MapArtwork({
             width: Math.max(1, visibleWidth - horizontalInset * 2),
             x: visibleLeft + horizontalInset,
             y: visibleTop + verticalInset,
-          }).then((result) => {
-            if (!cancelled && result.ok && result.blank) {
-              onRenderedBlank()
-            }
           })
+            .then((result) => {
+              if (cancelled) {
+                return
+              }
+
+              if (result.ok && result.blank) {
+                onRenderedBlank()
+                return
+              }
+
+              onRenderedReady?.()
+            })
+            .catch(() => {
+              if (!cancelled) {
+                onRenderedReady?.()
+              }
+            })
         }, 420)
       })
     })
@@ -336,14 +459,34 @@ function MapArtwork({
       window.clearTimeout(timeoutId)
     }
   }, [
-    activeState.loaded,
-    activeState.index,
-    imageKey,
+    currentSurface,
+    activeLoadState.status,
     onRenderedBlank,
-    renderEpoch,
+    onRenderedReady,
+    sourceKey,
   ])
 
-  if (!currentImageUrl) {
+  useEffect(() => {
+    if (activeLoadState.status === 'ready') {
+      if (
+        !window.fushiDesktop?.inspectRenderedRegion ||
+        !onRenderedBlank
+      ) {
+        onRenderedReady?.()
+      }
+      return
+    }
+
+    if (activeLoadState.status === 'failed') {
+      onRenderedBlank?.()
+    }
+  }, [
+    activeLoadState.status,
+    onRenderedBlank,
+    onRenderedReady,
+  ])
+
+  if (!imageUrls.length && !displaySurface) {
     return (
       <div
         className="tabletop-board__image-fallback"
@@ -357,7 +500,7 @@ function MapArtwork({
 
   return (
     <>
-      {!activeState.loaded ? (
+      {!displaySurface ? (
         <div
           className="tabletop-board__image-fallback"
           data-map-image-status="loading"
@@ -366,41 +509,19 @@ function MapArtwork({
           <span>Preparando imagem do mapa...</span>
         </div>
       ) : null}
-      <img
-        alt={map.name}
-        className="tabletop-board__image"
-        data-map-image-index={activeState.index}
-        data-map-image-status={activeState.loaded ? 'ready' : 'loading'}
-        decoding="async"
-        draggable={false}
-        key={`${imageKey}:${activeState.index}`}
-        onError={() =>
-          setImageState({
-            index: activeState.index + 1,
-            key: imageKey,
-            loaded: false,
-          })
-        }
-        onLoad={(event) => {
-          if (event.currentTarget.naturalWidth <= 0) {
-            setImageState({
-              index: activeState.index + 1,
-              key: imageKey,
-              loaded: false,
-            })
-            return
-          }
-
-          setImageState({
-            index: activeState.index,
-            key: imageKey,
-            loaded: true,
-          })
-        }}
-        ref={imageRef}
-        src={renderedImageUrl}
-      />
-      {animatedSource && videoStatus !== 'failed' ? (
+      {displaySurface ? (
+        <img
+          alt={map.name}
+          className="tabletop-board__image"
+          data-map-image-index={displaySurface.index}
+          data-map-image-status={currentSurface ? 'ready' : 'stale'}
+          decoding="async"
+          draggable={false}
+          ref={imageRef}
+          src={displaySurface.url}
+        />
+      ) : null}
+      {animatedSource && currentSurface && videoStatus !== 'failed' ? (
         <video
           aria-hidden="true"
           autoPlay
@@ -440,6 +561,7 @@ interface TabletopBoardProps {
   cellSize: number
   isArtworkSuspended?: boolean
   onArtworkBlank?: () => void
+  onArtworkReady?: () => void
   renderEpoch?: number
   tokens: BoardTokenView[]
   objects?: BoardObjectView[]
@@ -459,6 +581,7 @@ interface TabletopBoardProps {
   is3dFreeCameraVisible?: boolean
   isObjectPlacementActive?: boolean
   overlay?: ReactNode
+  lightingOverlay?: ReactNode
   isMeasureModeEnabled?: boolean
   measurementColor?: string
   measurementLabel?: string
@@ -494,6 +617,7 @@ interface TabletopBoardProps {
   onObjectUndo?: () => void
   onPing: (cell: TabletopCell) => void
   onViewportCameraChange?: (input: { scrollLeft: number; scrollTop: number }) => void
+  onStagePointerMove?: (input: { x: number; y: number }) => void
   onWheelZoom: (input: { deltaY: number; offsetX: number; offsetY: number }) => void
 }
 
@@ -557,6 +681,7 @@ export function TabletopBoard({
   cellSize,
   isArtworkSuspended = false,
   onArtworkBlank,
+  onArtworkReady,
   renderEpoch = 0,
   tokens,
   objects = [],
@@ -572,6 +697,7 @@ export function TabletopBoard({
   is3dFreeCameraVisible = false,
   isObjectPlacementActive = false,
   overlay,
+  lightingOverlay,
   isMeasureModeEnabled = false,
   measurementColor = '#d8a34d',
   measurementLabel,
@@ -597,6 +723,7 @@ export function TabletopBoard({
   onObjectUndo,
   onPing,
   onViewportCameraChange,
+  onStagePointerMove,
   onWheelZoom,
 }: TabletopBoardProps) {
   const stageRef = useRef<HTMLDivElement | null>(null)
@@ -1286,8 +1413,21 @@ export function TabletopBoard({
             className={`tabletop-board__stage${
               isMeasureModeEnabled ? ' tabletop-board__stage--measuring' : ''
             }`}
+            data-map-id={map.id}
             onClick={handleBoardClick}
             onPointerDown={handleBoardPointerDown}
+            onPointerMove={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect()
+
+              if (!rect.width || !rect.height) {
+                return
+              }
+
+              onStagePointerMove?.({
+                x: Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)),
+                y: Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height)),
+              })
+            }}
             ref={stageRef}
             style={{
               width: `${stageWidth}px`,
@@ -1295,23 +1435,22 @@ export function TabletopBoard({
               transform: `scale(${zoom})`,
             }}
           >
+            <MapArtwork
+              map={map}
+              onRenderedBlank={onArtworkBlank}
+              onRenderedReady={onArtworkReady}
+              renderEpoch={renderEpoch}
+              visualQuality={visualQuality}
+            />
             {isArtworkSuspended ? (
               <div
-                className="tabletop-board__image-fallback"
+                className="tabletop-board__image-fallback tabletop-board__image-fallback--recovery"
                 data-map-image-status="recovering"
               >
                 <strong>{map.name}</strong>
                 <span>Recuperando a renderizacao da mesa...</span>
               </div>
-            ) : (
-              <MapArtwork
-                key={`${map.id}:${renderEpoch}`}
-                map={map}
-                onRenderedBlank={onArtworkBlank}
-                renderEpoch={renderEpoch}
-                visualQuality={visualQuality}
-              />
-            )}
+            ) : null}
 
             {isGridVisible ? (
               <div
@@ -1636,6 +1775,8 @@ export function TabletopBoard({
                 </button>
               )
             })}
+
+            {lightingOverlay}
           </div>
         </div>
       </div>

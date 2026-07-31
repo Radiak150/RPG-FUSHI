@@ -652,6 +652,32 @@ export interface TabletopCamera3DState {
   targetZ?: number
 }
 
+export interface TabletopSceneLight {
+  id: string
+  label: string
+  x: number
+  y: number
+  radius: number
+  intensity: number
+  color: string
+  enabled: boolean
+}
+
+export interface TabletopSceneCursorLight {
+  enabled: boolean
+  x: number
+  y: number
+  radius: number
+  intensity: number
+  color: string
+}
+
+export interface TabletopSceneLighting {
+  enabled: boolean
+  cursorLight: TabletopSceneCursorLight
+  lights: TabletopSceneLight[]
+}
+
 export interface TabletopSceneMetadata {
   musicTrackId: string
   ambienceTrackId: string
@@ -662,6 +688,7 @@ export interface TabletopSceneMetadata {
   cinematicId: string
   cameraPresetId: string
   notes: string
+  lighting: TabletopSceneLighting
 }
 
 export interface TabletopScene {

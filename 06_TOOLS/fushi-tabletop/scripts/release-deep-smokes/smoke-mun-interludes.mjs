@@ -1561,6 +1561,35 @@ async function exercisePrepareMapForGm(send) {
         (button) => button.textContent?.trim() === 'Preparar mapa',
       )
       if (!(prepareButton instanceof HTMLElement)) return { step: 'prepare-button' }
+
+      const surfaceProbe = {
+        emptyFrames: 0,
+        mapIds: [],
+        samples: 0,
+        staleFrames: 0,
+      }
+      const sampleBoardSurface = () => {
+        const stage = document.querySelector('.tabletop-board__stage')
+        const image = document.querySelector('.tabletop-board__image')
+        const mapId = stage?.getAttribute('data-map-id') ?? ''
+        const hasDecodedImage =
+          image instanceof HTMLImageElement &&
+          image.complete &&
+          image.naturalWidth > 0 &&
+          image.naturalHeight > 0
+
+        surfaceProbe.samples += 1
+        if (!hasDecodedImage) surfaceProbe.emptyFrames += 1
+        if (image?.getAttribute('data-map-image-status') === 'stale') {
+          surfaceProbe.staleFrames += 1
+        }
+        if (mapId && surfaceProbe.mapIds.at(-1) !== mapId) {
+          surfaceProbe.mapIds.push(mapId)
+        }
+      }
+      sampleBoardSurface()
+      const surfaceProbeTimer = window.setInterval(sampleBoardSurface, 16)
+
       prepareButton.click()
       await wait(700)
 
@@ -1577,12 +1606,15 @@ async function exercisePrepareMapForGm(send) {
       returnButton.click()
       await wait(500)
       const returnedBoard = await waitForBoardMap(${JSON.stringify(targetMapName)})
+      window.clearInterval(surfaceProbeTimer)
+      sampleBoardSurface()
 
       return {
         hasReadiness: Boolean(document.querySelector('.tabletop-readiness')),
         hasRouteError: Boolean(document.querySelector('.route-error')),
         preparedBoard,
         returnedBoard,
+        surfaceProbe,
         step: returnedBoard.ready ? 'done' : 'returned-board',
       }
     })()`,
@@ -1591,6 +1623,18 @@ async function exercisePrepareMapForGm(send) {
   assert(result?.step === 'done', `Falha no fluxo Preparar MAP: ${JSON.stringify(result)}`)
   assert(result.hasReadiness === false, 'Preparar MAP reabriu readiness indevidamente.')
   assert(result.hasRouteError === false, 'Preparar MAP terminou em tela de recuperacao.')
+  assert(
+    result.surfaceProbe?.samples > 10,
+    `Troca de mapas nao produziu amostras suficientes: ${JSON.stringify(result.surfaceProbe)}`,
+  )
+  assert(
+    result.surfaceProbe?.emptyFrames === 0,
+    `Troca de mapas deixou a mesa sem uma imagem decodificada: ${JSON.stringify(result.surfaceProbe)}`,
+  )
+  assert(
+    result.surfaceProbe?.mapIds?.length >= 2,
+    `Troca de mapas nao percorreu as duas superficies esperadas: ${JSON.stringify(result.surfaceProbe)}`,
+  )
   await captureScreenshot(send, prepareScreenshotPath)
 
   return result

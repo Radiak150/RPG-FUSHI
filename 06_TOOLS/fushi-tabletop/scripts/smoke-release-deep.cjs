@@ -27,6 +27,15 @@ const smokeCases = [
     timeoutMs: 150_000,
   },
   {
+    name: 'day-night-lighting',
+    script: 'scripts/release-deep-smokes/smoke-day-night-lighting.mjs',
+    timeoutMs: 150_000,
+    seedAssets: [
+      'mundi/mun_base_ilha_sem_labels.png',
+      'mundi/locations/loc_caverna_primeiro_corpo.png',
+    ],
+  },
+  {
     name: 'base-map-assets',
     script: 'scripts/release-deep-smokes/smoke-base-map-assets.mjs',
     timeoutMs: 90_000,

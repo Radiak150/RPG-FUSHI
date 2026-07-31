@@ -7,6 +7,7 @@ import type {
   TabletopToken,
   TabletopTransitionAsset,
 } from '../types'
+import { createDefaultTabletopSceneLighting } from '../../lib/tabletopLighting'
 
 const planicieCavernaMapPath =
   '/assets/maps/planicie/caverna-inicial/caverna_despertar.png'
@@ -2126,6 +2127,7 @@ const sessionScenes: TabletopScene[] = [
       cameraPresetId: 'camera-default',
       notes:
         'Primeiro mapa da sessao. O grupo ainda nao combate aqui; so explora, testa movimento e percebe o corpo.',
+      lighting: createDefaultTabletopSceneLighting(),
     },
   },
   {
@@ -2148,6 +2150,7 @@ const sessionScenes: TabletopScene[] = [
       cameraPresetId: 'camera-wide',
       notes:
         'Tutorial de movimento, percepcao e reconhecimento da planicie antes do combate com lobos.',
+      lighting: createDefaultTabletopSceneLighting(),
     },
   },
   {
@@ -2170,6 +2173,7 @@ const sessionScenes: TabletopScene[] = [
       cameraPresetId: 'camera-default',
       notes:
         'Cena tutorial de combate. O mestre pode adicionar manualmente o Lobo da Planicie pela biblioteca conforme o desempenho do grupo.',
+      lighting: createDefaultTabletopSceneLighting(),
     },
   },
   {
@@ -2192,6 +2196,7 @@ const sessionScenes: TabletopScene[] = [
       cameraPresetId: 'camera-wide',
       notes:
         'Mapa final da sessao depois do interludio de chegada. Pode fechar a sessao ou puxar a continuacao.',
+      lighting: createDefaultTabletopSceneLighting(),
     },
   },
   {
@@ -2214,6 +2219,7 @@ const sessionScenes: TabletopScene[] = [
       cameraPresetId: 'camera-wide',
       notes:
         'Sessao solo de Kael em estado de eco/alma dentro do Mundo dos Sonhos do Fragmentado. Nao e sonho literal: e a forma cosmica como o Fragmentado ve lembrancas, vinculos e consciencias.',
+      lighting: createDefaultTabletopSceneLighting(),
     },
   },
 ]

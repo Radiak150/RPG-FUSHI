@@ -1,5 +1,6 @@
 ﻿import { useMemo, useState, type CSSProperties, type JSX } from 'react'
 import type { CharacterSheet, FactionItem, TabletopMap } from '../../data/types'
+import { Moon, Sun } from 'lucide-react'
 import { useEffect } from 'react'
 import type { DragEvent } from 'react'
 import { getFactionLogoUrl } from '../../lib/factionAssets'
@@ -56,6 +57,7 @@ import {
   type WorldSimulationEvent,
   type WorldSimulationSessionSummary,
 } from '../../lib/worldSimulation'
+import { isTabletopNight } from '../../lib/tabletopLighting'
 
 export interface WorldMundiMapPlaceholderRequest {
   biomaId: string
@@ -5056,6 +5058,41 @@ export function TabletopWorldMundiPanel({
     advanceClock(parsedHours, 'ajuste manual')
   }
 
+  function setClockLightingMode(mode: 'day' | 'night') {
+    const nextHour = mode === 'day' ? 8 : 20
+    const nextClock: WorldMundiClock = {
+      ...state.clock,
+      hora: nextHour,
+      fase: 0,
+    }
+    const nextLog = createWorldMundiLogEntry({
+      dia: nextClock.dia,
+      hora: nextClock.hora,
+      texto:
+        mode === 'day'
+          ? 'O Mestre abriu o dia sobre a mesa.'
+          : 'O Mestre deixou a noite cair sobre a mesa.',
+      tecnico: `Modo visual ${mode === 'day' ? 'dia' : 'noite'} definido manualmente. A iluminacao do tabletop acompanha o relogio publico.`,
+      categoria: 'sistema',
+      canal: 'mestre',
+      tone: 'steady',
+    })
+
+    pushUndoSnapshot(state)
+    onChange(
+      createWorldMundiState({
+        ...state,
+        clock: nextClock,
+        logs: [nextLog, ...state.logs],
+      }),
+    )
+    setMovementNotice(
+      mode === 'day'
+        ? 'Dia definido para 08:00. A iluminacao natural foi restaurada.'
+        : 'Noite definida para 20:00. A iluminacao da cena foi ativada.',
+    )
+  }
+
   function applyGroupAction(hours: number, actionLabel: string, category: WorldLogFilter = 'players') {
     if (!selectedParty || category === 'todos') {
       return
@@ -8479,6 +8516,30 @@ export function TabletopWorldMundiPanel({
           </div>
         </div>
         <div className="tabletop-hud-panel__actions">
+          <button
+            aria-pressed={!isTabletopNight(state.clock)}
+            className={`button${
+              !isTabletopNight(state.clock) ? ' button--primary' : ''
+            }`}
+            onClick={() => setClockLightingMode('day')}
+            title="Definir dia e restaurar a luz natural da mesa"
+            type="button"
+          >
+            <Sun aria-hidden="true" size={15} />
+            Dia
+          </button>
+          <button
+            aria-pressed={isTabletopNight(state.clock)}
+            className={`button${
+              isTabletopNight(state.clock) ? ' button--primary' : ''
+            }`}
+            onClick={() => setClockLightingMode('night')}
+            title="Definir noite e ativar a iluminacao da cena"
+            type="button"
+          >
+            <Moon aria-hidden="true" size={15} />
+            Noite
+          </button>
           <button className="button" onClick={() => advanceClock(1, 'tempo parado')} type="button">
             Avancar 1h
           </button>

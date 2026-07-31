@@ -1,6 +1,6 @@
 {
   "version": "campanha-controle-v1",
-  "updatedAt": "2026-07-29",
+  "updatedAt": "2026-07-30",
   "purpose": "Painel simples de producao da campanha. Use OK para pronto/estavel, FOCO para atencao atual e CRITICO para bloqueio/placeholder.",
   "rules": [
     "O app estavel vem antes de conteudo novo.",
@@ -18,7 +18,8 @@
     "Aceite multiplayer vale pela conexao viva do app: navegar entre Mesa, Fluxo, Livro e Multiplayer nao pode recarregar a pagina nem voltar o Jogador para pending.",
     "Fechar uma apresentacao visual do EVE e local a janela e nunca apaga o resultado canonico; um novo drawId deve abrir novamente.",
     "Combat V2 e a fonte ativa para CA, Bloqueio, Esquiva, critico, manobras, escala de mobs e simulacao; FUSHI_COMBAT_V2.md prevalece sobre regra V1 conflitante.",
-    "Estagios/Fases usam uma unica ficha canonica ativa; catalogo privado do Mestre fica em snapshots nao recursivos, Jogador recebe apenas fase ativa e revision, e toda troca precisa de VFX idempotente e teste Mestre > Jogador."
+    "Estagios/Fases usam uma unica ficha canonica ativa; catalogo privado do Mestre fica em snapshots nao recursivos, Jogador recebe apenas fase ativa e revision, e toda troca precisa de VFX idempotente e teste Mestre > Jogador.",
+    "Alpha.90: troca de mapa preserva a ultima superficie decodificada; Ctrl+A recupera o renderer sem trocar mapa, tokens ou sessao; Relogio MUN e fonte canonica de Dia/Noite; iluminacao fica na metadata da cena e so Mestre edita."
   ],
   "lanes": [
     {
@@ -84,8 +85,8 @@
       "item": "Mesa Mestre carrega",
       "status": "OK",
       "acceptance": "Entrar como Mestre, mapa e tokens aparecem, sem readiness preso; Ctrl+A recupera apenas a arte visual sem trocar mapa, tokens, camera ou sessao.",
-      "evidence": "Alpha.88: smoke:ui e smoke:release aprovados; smoke:interludes confirmou epoch visual 0 -> 1 com o mesmo mapa e o mesmo conjunto de tokens.",
-      "next": "Testar Ctrl+A fisicamente somente se surgir imagem branca; manter smoke:ui e smoke:release."
+      "evidence": "Alpha.90: smoke:ui e smoke:release aprovados; smoke:release:deep mediu 79 amostras, 0 quadros vazios, 11 quadros stale durante a preparacao e confirmou Ctrl+A sem trocar mapa, tokens ou sessao.",
+      "next": "Playtest fisico em dois PCs com troca repetida de mapas; usar Ctrl+A apenas como recuperacao de renderer se uma superficie ficar branca."
     },
     {
       "area": "Multiplayer",
@@ -164,7 +165,7 @@
       "item": "MUN e mapas com thumb/topdown",
       "status": "OK",
       "acceptance": "Abrir mapa nao fica branco/preto; interludio tem thumb e fallback coerente.",
-      "evidence": "Alpha.88: 121/121 interludios automaticos possuem fonte valida no pacote, 0 thumbs vazias; Estatuas do Litoral usa a imagem semantica do MUN; cinco ciclos empacotados e 0 falhas de rede.",
+      "evidence": "Alpha.90: 121/121 interludios automaticos possuem fonte valida no pacote, 0 thumbs vazias; Estatuas do Litoral usa a imagem semantica do MUN; ciclos empacotados mediram 0 quadros vazios e 0 falhas de rede.",
       "next": "Revisao artistica por cena; manter a auditoria semantica antes de cada release."
     },
     {
@@ -180,8 +181,8 @@
       "item": "Build empacotado real",
       "status": "OK",
       "acceptance": "release/win-unpacked abre e smokes rodam isolados.",
-      "evidence": "Alpha.87 empacotada em release/win-unpacked e instaladores; build, lint, release:assets, smoke:ui, smoke:multiplayer, smoke:release e smoke:release:deep 11/11 aprovados.",
-      "next": "Nao promover conteudo sem smoke:release e o gate especifico da area alterada."
+      "evidence": "Alpha.90 empacotada em release/win-unpacked; build, lint, smoke:lighting, smoke:interludes, smoke:multiplayer, smoke:release, smoke:release:deep 12/12, smoke:ui, perf:release, release:assets, content:audit, base:diagnose e asset:audit aprovados.",
+      "next": "Nao promover conteudo sem fechar o executavel oficial, rodar smoke:release e o gate especifico da area alterada."
     },
     {
       "area": "Livros",
@@ -214,6 +215,14 @@
       "acceptance": "Mestre ativa dois ou mais eventos, desativa cada um isoladamente e a Mesa volta ao estado-base sem apagar progresso.",
       "evidence": "Treino Inicial e Sorteio Raridade Build passaram em build, smoke:events, smoke:training:ui, smoke:multiplayer, smoke:release e smoke:release:deep 11/11; campos privados foram removidos do payload do Jogador e a revelacao agora fecha por clique sem alterar ficha/EVE.",
       "next": "Manter em teste real; todo evento novo deve seguir FUSHI_EVENT_SYSTEM_V1 e ganhar smoke proprio."
+    },
+    {
+      "area": "Mesa",
+      "item": "Dia/Noite e iluminacao",
+      "status": "OK tecnico",
+      "acceptance": "Relogio MUN alterna Dia/Noite; Mestre controla pontos e lanterna; Jogador ve o resultado sem controles; estado persiste por troca de mapa e reconexao.",
+      "evidence": "Alpha.90: smoke:lighting isolado e dentro de smoke:release:deep; 12/12 deep, smoke:multiplayer, smoke:release e perf:release aprovados; limite de 24 luzes por cena.",
+      "next": "Playtest fisico Mestre/Jogador com noite, cursor, ponto fixo, Ctrl+T, OFF/ON e troca de mapa."
     },
     {
       "area": "Treinamento",

@@ -1,7 +1,7 @@
 {
   "name": "fushi-tabletop",
   "private": true,
-  "version": "0.1.0-alpha.88",
+  "version": "0.1.0-alpha.90",
   "description": "Mesa virtual desktop do RPG FUSHI com campanha e multiplayer.",
   "author": {
     "name": "Projeto RPG FUSHI"
@@ -69,6 +69,7 @@
     "smoke:rulebooks": "node scripts/smoke-rulebooks.cjs",
     "smoke:rulebooks:release": "node scripts/smoke-rulebooks-release.cjs",
     "smoke:interludes": "node scripts/smoke-release-deep.cjs --only=mun-interludes",
+    "smoke:lighting": "node scripts/smoke-release-deep.cjs --only=day-night-lighting",
     "smoke:release": "node scripts/smoke-release-playwright.cjs",
     "smoke:release:deep": "node scripts/smoke-release-deep.cjs",
     "smoke:ui": "node scripts/smoke-playwright.cjs",
