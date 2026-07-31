@@ -1,6 +1,7 @@
 const { spawn } = require('node:child_process')
 const fs = require('node:fs')
 const http = require('node:http')
+const os = require('node:os')
 const path = require('node:path')
 const { chromium } = require('playwright')
 
@@ -44,10 +45,14 @@ async function waitForServer() {
 
 function startDevServer() {
   const viteEntry = path.resolve(__dirname, '../node_modules/vite/bin/vite.js')
+  const isolatedAutosaveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fushi-tabletop-ui-smoke-'))
 
   const serverProcess = spawn(process.execPath, [viteEntry, '--host', '127.0.0.1', '--port', String(port)], {
     cwd: __dirname + '/..',
-    env: process.env,
+    env: {
+      ...process.env,
+      FUSHI_AUTOSAVE_DIR: isolatedAutosaveDir,
+    },
     stdio: 'ignore',
   })
 

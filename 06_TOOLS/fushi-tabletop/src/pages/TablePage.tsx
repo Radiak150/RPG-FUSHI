@@ -403,7 +403,6 @@ type HudPanelId =
   | 'objects'
   | 'world'
   | 'cinematics'
-  | 'history'
   | 'vfx'
   | 'book'
   | 'diagnostics'
@@ -2047,6 +2046,7 @@ export function TablePage() {
     readPersistedWorldMundiState(activeCampaignId),
   )
   const [activeHudPanel, setActiveHudPanel] = useState<HudPanelId | null>(null)
+  const [masterBookView, setMasterBookView] = useState<'rules' | 'history'>('rules')
   const [trainingOpenRequestId, setTrainingOpenRequestId] = useState(0)
   const [turnDraftActiveTokenId, setTurnDraftActiveTokenId] = useState('')
   const [turnDraftTokenIds, setTurnDraftTokenIds] = useState<string[]>([])
@@ -2688,7 +2688,6 @@ export function TablePage() {
       { id: 'events', label: 'Eventos da mesa', shortLabel: 'EVE' },
       { id: 'vfx', label: 'Efeitos visuais', shortLabel: 'VFX' },
       { id: 'world', label: 'Mapa Mundi', shortLabel: 'MUN' },
-      { id: 'history', label: 'Livro da Historia', shortLabel: 'HIS' },
       { id: 'turns', label: 'Turnos', shortLabel: 'TRN' },
       { id: 'diagnostics', label: 'Diagnostico multiplayer', shortLabel: 'NET' },
     ] as const,
@@ -3405,6 +3404,45 @@ export function TablePage() {
     () => (boardSceneRuntime?.uiTheme.variables ?? {}) as CSSProperties,
     [boardSceneRuntime?.uiTheme.variables],
   )
+
+  function handleToggleBoardDayNight() {
+    if (isRemotePlayerMode || viewMode !== 'gm') {
+      return
+    }
+
+    setWorldMundiState((currentState) => {
+      const nextMode = isTabletopNight(currentState.clock) ? 'day' : 'night'
+      const nextClock: WorldMundiClock = {
+        ...currentState.clock,
+        hora: nextMode === 'day' ? 8 : 20,
+        fase: 0,
+      }
+
+      return createWorldMundiState({
+        ...currentState,
+        clock: nextClock,
+        logs: [
+          createWorldMundiLogEntry({
+            dia: nextClock.dia,
+            hora: nextClock.hora,
+            texto:
+              nextMode === 'day'
+                ? 'O Mestre abriu o dia sobre a mesa.'
+                : 'O Mestre deixou a noite cair sobre a mesa.',
+            tecnico: `Modo visual ${nextMode === 'day' ? 'dia' : 'noite'} definido diretamente no tabletop. O relogio publico foi atualizado.`,
+            categoria: 'sistema',
+            canal: 'mestre',
+            tone: 'steady',
+          }),
+          ...currentState.logs,
+        ],
+      })
+    })
+
+    setTableFeedbackMessage(
+      boardIsNight ? 'Dia definido para 08:00.' : 'Noite definida para 20:00.',
+    )
+  }
 
   function getLightingForWrite() {
     const pending = lightingWriteRef.current
@@ -13957,6 +13995,7 @@ export function TablePage() {
           onAddLight={handleAddSceneLight}
           onRemoveLight={handleRemoveSceneLight}
           onSelectLight={setSelectedSceneLightId}
+          onToggleDayNight={handleToggleBoardDayNight}
           onToggleCursor={handleToggleCursorLight}
           onToggleEditing={() => setIsLightingEditMode((current) => !current)}
           onToggleEnabled={handleToggleSceneLighting}
@@ -15309,27 +15348,6 @@ export function TablePage() {
             </FloatingWindow>
           ) : null}
 
-          {activeHudPanel === 'history' ? (
-            <FloatingWindow
-              initialPosition={{ x: 116, y: 120 }}
-              initialSize={{ width: 980, height: 700 }}
-              onClose={() => setActiveHudPanel(null)}
-              subtitle="Crônica da campanha e continuidade do Mestre, sem sair da mesa."
-              title="HIS · Livro da História"
-            >
-              <TabletopHudPanel
-                onClose={() => setActiveHudPanel(null)}
-                showChrome={false}
-                subtitle="Crônica da campanha e continuidade do Mestre, sem sair da mesa."
-                title="HIS · Livro da História"
-              >
-                <HistoryQuickReference
-                  audience={viewMode === 'gm' ? 'master' : 'player'}
-                />
-              </TabletopHudPanel>
-            </FloatingWindow>
-          ) : null}
-
           {activeHudPanel === 'world' ? (
             <FloatingWindow
               initialPosition={{ x: 84, y: 140 }}
@@ -15995,11 +16013,13 @@ export function TablePage() {
           {activeHudPanel === 'book' ? (
             <FloatingWindow
               initialPosition={{ x: 104, y: 220 }}
-              initialSize={{ width: 720, height: 640 }}
+              initialSize={{ width: viewMode === 'gm' ? 900 : 720, height: 680 }}
               onClose={() => setActiveHudPanel(null)}
               subtitle={
                 viewMode === 'gm'
-                  ? 'Regras, DTs e protocolos do Mestre sem sair da mesa.'
+                  ? masterBookView === 'history'
+                    ? 'Cronica e continuidade confidencial da campanha.'
+                    : 'Regras, DTs e protocolos do Mestre sem sair da mesa.'
                   : 'Regras publicas para decidir a proxima acao.'
               }
               title={viewMode === 'gm' ? 'Escudo do Mestre' : 'Livro do Jogador'}
@@ -16009,14 +16029,51 @@ export function TablePage() {
                 showChrome={false}
                 subtitle={
                   viewMode === 'gm'
-                    ? 'Regras, DTs e protocolos do Mestre sem sair da mesa.'
+                    ? masterBookView === 'history'
+                      ? 'Cronica e continuidade confidencial da campanha.'
+                      : 'Regras, DTs e protocolos do Mestre sem sair da mesa.'
                     : 'Regras publicas para decidir a proxima acao.'
                 }
                 title={viewMode === 'gm' ? 'Escudo do Mestre' : 'Livro do Jogador'}
               >
-                <RulebookQuickReference
-                  audience={viewMode === 'gm' ? 'master' : 'player'}
-                />
+                {viewMode === 'gm' ? (
+                  <div
+                    aria-label="Conteudo do Escudo do Mestre"
+                    className="rulebook-segmented master-shield-switch"
+                    data-testid="master-shield-section-tabs"
+                    role="tablist"
+                  >
+                    <button
+                      aria-pressed={masterBookView === 'rules'}
+                      className={
+                        masterBookView === 'rules' ? 'rulebook-segmented__active' : ''
+                      }
+                      onClick={() => setMasterBookView('rules')}
+                      role="tab"
+                      type="button"
+                    >
+                      Regras
+                    </button>
+                    <button
+                      aria-pressed={masterBookView === 'history'}
+                      className={
+                        masterBookView === 'history' ? 'rulebook-segmented__active' : ''
+                      }
+                      onClick={() => setMasterBookView('history')}
+                      role="tab"
+                      type="button"
+                    >
+                      Livro da Historia
+                    </button>
+                  </div>
+                ) : null}
+                {viewMode === 'gm' && masterBookView === 'history' ? (
+                  <HistoryQuickReference audience="master" />
+                ) : (
+                  <RulebookQuickReference
+                    audience={viewMode === 'gm' ? 'master' : 'player'}
+                  />
+                )}
               </TabletopHudPanel>
             </FloatingWindow>
           ) : null}

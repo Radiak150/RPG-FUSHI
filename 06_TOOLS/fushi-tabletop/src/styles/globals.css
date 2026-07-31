@@ -6608,6 +6608,42 @@ button.landing-action:disabled {
   transition: opacity 180ms ease;
 }
 
+.tabletop-lighting-layer__moon-wash {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      118deg,
+      transparent 18%,
+      rgba(123, 164, 204, 0.025) 31%,
+      rgba(172, 207, 232, 0.13) 46%,
+      rgba(108, 151, 193, 0.045) 58%,
+      transparent 73%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(115, 157, 197, 0.08) 0%,
+      transparent 44%,
+      rgba(80, 118, 162, 0.035) 100%
+    );
+  mix-blend-mode: screen;
+  filter: blur(18px) saturate(0.82);
+  opacity: 0.78;
+  transform: translate3d(-4%, -2%, 0) scale(1.08);
+  animation: tabletop-moon-drift 44s ease-in-out infinite alternate;
+}
+
+@keyframes tabletop-moon-drift {
+  from {
+    transform: translate3d(-5%, -2%, 0) scale(1.08);
+  }
+
+  to {
+    transform: translate3d(5%, 2%, 0) scale(1.08);
+  }
+}
+
 .tabletop-lighting-layer__glow {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -6722,7 +6758,9 @@ button.landing-action:disabled {
 }
 
 .tabletop-lighting-controls__mode {
+  background: rgba(245, 242, 236, 0.035);
   color: var(--text-main);
+  cursor: pointer;
 }
 
 .tabletop-lighting-controls--night .tabletop-lighting-controls__mode {
@@ -6741,6 +6779,33 @@ button.landing-action:disabled {
   background: rgba(245, 242, 236, 0.06);
   color: var(--text-soft);
   cursor: pointer;
+}
+
+.tabletop-lighting-controls__chevron {
+  display: inline-grid;
+  width: 25px;
+  height: 31px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+
+.tabletop-lighting-controls__chevron:hover:not(:disabled) {
+  color: #dff1ff;
+}
+
+.tabletop-lighting-controls__chevron:disabled {
+  color: rgba(245, 242, 236, 0.2);
+  cursor: default;
+}
+
+.tabletop-lighting-controls__tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .tabletop-lighting-controls__button:hover,
@@ -6820,6 +6885,18 @@ button.landing-action:disabled {
     width: 100%;
     padding-left: 0;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabletop-lighting-layer__moon-wash {
+    animation: none;
+    transform: scale(1.08);
+  }
+}
+
+.master-shield-switch {
+  width: min(100%, 420px);
+  margin: 0 0 14px;
 }
 
 .tabletop-board__grid {

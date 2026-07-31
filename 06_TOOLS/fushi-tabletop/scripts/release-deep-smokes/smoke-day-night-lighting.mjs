@@ -245,167 +245,93 @@ async function clickVisibleButton(
   )
 }
 
-async function openWorldClock(send) {
-  const toolsButtonPredicate = `(button) =>
-    ['Abrir atalhos', 'Abrir ferramentas'].includes(
-      button.getAttribute('aria-label') ?? ''
-    )`
-  const worldButtonPredicate = `(button) =>
-    button.textContent?.trim() === 'MUN' ||
-    button.textContent?.trim() === 'Mapa Mundi' ||
-    button.getAttribute('aria-label') === 'Abrir Mapa Mundi' ||
-    button.getAttribute('aria-label') === 'Mapa Mundi' ||
-    button.title === 'Mapa Mundi'`
-
-  let worldButton = await getVisibleButtonCenter(send, worldButtonPredicate)
-
-  for (let attempt = 0; attempt < 3 && !worldButton?.found; attempt += 1) {
-    const toolLayerOpened = await evaluate(
-      send,
-      `(() => {
-        const isVisible = (element) => {
-          if (!(element instanceof HTMLElement)) return false
-          const rect = element.getBoundingClientRect()
-          const style = getComputedStyle(element)
-          return (
-            rect.width > 0 &&
-            rect.height > 0 &&
-            style.display !== 'none' &&
-            style.visibility !== 'hidden'
-          )
-        }
-        const predicate = ${toolsButtonPredicate}
-        const button = Array.from(document.querySelectorAll('button')).find(
-          (candidate) => isVisible(candidate) && predicate(candidate)
-        )
-        if (!(button instanceof HTMLButtonElement)) {
-          return { ok: false }
-        }
-        button.click()
-        return {
-          ariaLabel: button.getAttribute('aria-label') ?? '',
-          ok: true,
-        }
-      })()`,
-    )
-
-    if (!toolLayerOpened?.ok) {
-      break
-    }
-
-    await delay(350)
-    worldButton = await getVisibleButtonCenter(send, worldButtonPredicate)
-  }
-
-  if (!worldButton?.found) {
-    throw new Error(`MUN indisponivel: ${JSON.stringify(worldButton)}`)
-  }
-
-  await clickAt(send, worldButton.x, worldButton.y)
-  await waitFor(
-    send,
-    `(() => ({ ok: Boolean(document.querySelector('.world-mundi')) }))()`,
-    'painel MUN',
-  )
-
-  const clockOpened = await evaluate(
+async function setTableClockMode(send, mode) {
+  const expectedNight = mode === 'night'
+  const clicked = await evaluate(
     send,
     `(() => {
-      const panel = document.querySelector('.world-mundi')
-      const button = Array.from(panel?.querySelectorAll('button') ?? []).find(
-        (candidate) => candidate.textContent?.trim() === 'Relogio'
+      const layer = document.querySelector('.tabletop-lighting-layer')
+      const isNight = layer?.getAttribute('data-night') === 'true'
+
+      if (isNight === ${JSON.stringify(expectedNight)}) {
+        return { ok: true, skipped: true }
+      }
+
+      const button = document.querySelector(
+        ${JSON.stringify(
+          expectedNight
+            ? 'button[aria-label="Alternar para Noite"]'
+            : 'button[aria-label="Alternar para Dia"]',
+        )}
       )
 
       if (!(button instanceof HTMLButtonElement)) {
-        return { ok: false, step: 'clock-button' }
+        return { ok: false, currentNight: isNight }
       }
 
       button.click()
-      return { ok: true }
+      return { ok: true, skipped: false }
     })()`,
   )
 
   assert.equal(
-    clockOpened?.ok,
+    clicked?.ok,
     true,
-    `Aba Relogio indisponivel: ${JSON.stringify(clockOpened)}`,
+    `Controle direto da mesa nao definiu ${mode}: ${JSON.stringify(clicked)}`,
   )
 
   await waitFor(
     send,
     `(() => ({
-      ok: Array.from(
-        document.querySelectorAll('.world-mundi button')
-      ).some((button) => button.textContent?.trim() === 'Noite')
+      ok:
+        document.querySelector('.tabletop-lighting-layer')
+          ?.getAttribute('data-night') === ${JSON.stringify(expectedNight ? 'true' : 'false')}
     }))()`,
-    'controles Dia/Noite',
+    `modo ${mode} pelo controle compacto`,
   )
 }
 
-async function setClockMode(send, mode) {
-  const label = mode === 'night' ? 'Noite' : 'Dia'
+async function setLightingControlsExpanded(send, expanded) {
+  const label = expanded
+    ? 'Expandir controles de iluminacao'
+    : 'Recolher controles de iluminacao'
   const clicked = await evaluate(
     send,
     `(() => {
-      const button = Array.from(
-        document.querySelectorAll('.world-mundi button')
-      ).find((candidate) => candidate.textContent?.trim() === ${JSON.stringify(label)})
+      const controls = document.querySelector('[data-lighting-controls]')
+      const isExpanded = controls?.getAttribute('data-expanded') === 'true'
 
-      if (!(button instanceof HTMLButtonElement)) {
-        return { ok: false }
+      if (isExpanded === ${JSON.stringify(expanded)}) {
+        return { ok: true, skipped: true }
+      }
+
+      const button = document.querySelector(
+        ${JSON.stringify(`button[aria-label="${label}"]`)}
+      )
+
+      if (!(button instanceof HTMLButtonElement) || button.disabled) {
+        return { ok: false, currentExpanded: isExpanded }
       }
 
       button.click()
-      return { ok: true }
+      return { ok: true, skipped: false }
     })()`,
   )
 
-  assert.equal(clicked?.ok, true, `Nao consegui definir ${label}.`)
+  assert.equal(
+    clicked?.ok,
+    true,
+    `Controle compacto nao mudou expansao: ${JSON.stringify(clicked)}`,
+  )
 
   await waitFor(
     send,
-    `(() => {
-      const layer = document.querySelector('.tabletop-lighting-layer')
-      return {
-        ok:
-          layer?.getAttribute('data-night') ===
-          ${JSON.stringify(mode === 'night' ? 'true' : 'false')},
-        night: layer?.getAttribute('data-night') ?? null,
-      }
-    })()`,
-    `modo ${label}`,
-  )
-}
-
-async function closeWorld(send) {
-  const closed = await evaluate(
-    send,
-    `(() => {
-      const windowElement = Array.from(
-        document.querySelectorAll('.floating-window')
-      ).find(
-        (candidate) =>
-          candidate.querySelector('.floating-window__title h3')
-            ?.textContent?.trim() === 'Mapa Mundi'
-      )
-      const closeButton = windowElement?.querySelector(
-        'button[aria-label="Fechar janela"]'
-      )
-
-      if (!(closeButton instanceof HTMLButtonElement)) {
-        return { ok: false }
-      }
-
-      closeButton.click()
-      return { ok: true }
-    })()`,
-  )
-
-  assert.equal(closed?.ok, true, 'Nao consegui fechar o MUN.')
-  await waitFor(
-    send,
-    `(() => ({ ok: !document.querySelector('.world-mundi') }))()`,
-    'fechamento do MUN',
+    `(() => ({
+      ok:
+        document.querySelector('[data-lighting-controls]')
+          ?.getAttribute('data-expanded') === ${JSON.stringify(expanded ? 'true' : 'false')}
+    }))()`,
+    expanded ? 'expansao dos controles de luz' : 'recolhimento dos controles de luz',
   )
 }
 
@@ -432,11 +358,15 @@ async function readLightingState(send) {
         cursorTop:
           cursorGlow instanceof HTMLElement ? cursorGlow.style.top : '',
         gmControls: controls?.getAttribute('data-gm-controls') ?? null,
+        expanded: controls?.getAttribute('data-expanded') ?? null,
         hasAddButton: Boolean(
           document.querySelector('button[aria-label="Adicionar ponto de luz"]')
         ),
         hasDarkness: Boolean(
           document.querySelector('.tabletop-lighting-layer__mask')
+        ),
+        hasMoonAmbience: Boolean(
+          document.querySelector('[data-moon-ambience="true"]')
         ),
         lightCount: Number(layer?.getAttribute('data-light-count') ?? -1),
         lightingEnabled:
@@ -466,9 +396,11 @@ async function main() {
   await openGmTable(send, evaluate, delay)
 
   const initial = await readLightingState(send)
-  await openWorldClock(send)
-  await setClockMode(send, 'night')
-  await closeWorld(send)
+  assert.equal(initial.gmControls, 'true')
+  assert.equal(initial.expanded, 'false')
+  assert.equal(initial.hasAddButton, false)
+  await setTableClockMode(send, 'night')
+  await setLightingControlsExpanded(send, true)
 
   const lightAdded = await evaluate(
     send,
@@ -651,8 +583,10 @@ async function main() {
   assert.equal(night.night, 'true')
   assert.equal(night.lightingEnabled, 'true')
   assert.equal(night.gmControls, 'true')
+  assert.equal(night.expanded, 'true')
   assert.equal(night.hasAddButton, true)
   assert.equal(night.hasDarkness, true)
+  assert.equal(night.hasMoonAmbience, true)
   assert.equal(night.lightCount, 1)
   assert.equal(night.cursorEnabled, 'true')
   assert.ok(
@@ -668,17 +602,20 @@ async function main() {
     `Lanterna nao seguiu o mouse no eixo Y: ${night.cursorTop}`,
   )
 
-  await openWorldClock(send)
-  await setClockMode(send, 'day')
+  await setLightingControlsExpanded(send, false)
+  await setTableClockMode(send, 'day')
   const day = await readLightingState(send)
   assert.equal(day.night, 'false')
+  assert.equal(day.expanded, 'false')
   assert.equal(day.hasDarkness, false)
+  assert.equal(day.hasMoonAmbience, false)
   assert.equal(day.lightCount, 1)
 
-  await setClockMode(send, 'night')
-  await closeWorld(send)
+  await setTableClockMode(send, 'night')
   const restoredNight = await readLightingState(send)
   assert.equal(restoredNight.night, 'true')
+  assert.equal(restoredNight.expanded, 'false')
+  assert.equal(restoredNight.hasMoonAmbience, true)
   assert.equal(restoredNight.lightCount, 1)
   assert.equal(restoredNight.cursorEnabled, 'true')
   assert.equal(restoredNight.boardImageReady, true)

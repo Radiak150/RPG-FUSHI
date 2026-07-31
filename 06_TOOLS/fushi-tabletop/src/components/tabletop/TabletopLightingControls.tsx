@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import {
+  ChevronLeft,
+  ChevronRight,
   Lightbulb,
   Maximize2,
   Moon,
@@ -16,6 +19,7 @@ interface TabletopLightingControlsProps {
   lighting: TabletopSceneLighting
   isEditing: boolean
   selectedLightId: string
+  onToggleDayNight: () => void
   onToggleEnabled: () => void
   onToggleCursor: () => void
   onAddLight: () => void
@@ -31,6 +35,7 @@ export function TabletopLightingControls({
   lighting,
   isEditing,
   selectedLightId,
+  onToggleDayNight,
   onToggleEnabled,
   onToggleCursor,
   onAddLight,
@@ -39,8 +44,16 @@ export function TabletopLightingControls({
   onUpdateLight,
   onRemoveLight,
 }: TabletopLightingControlsProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const selectedLight =
     lighting.lights.find((light) => light.id === selectedLightId) ?? null
+
+  function collapseControls() {
+    if (isEditing) {
+      onToggleEditing()
+    }
+    setIsExpanded(false)
+  }
 
   return (
     <div
@@ -48,19 +61,60 @@ export function TabletopLightingControls({
         isNight ? ' tabletop-lighting-controls--night' : ''
       }`}
       data-gm-controls={isGm ? 'true' : 'false'}
+      data-expanded={isExpanded ? 'true' : 'false'}
       data-light-count={lighting.lights.length}
       data-lighting-controls
     >
-      <span
-        className="tabletop-lighting-controls__mode"
-        title={isNight ? 'Noite: iluminacao da cena' : 'Dia: iluminacao natural'}
-      >
-        {isNight ? <Moon aria-hidden="true" size={15} /> : <Sun aria-hidden="true" size={15} />}
-        <span>{isNight ? 'Noite' : 'Dia'}</span>
-      </span>
+      {isGm ? (
+        <button
+          aria-label="Recolher controles de iluminacao"
+          className="tabletop-lighting-controls__chevron"
+          disabled={!isExpanded}
+          onClick={collapseControls}
+          title="Recolher iluminacao"
+          type="button"
+        >
+          <ChevronLeft aria-hidden="true" size={15} />
+        </button>
+      ) : null}
 
-      {!isGm ? null : (
-        <>
+      {isGm ? (
+        <button
+          aria-label={isNight ? 'Alternar para Dia' : 'Alternar para Noite'}
+          aria-pressed={isNight}
+          className="tabletop-lighting-controls__mode"
+          onClick={onToggleDayNight}
+          title={isNight ? 'Noite: clique para amanhecer' : 'Dia: clique para anoitecer'}
+          type="button"
+        >
+          {isNight ? <Moon aria-hidden="true" size={15} /> : <Sun aria-hidden="true" size={15} />}
+          <span>{isNight ? 'Noite' : 'Dia'}</span>
+        </button>
+      ) : (
+        <span
+          className="tabletop-lighting-controls__mode"
+          title={isNight ? 'Noite: iluminacao da cena' : 'Dia: iluminacao natural'}
+        >
+          {isNight ? <Moon aria-hidden="true" size={15} /> : <Sun aria-hidden="true" size={15} />}
+          <span>{isNight ? 'Noite' : 'Dia'}</span>
+        </span>
+      )}
+
+      {isGm ? (
+        <button
+          aria-label="Expandir controles de iluminacao"
+          className="tabletop-lighting-controls__chevron"
+          disabled={isExpanded}
+          onClick={() => setIsExpanded(true)}
+          title="Abrir iluminacao"
+          type="button"
+        >
+          <ChevronRight aria-hidden="true" size={15} />
+        </button>
+      ) : null}
+
+      {!isGm || !isExpanded ? null : (
+        <div className="tabletop-lighting-controls__tools">
           <button
             aria-label={lighting.enabled ? 'Desligar iluminacao' : 'Ligar iluminacao'}
             className={`tabletop-lighting-controls__button${
@@ -112,10 +166,10 @@ export function TabletopLightingControls({
             <Lightbulb aria-hidden="true" size={14} />
             {lighting.lights.length}/24
           </span>
-        </>
+        </div>
       )}
 
-      {isGm && isEditing && selectedLight ? (
+      {isGm && isExpanded && isEditing && selectedLight ? (
         <div className="tabletop-lighting-controls__inspector">
           <button
             aria-label={`Selecionar ${selectedLight.label}`}

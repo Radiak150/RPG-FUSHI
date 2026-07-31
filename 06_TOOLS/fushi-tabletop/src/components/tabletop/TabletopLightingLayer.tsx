@@ -213,6 +213,14 @@ export function TabletopLightingLayer({
         </svg>
       ) : null}
 
+      {isNight ? (
+        <span
+          aria-hidden="true"
+          className="tabletop-lighting-layer__moon-wash"
+          data-moon-ambience="true"
+        />
+      ) : null}
+
       {isNight
         ? activeLights.map((light) => (
             <span

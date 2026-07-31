@@ -194,6 +194,30 @@ async function runMasterProfile() {
     })
     await chooseProfile(page, 'Mestre', 'mestre1')
     await page.locator('.tabletop-screen').waitFor({ timeout: 45_000 })
+    const separateHistoryHub = page.locator('button[aria-label="Livro da Historia"]')
+    assert(
+      (await separateHistoryHub.count()) === 0,
+      'Livro da Historia continuou como hub separado na mesa.',
+    )
+    const bookButton = page.locator('button[aria-label="Livro"]')
+    if (!(await bookButton.isVisible().catch(() => false))) {
+      await page.locator('button[aria-label="Abrir ferramentas"]').click()
+    }
+    await bookButton.click()
+    const shieldTabs = page.locator('[data-testid="master-shield-section-tabs"]')
+    await shieldTabs.waitFor({ state: 'visible', timeout: 15_000 })
+    await shieldTabs.getByRole('tab', { name: 'Livro da Historia' }).click()
+    const embeddedHistory = page.locator('.history-quick--master')
+    await embeddedHistory.waitFor({ state: 'visible', timeout: 15_000 })
+    assert(
+      normalize(await embeddedHistory.innerText()).includes('historia do mestre'),
+      'Escudo do Mestre nao incorporou a Historia confidencial.',
+    )
+    const shieldWindow = page
+      .locator('.floating-window')
+      .filter({ has: page.getByRole('heading', { name: 'Escudo do Mestre' }) })
+    await shieldWindow.getByRole('button', { name: 'Fechar janela' }).click()
+
     const vfxButton = page.locator('button[aria-label="Efeitos visuais"]')
     if (!(await vfxButton.isVisible().catch(() => false))) {
       await page.locator('button[aria-label="Abrir ferramentas"]').click()
