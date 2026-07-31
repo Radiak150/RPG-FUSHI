@@ -49,6 +49,11 @@ const MultiplayerPage = lazy(() =>
 const BookPage = lazy(() =>
   import('../pages/BookPage').then(({ BookPage }) => ({ default: BookPage })),
 )
+const HistoryPage = lazy(() =>
+  import('../pages/HistoryPage').then(({ HistoryPage }) => ({
+    default: HistoryPage,
+  })),
+)
 const SettingsPage = lazy(() =>
   import('../pages/SettingsPage').then(({ SettingsPage }) => ({
     default: SettingsPage,
@@ -92,6 +97,7 @@ export default function App() {
                       <Route element={routeElement(MultiplayerPage)} path="multiplayer" />
                       <Route element={<Navigate replace to="/jogar/mesa" />} path="multiplayer/player" />
                       <Route element={routeElement(BookPage)} path="livro" />
+                      <Route element={routeElement(HistoryPage)} path="historia" />
                       <Route element={<Navigate replace to="/jogar/mesa" />} path="mesa" />
                       <Route element={<Navigate replace to="/campanhas" />} path="dashboard" />
                       <Route element={<Navigate replace to="/campanhas" />} path="mundo" />

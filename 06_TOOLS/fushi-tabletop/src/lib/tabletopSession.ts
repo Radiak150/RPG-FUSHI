@@ -323,6 +323,7 @@ export interface TabletopBroadcastEvent {
     | 'transition'
     | 'transition-close'
     | 'transition-playback'
+    | 'vfx'
   createdAt: number
   sceneId?: string
   introCardId?: string
@@ -338,6 +339,10 @@ export interface TabletopBroadcastEvent {
   mixerTime?: number
   mixerVolume?: number
   playbackState?: SharedTransitionPlaybackState | null
+  vfxAction?: 'show' | 'clear'
+  vfxPresetId?: string
+  vfxTargetTokenId?: string
+  vfxExpiresAt?: number
 }
 
 export interface PersistedTransitionOverride {
@@ -1341,7 +1346,8 @@ function normalizeBroadcastEvent(value: unknown): TabletopBroadcastEvent | null 
     value.type !== 'mixer-audio' &&
     value.type !== 'transition' &&
     value.type !== 'transition-close' &&
-    value.type !== 'transition-playback'
+    value.type !== 'transition-playback' &&
+    value.type !== 'vfx'
   ) {
     return null
   }
@@ -1362,6 +1368,28 @@ function normalizeBroadcastEvent(value: unknown): TabletopBroadcastEvent | null 
   if (typeof value.src === 'string') event.src = value.src
   if (typeof value.label === 'string') event.label = value.label
   if (typeof value.mixerTrackId === 'string') event.mixerTrackId = value.mixerTrackId
+  if (typeof value.vfxPresetId === 'string' && value.vfxPresetId.trim()) {
+    event.vfxPresetId = value.vfxPresetId.trim()
+  }
+  if (
+    typeof value.vfxTargetTokenId === 'string' &&
+    value.vfxTargetTokenId.trim()
+  ) {
+    event.vfxTargetTokenId = value.vfxTargetTokenId.trim()
+  }
+  if (value.vfxAction === 'show' || value.vfxAction === 'clear') {
+    event.vfxAction = value.vfxAction
+  }
+  if (value.type === 'vfx') {
+    if (
+      typeof value.vfxExpiresAt !== 'number' ||
+      !Number.isFinite(value.vfxExpiresAt) ||
+      value.vfxExpiresAt <= Date.now()
+    ) {
+      return null
+    }
+    event.vfxExpiresAt = value.vfxExpiresAt
+  }
 
   if (
     value.audioTransportState === 'playing' ||

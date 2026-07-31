@@ -1,6 +1,6 @@
 # Combat V2 Simulation Report
 
-Gerado em: 2026-07-28T23:39:40.010Z
+Gerado em: 2026-07-31T20:16:01.381Z
 Fonte: C:\Users\danie\AppData\Roaming\FUSHI\workspace.json
 Iteracoes por cenario: 600
 Seed: 20260711

@@ -1,6 +1,8 @@
 param(
   [switch]$PlayerOnly,
-  [switch]$MasterOnly
+  [switch]$MasterOnly,
+  [switch]$HistoryOnly,
+  [switch]$RulebooksOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -23,6 +25,8 @@ if ($env:FUSHI_PYTHON -and (Test-Path -LiteralPath $env:FUSHI_PYTHON)) {
 $arguments = @($builder)
 if ($PlayerOnly) { $arguments += '--player-only' }
 if ($MasterOnly) { $arguments += '--master-only' }
+if ($HistoryOnly) { $arguments += '--history-only' }
+if ($RulebooksOnly) { $arguments += '--rulebooks-only' }
 
 Push-Location $projectRoot
 try {

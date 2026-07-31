@@ -46,10 +46,13 @@ from reportlab.platypus.tableofcontents import TableOfContents
 
 ROOT = Path(__file__).resolve().parents[1]
 RULEBOOK_DIR = ROOT / "src" / "data" / "rulebook"
+HISTORY_DIR = ROOT / "src" / "data" / "history"
 OUTPUT_DIR = ROOT / "output" / "pdf"
 PLAYER_PATH = RULEBOOK_DIR / "player-rulebook.json"
 MASTER_PATH = RULEBOOK_DIR / "master-rulebook.json"
 BIBLIOGRAPHY_PATH = RULEBOOK_DIR / "bibliography.json"
+PLAYER_HISTORY_PATH = HISTORY_DIR / "player-history.json"
+MASTER_HISTORY_PATH = HISTORY_DIR / "master-history.json"
 
 PAGE_WIDTH, PAGE_HEIGHT = A4
 MARGIN_X = 18 * mm
@@ -137,6 +140,18 @@ PLAYER_FORBIDDEN_TERMS = (
     "alvo mais proximo",
     "disputa de posse",
     "esporos de fushi",
+)
+
+HISTORY_PLAYER_FORBIDDEN_TERMS = (
+    *PLAYER_FORBIDDEN_TERMS,
+    "organismo alienígena",
+    "organismo alienigena",
+    "matrizes humanas",
+    "metaplot",
+    "ryoku",
+    "vhazaryon",
+    "seraph",
+    "natureza dos protagonistas",
 )
 
 
@@ -252,6 +267,19 @@ def assert_player_secrecy(player: dict[str, Any]) -> None:
     if leaks:
         raise ValueError(
             "O Livro do Jogador contém termos confidenciais: " + ", ".join(leaks)
+        )
+
+
+def assert_public_history_secrecy(history: dict[str, Any]) -> None:
+    serialized = normalized_search(json.dumps(history, ensure_ascii=False))
+    leaks = [
+        term
+        for term in HISTORY_PLAYER_FORBIDDEN_TERMS
+        if normalized_search(term) in serialized
+    ]
+    if leaks:
+        raise ValueError(
+            "As Crônicas da Ilha contêm termos confidenciais: " + ", ".join(leaks)
         )
 
 
@@ -450,10 +478,33 @@ def make_styles() -> dict[str, ParagraphStyle]:
 
 
 class RulebookDocTemplate(BaseDocTemplate):
-    def __init__(self, filename: str, *, title: str, audience: str, **kwargs: Any):
+    def __init__(
+        self,
+        filename: str,
+        *,
+        title: str,
+        audience: str,
+        cover_kicker: str | None = None,
+        cover_label: str | None = None,
+        cover_subtitle: str | None = None,
+        edition_label: str = "EDIÇÃO ALPHA 0.1 · JULHO DE 2026",
+        footer_edition: str = "EDIÇÃO ALPHA 0.1",
+        **kwargs: Any,
+    ):
         super().__init__(filename, **kwargs)
         self.rulebook_title = title
         self.audience = audience
+        self.cover_kicker = cover_kicker or "FUSHI · REGRAS OFICIAIS"
+        self.cover_label = cover_label or (
+            "LIVRO DO MESTRE" if audience == "master" else "LIVRO DO JOGADOR"
+        )
+        self.cover_subtitle = cover_subtitle or (
+            "Escudo de regras, segredos de campanha e condução mecânica"
+            if audience == "master"
+            else "Regras públicas, combate tático e caminhos de evolução"
+        )
+        self.edition_label = edition_label
+        self.footer_edition = footer_edition
         self.current_section = ""
         self._bookmark_count = 0
 
@@ -541,30 +592,21 @@ def cover_page(canvas: Any, doc: RulebookDocTemplate) -> None:
     draw_sigil(canvas, PAGE_WIDTH / 2, PAGE_HEIGHT * 0.71, 26 * mm, accent)
     canvas.setFillColor(accent)
     canvas.setFont(FONT_BODY_BOLD, 8.5)
-    canvas.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT * 0.61, "FUSHI · REGRAS OFICIAIS")
+    canvas.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT * 0.61, doc.cover_kicker)
     canvas.setFillColor(WHITE)
     canvas.setFont(FONT_DISPLAY_BOLD, 29)
     canvas.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT * 0.52, "FUSHI")
     canvas.setFont(FONT_DISPLAY_BOLD, 22)
-    canvas.drawCentredString(
-        PAGE_WIDTH / 2,
-        PAGE_HEIGHT * 0.47,
-        "LIVRO DO MESTRE" if master else "LIVRO DO JOGADOR",
-    )
+    canvas.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT * 0.47, doc.cover_label)
     canvas.setFont(FONT_BODY, 10)
     canvas.setFillColor(colors.HexColor("#DCE9F0"))
-    subtitle = (
-        "Escudo de regras, segredos de campanha e condução mecânica"
-        if master
-        else "Regras públicas, combate tático e caminhos de evolução"
-    )
-    canvas.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT * 0.42, subtitle)
+    canvas.drawCentredString(PAGE_WIDTH / 2, PAGE_HEIGHT * 0.42, doc.cover_subtitle)
     canvas.setStrokeColor(accent)
     canvas.setLineWidth(1)
     canvas.line(42 * mm, PAGE_HEIGHT * 0.375, PAGE_WIDTH - 42 * mm, PAGE_HEIGHT * 0.375)
     canvas.setFont(FONT_BODY_BOLD, 8)
     canvas.setFillColor(accent)
-    canvas.drawCentredString(PAGE_WIDTH / 2, 34 * mm, "EDIÇÃO ALPHA 0.1 · JULHO DE 2026")
+    canvas.drawCentredString(PAGE_WIDTH / 2, 34 * mm, doc.edition_label)
     canvas.setFont(FONT_BODY, 7.2)
     canvas.setFillColor(colors.HexColor("#B8C7D0"))
     canvas.drawCentredString(PAGE_WIDTH / 2, 27 * mm, "PROJETO RPG FUSHI · TABLETOP")
@@ -596,7 +638,7 @@ def body_page(canvas: Any, doc: RulebookDocTemplate) -> None:
         PAGE_HEIGHT - 10 * mm,
         doc.rulebook_title[:82],
     )
-    canvas.drawString(MARGIN_X, 7.2 * mm, "EDIÇÃO ALPHA 0.1")
+    canvas.drawString(MARGIN_X, 7.2 * mm, doc.footer_edition)
     canvas.drawRightString(PAGE_WIDTH - MARGIN_X, 7.2 * mm, str(doc.page))
     canvas.restoreState()
 
@@ -605,7 +647,18 @@ def part_page(canvas: Any, doc: RulebookDocTemplate) -> None:
     draw_space_background(canvas, 1423 + doc.page, master=doc.audience == "master")
 
 
-def make_document(path: Path, title: str, audience: str) -> RulebookDocTemplate:
+def make_document(
+    path: Path,
+    title: str,
+    audience: str,
+    *,
+    cover_kicker: str | None = None,
+    cover_label: str | None = None,
+    cover_subtitle: str | None = None,
+    edition_label: str = "EDIÇÃO ALPHA 0.1 · JULHO DE 2026",
+    footer_edition: str = "EDIÇÃO ALPHA 0.1",
+    subject: str = "Sistema e campanha RPG FUSHI",
+) -> RulebookDocTemplate:
     body_frame = Frame(
         MARGIN_X,
         MARGIN_BOTTOM,
@@ -633,6 +686,11 @@ def make_document(path: Path, title: str, audience: str) -> RulebookDocTemplate:
         str(path),
         title=title,
         audience=audience,
+        cover_kicker=cover_kicker,
+        cover_label=cover_label,
+        cover_subtitle=cover_subtitle,
+        edition_label=edition_label,
+        footer_edition=footer_edition,
         pagesize=A4,
         leftMargin=MARGIN_X,
         rightMargin=MARGIN_X,
@@ -641,7 +699,7 @@ def make_document(path: Path, title: str, audience: str) -> RulebookDocTemplate:
         allowSplitting=1,
         pageCompression=1,
         author="Projeto RPG FUSHI",
-        subject="Sistema e campanha RPG FUSHI",
+        subject=subject,
         creator="FUSHI Tabletop Rulebook Builder",
     )
     doc.addPageTemplates(
@@ -676,6 +734,9 @@ def editorial_pages(
     styles: dict[str, ParagraphStyle],
     *,
     master: bool,
+    intro_text: str | None = None,
+    status_text: str | None = None,
+    precedence_text: str | None = None,
 ) -> list[Any]:
     accent = GOLD_DARK if master else CYAN_DARK
     confidentiality = safe_text(volume.get("confidentiality"))
@@ -684,22 +745,31 @@ def editorial_pages(
         [
             Paragraph("Sobre esta edição", styles["ChapterTitle"]),
             Paragraph(
-                "Este livro é gerado da mesma fonte estruturada usada pelo FUSHI Tabletop. "
-                "O objetivo é manter a consulta da mesa, o PDF e a manutenção das regras no mesmo estado.",
+                intro_text
+                or (
+                    "Este livro é gerado da mesma fonte estruturada usada pelo FUSHI Tabletop. "
+                    "O objetivo é manter a consulta da mesa, o PDF e a manutenção das regras no mesmo estado."
+                ),
                 styles["Body"],
             ),
             Paragraph("Escopo", styles["BlockTitle"]),
             Paragraph(paragraph_text(confidentiality), styles["CalloutBody"]),
             Paragraph("Estado editorial", styles["BlockTitle"]),
             Paragraph(
-                "CÂNONE indica regra aprovada. EM TESTE indica regra pronta para uso, mas sujeita a ajuste após sessão. "
-                "EM CONSTRUÇÃO indica estrutura oficial cujo catálogo ou balanceamento ainda não foi fechado.",
+                status_text
+                or (
+                    "CÂNONE indica regra aprovada. EM TESTE indica regra pronta para uso, mas sujeita a ajuste após sessão. "
+                    "EM CONSTRUÇÃO indica estrutura oficial cujo catálogo ou balanceamento ainda não foi fechado."
+                ),
                 styles["Body"],
             ),
             Paragraph("Princípio de precedência", styles["BlockTitle"]),
             Paragraph(
-                "Decisão definitiva do Mestre e registro mais recente prevalecem sobre texto antigo. "
-                "Nenhuma automação, ficha ou ferramenta transforma uma hipótese em Canon sozinha.",
+                precedence_text
+                or (
+                    "Decisão definitiva do Mestre e registro mais recente prevalecem sobre texto antigo. "
+                    "Nenhuma automação, ficha ou ferramenta transforma uma hipótese em Canon sozinha."
+                ),
                 styles["Body"],
             ),
             Spacer(1, 5 * mm),
@@ -954,6 +1024,53 @@ def public_bibliography_entries(bibliography: Sequence[dict[str, Any]]) -> list[
             "note": "Fonte estruturada das regras públicas, exemplos táticos e estados editoriais desta edição.",
         },
         *public,
+    ]
+
+
+def history_bibliography_entries(*, master: bool) -> list[dict[str, Any]]:
+    if not master:
+        return [
+            {
+                "title": "Registros públicos da campanha FUSHI",
+                "type": "internal",
+                "note": (
+                    "Compilação dos acontecimentos presenciados pelos protagonistas e "
+                    "liberados pelo Mestre. Fontes confidenciais não são listadas neste volume."
+                ),
+            }
+        ]
+
+    return [
+        {
+            "title": "Log real da Sessão 1",
+            "type": "internal",
+            "path": "docs/SESSION_1_ACTUAL_LOG_2026-05-31.md",
+            "note": "Fonte primária dos acontecimentos da Caverna e da Clareira dos Lobos.",
+        },
+        {
+            "title": "Log real da Sessão 2",
+            "type": "internal",
+            "path": "docs/planejamento/SESSION_2_ACTUAL_LOG_2026-07-09.md",
+            "note": "Fonte primária da chegada à Vila e do retorno de Davi à Clareira.",
+        },
+        {
+            "title": "Resultado confirmado da Sessão 3",
+            "type": "internal",
+            "path": "docs/planejamento/PLANICIE_SESSAO_03_RESULTADO_2026-07-18.md",
+            "note": "Fonte primária do Riacho Claro, da Caixinha do Ontem e da liberação do MUN.",
+        },
+        {
+            "title": "Contexto consolidado de lore e continuidade",
+            "type": "internal",
+            "path": "docs/planejamento/LORE_COMPILADO_CONTEXTO.md",
+            "note": "Mapa de fontes, correções canônicas e lacunas que ainda exigem decisão do Mestre.",
+        },
+        {
+            "title": "Premissa e lore primária",
+            "type": "internal",
+            "path": r"C:\RPG FUSHI\RPG-FUSHI\01_LORE\premissa",
+            "note": "Fonte de verdade anterior à campanha para natureza, identidade e metaplot.",
+        },
     ]
 
 
@@ -1343,37 +1460,161 @@ def build_master_pdf(
     return output
 
 
+def build_history_player_pdf(
+    history: dict[str, Any],
+    styles: dict[str, ParagraphStyle],
+) -> Path:
+    output = OUTPUT_DIR / "FUSHI_Cronicas_da_Ilha_Alpha92.pdf"
+    doc = make_document(
+        output,
+        history["title"],
+        "player",
+        cover_kicker="FUSHI · MEMÓRIA DA CAMPANHA",
+        cover_label="CRÔNICAS DA ILHA",
+        cover_subtitle="O caminho realmente vivido pelos protagonistas, sem segredos do Mestre",
+        edition_label="EDIÇÃO ALPHA 0.1.0-ALPHA.92 · JULHO DE 2026",
+        footer_edition="ALPHA.92 · CRÔNICAS PÚBLICAS",
+        subject="Registro público da campanha RPG FUSHI",
+    )
+    story: list[Any] = []
+    story.extend(
+        editorial_pages(
+            history,
+            styles,
+            master=False,
+            intro_text=(
+                "Estas crônicas são geradas da mesma fonte pública usada pelo FUSHI Tabletop. "
+                "Elas registram somente acontecimentos presenciados pelos protagonistas ou fatos "
+                "que o Mestre decidiu revelar."
+            ),
+            status_text=(
+                "CÂNONE indica acontecimento confirmado por um registro de sessão. EM CONSTRUÇÃO "
+                "marca apenas o limite atual da crônica; não antecipa o que ocorrerá depois."
+            ),
+            precedence_text=(
+                "O que aconteceu na mesa e foi confirmado pelo Mestre prevalece. Planejamento, "
+                "conteúdo preparado e estado técnico do aplicativo não viram história pública sozinhos."
+            ),
+        )
+    )
+    story.extend(
+        part_divider(
+            "CRÔNICAS PÚBLICAS",
+            "Memórias confirmadas das Sessões 1 a 3 e o último ponto conhecido pelo grupo.",
+            styles,
+        )
+    )
+    story.extend(chapter_story(history["sections"], styles, master=False))
+    story.extend(
+        bibliography_story(
+            history_bibliography_entries(master=False),
+            styles,
+            master=False,
+        )
+    )
+    doc.multiBuild(story)
+    return output
+
+
+def build_history_master_pdf(
+    history: dict[str, Any],
+    styles: dict[str, ParagraphStyle],
+) -> Path:
+    output = OUTPUT_DIR / "FUSHI_Livro_da_Historia_Alpha92.pdf"
+    doc = make_document(
+        output,
+        history["title"],
+        "master",
+        cover_kicker="FUSHI · CONTINUIDADE DO MESTRE",
+        cover_label="LIVRO DA HISTÓRIA",
+        cover_subtitle="Continuidade, bastidores, segredos e estado vivo da campanha",
+        edition_label="EDIÇÃO ALPHA 0.1.0-ALPHA.92 · JULHO DE 2026",
+        footer_edition="ALPHA.92 · CONFIDENCIAL DO MESTRE",
+        subject="Continuidade confidencial da campanha RPG FUSHI",
+    )
+    story: list[Any] = []
+    story.extend(
+        editorial_pages(
+            history,
+            styles,
+            master=True,
+            intro_text=(
+                "Este volume confidencial reúne continuidade, bastidores e lacunas da campanha na "
+                "mesma fonte consultada pelo painel do Mestre no FUSHI Tabletop."
+            ),
+            status_text=(
+                "CÂNONE é fato confirmado. EM TESTE é direção pronta para mesa, mas ainda ajustável. "
+                "EM CONSTRUÇÃO é material incompleto e nunca deve ser narrado como fato por inferência."
+            ),
+            precedence_text=(
+                "Logs reais vêm primeiro; lore primária vem depois; planejamento e simulação só se "
+                "tornam acontecimento quando o Mestre registra que ocorreram."
+            ),
+        )
+    )
+    story.extend(
+        part_divider(
+            "CONTINUIDADE DO MESTRE",
+            "A verdade estrutural, os acontecimentos confirmados e as lacunas que não podem ser inventadas.",
+            styles,
+        )
+    )
+    story.extend(chapter_story(history["sections"], styles, master=True))
+    story.extend(
+        bibliography_story(
+            history_bibliography_entries(master=True),
+            styles,
+            master=True,
+        )
+    )
+    doc.multiBuild(story)
+    return output
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Gera os dois livros oficiais do FUSHI.")
+    parser = argparse.ArgumentParser(description="Gera os livros oficiais do FUSHI.")
     parser.add_argument("--player-only", action="store_true", help="Gera apenas o Livro do Jogador.")
     parser.add_argument("--master-only", action="store_true", help="Gera apenas o Livro do Mestre.")
+    parser.add_argument("--history-only", action="store_true", help="Gera apenas os volumes de História.")
+    parser.add_argument("--rulebooks-only", action="store_true", help="Gera apenas os livros de regras.")
     args = parser.parse_args()
     if args.player_only and args.master_only:
         parser.error("Use somente um filtro de volume por vez.")
+    if args.history_only and args.rulebooks_only:
+        parser.error("Use somente um filtro de coleção por vez.")
 
     register_fonts()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     player = load_json(PLAYER_PATH)
     master = load_json(MASTER_PATH)
+    player_history = load_json(PLAYER_HISTORY_PATH)
+    master_history = load_json(MASTER_HISTORY_PATH)
     bibliography = load_json(BIBLIOGRAPHY_PATH)
     assert_player_secrecy(player)
+    assert_public_history_secrecy(player_history)
     workspace_path, characters = load_workspace()
     styles = make_styles()
 
     outputs: list[Path] = []
-    if not args.master_only:
-        outputs.append(build_player_pdf(player, bibliography, styles))
-    if not args.player_only:
-        outputs.append(
-            build_master_pdf(
-                player,
-                master,
-                bibliography,
-                styles,
-                workspace_path,
-                characters,
+    if not args.history_only:
+        if not args.master_only:
+            outputs.append(build_player_pdf(player, bibliography, styles))
+        if not args.player_only:
+            outputs.append(
+                build_master_pdf(
+                    player,
+                    master,
+                    bibliography,
+                    styles,
+                    workspace_path,
+                    characters,
+                )
             )
-        )
+    if not args.rulebooks_only:
+        if not args.master_only:
+            outputs.append(build_history_player_pdf(player_history, styles))
+        if not args.player_only:
+            outputs.append(build_history_master_pdf(master_history, styles))
 
     for output in outputs:
         print(f"OK {output} ({output.stat().st_size / 1024 / 1024:.2f} MiB)")

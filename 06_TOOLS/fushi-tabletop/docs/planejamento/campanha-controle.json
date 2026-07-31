@@ -1,6 +1,6 @@
 {
   "version": "campanha-controle-v1",
-  "updatedAt": "2026-07-30",
+  "updatedAt": "2026-07-31",
   "purpose": "Painel simples de producao da campanha. Use OK para pronto/estavel, FOCO para atencao atual e CRITICO para bloqueio/placeholder.",
   "rules": [
     "O app estavel vem antes de conteudo novo.",
@@ -19,7 +19,8 @@
     "Fechar uma apresentacao visual do EVE e local a janela e nunca apaga o resultado canonico; um novo drawId deve abrir novamente.",
     "Combat V2 e a fonte ativa para CA, Bloqueio, Esquiva, critico, manobras, escala de mobs e simulacao; FUSHI_COMBAT_V2.md prevalece sobre regra V1 conflitante.",
     "Estagios/Fases usam uma unica ficha canonica ativa; catalogo privado do Mestre fica em snapshots nao recursivos, Jogador recebe apenas fase ativa e revision, e toda troca precisa de VFX idempotente e teste Mestre > Jogador.",
-    "Alpha.90: troca de mapa preserva a ultima superficie decodificada; Ctrl+A recupera o renderer sem trocar mapa, tokens ou sessao; Relogio MUN e fonte canonica de Dia/Noite; iluminacao fica na metadata da cena e so Mestre edita."
+    "Alpha.90: troca de mapa preserva a ultima superficie decodificada; Ctrl+A recupera o renderer sem trocar mapa, tokens ou sessao; Relogio MUN e fonte canonica de Dia/Noite; iluminacao fica na metadata da cena e so Mestre edita.",
+    "Alpha.92: Cronicas da Ilha sao publicas e o Livro da Historia e exclusivo do Mestre; VFX sao apresentacoes efemeras com vfxExpiresAt, sem replay no reconnect; MSC fica bloqueado ate o teste fisico."
   ],
   "lanes": [
     {
@@ -181,7 +182,7 @@
       "item": "Build empacotado real",
       "status": "OK",
       "acceptance": "release/win-unpacked abre e smokes rodam isolados.",
-      "evidence": "Alpha.90 empacotada em release/win-unpacked; build, lint, smoke:lighting, smoke:interludes, smoke:multiplayer, smoke:release, smoke:release:deep 12/12, smoke:ui, perf:release, release:assets, content:audit, base:diagnose e asset:audit aprovados.",
+      "evidence": "Alpha.92 empacotada em release/win-unpacked; build, lint, smoke:lighting, smoke:interludes, smoke:multiplayer, smoke:release, smoke:release:deep 12/12, smoke:history-vfx:release, smoke:rulebooks:release, smoke:ui, perf:release, release:assets, content:audit, base:diagnose e asset:audit aprovados em 31/07/2026.",
       "next": "Nao promover conteudo sem fechar o executavel oficial, rodar smoke:release e o gate especifico da area alterada."
     },
     {
@@ -191,6 +192,22 @@
       "acceptance": "Jogador consulta regras publicas no Fluxo e na Mesa sem ver reencarnacao/progressao oculta; Mestre consulta escudo e compendio real; PDFs passam auditoria visual e de sigilo.",
       "evidence": "Combat V2: 16 capitulos publicos, 19 capitulos do Mestre, PDF Jogador 28 paginas, PDF Mestre 392 paginas; auditoria visual, sigilo e bordas aprovada.",
       "next": "Atualizar src/data/rulebook a cada decisao aprovada; rodar books:build, books:audit e smoke:rulebooks:release."
+    },
+    {
+      "area": "Historia",
+      "item": "Cronica publica e Livro da Historia",
+      "status": "OK tecnico",
+      "acceptance": "Jogador ve somente acontecimentos liberados; Mestre ve continuidade, segredos e lacunas; Sessao 4 permanece pendente ate log real.",
+      "evidence": "Alpha.92: dois JSONs separados, PDFs publicos e confidenciais auditados; smoke:history-vfx confirmou seis secoes publicas, oito do Mestre e bloqueio de termos proibidos.",
+      "next": "Depois da proxima sessao, atualizar primeiro o log real e somente entao regenerar os dois volumes."
+    },
+    {
+      "area": "VFX",
+      "item": "Catalogo VFX efemero",
+      "status": "OK tecnico",
+      "acceptance": "Preview local nao vaza; broadcast do Mestre aparece uma vez para a mesa; clear/expiracao impedem replay em reconnect e troca de mapa.",
+      "evidence": "Alpha.92: catalogo declarativo com 10 presets, vfxExpiresAt obrigatorio e filtro de pulso antigo; smoke:history-vfx e gate empacotado dedicados.",
+      "next": "Playtest fisico de um preview, um broadcast e um reconnect; MSC continua bloqueado ate esse teste."
     },
     {
       "area": "Combate",
@@ -279,9 +296,10 @@
     {
       "area": "VFX",
       "item": "Habilidades lendarias e expansoes",
-      "status": "FOCO",
+      "status": "OK tecnico",
       "acceptance": "Ritual/expansao tem preset declarativo, fallback e sync multiplayer.",
-      "next": "Criar protocolo antes de asset pesado."
+      "evidence": "Alpha.92 fecha a camada geral com 10 presets leves, preview local, broadcast efemero, expiracao e fallback visual; efeitos especificos de cada boss continuam pendentes.",
+      "next": "Playtest fisico e, depois, criar VFX especifico somente para habilidades aprovadas."
     },
     {
       "area": "Mapas",

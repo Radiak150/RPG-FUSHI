@@ -1,5 +1,5 @@
 import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
-import { ShieldAlert, type LucideIcon } from 'lucide-react'
+import { BookMarked, ShieldAlert, Sparkles, type LucideIcon } from 'lucide-react'
 
 interface HudItem {
   id: string
@@ -27,7 +27,9 @@ const HUD_ITEM_ICONS: Record<string, string> = {
 }
 
 const HUD_ITEM_LUCIDE_ICONS: Record<string, LucideIcon> = {
+  history: BookMarked,
   statuses: ShieldAlert,
+  vfx: Sparkles,
 }
 
 export function TabletopHud({

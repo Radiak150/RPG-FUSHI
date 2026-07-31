@@ -1,0 +1,224 @@
+{
+  "audience": "player",
+  "title": "FUSHI - Crônicas da Ilha",
+  "subtitle": "O caminho que os protagonistas realmente viveram",
+  "edition": "Edição Alpha 0.1 - Julho de 2026",
+  "confidentiality": "Registro público da campanha. Mostra somente acontecimentos presenciados pelos protagonistas e fatos liberados pelo Mestre.",
+  "quickReference": [
+    {
+      "label": "Despertar",
+      "detail": "O grupo acordou na Caverna do Primeiro Corpo e abriu passagem para a superfície.",
+      "sectionId": "despertar"
+    },
+    {
+      "label": "Clareira",
+      "detail": "A primeira travessia terminou em confronto com lobos e na separação das consciências.",
+      "sectionId": "clareira"
+    },
+    {
+      "label": "Vila",
+      "detail": "A Vila do Conhecimento Absorvido recebeu o grupo e revelou seus primeiros problemas.",
+      "sectionId": "vila"
+    },
+    {
+      "label": "Riacho",
+      "detail": "Nilo, Liora e a Caixinha do Ontem transformaram memória em uma escolha difícil.",
+      "sectionId": "riacho"
+    },
+    {
+      "label": "Agora",
+      "detail": "O Mapa Mundi foi liberado e o grupo seguiu para o Campo de Treinamento.",
+      "sectionId": "estado-atual"
+    }
+  ],
+  "sections": [
+    {
+      "id": "despertar",
+      "number": "01",
+      "label": "O primeiro corpo",
+      "status": "canon",
+      "summary": "O despertar, a caverna e a primeira decisão conjunta.",
+      "tags": ["Sessão 1", "Caverna", "Confirmado"],
+      "searchTerms": ["primeiro corpo", "ovo", "osso", "pedras"],
+      "blocks": [
+        {
+          "kind": "lead",
+          "tone": "info",
+          "title": "Sessão 1 · 31 de maio de 2026",
+          "text": "Cinco consciências despertaram juntas em um corpo desconhecido, cercadas por pedra, silêncio e perguntas."
+        },
+        {
+          "kind": "paragraph",
+          "title": "A saída",
+          "text": "O grupo explorou a Caverna do Primeiro Corpo, encontrou um ovo e usou um osso grande como alavanca para remover as pedras que bloqueavam a passagem."
+        },
+        {
+          "kind": "steps",
+          "title": "O que ficou registrado",
+          "items": [
+            "O grupo acordou compartilhando o Fragmentado.",
+            "Lamber o ovo recuperou 1 de Vida.",
+            "O osso encontrado virou ferramenta e arma improvisada.",
+            "Depois de várias tentativas, a passagem para a superfície foi aberta."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "clareira",
+      "number": "02",
+      "label": "A Clareira dos Lobos",
+      "status": "canon",
+      "summary": "A primeira batalha, a separação e a fuga até a Vila.",
+      "tags": ["Sessão 1", "Lobos", "Separação"],
+      "searchTerms": ["wave", "Connor", "Kairos", "Kael", "Grim", "Davi"],
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "title": "A primeira ameaça",
+          "text": "Na Clareira dos Lobos, o grupo enfrentou ondas sucessivas de animais. Pelo menos três lobos foram derrotados antes da decisão de recuar."
+        },
+        {
+          "kind": "bullets",
+          "title": "Corpos separados",
+          "items": [
+            "Connor foi o primeiro a sair do Fragmentado.",
+            "Kairos, Kael e Grim também assumiram corpos próprios durante o confronto.",
+            "Davi permaneceu no Fragmentado ao final da sessão.",
+            "A wave chegou à quarta etapa, mas o grupo escolheu fugir e seguir pela trilha."
+          ]
+        },
+        {
+          "kind": "lead",
+          "tone": "rule",
+          "title": "Fim da travessia",
+          "text": "Feridos e ainda sem compreender o que eram, os protagonistas avistaram a Vila do Conhecimento Absorvido."
+        }
+      ]
+    },
+    {
+      "id": "vila",
+      "number": "03",
+      "label": "A Vila do Conhecimento Absorvido",
+      "status": "canon",
+      "summary": "Primeiros vínculos, primeiros conflitos e um retorno perigoso à clareira.",
+      "tags": ["Sessão 2", "Vila", "NPCs"],
+      "searchTerms": ["Elara", "Orian", "Kazuo", "Renji", "Maira", "Selian", "Dalvo", "Elias"],
+      "blocks": [
+        {
+          "kind": "lead",
+          "tone": "info",
+          "title": "Sessão 2 · 9 de julho de 2026",
+          "text": "Kael chegou incapacitado à Vila. O cuidado com ele abriu o primeiro contato real com Elara, Orian, Kazuo e os demais moradores."
+        },
+        {
+          "kind": "table",
+          "title": "Encontros da Vila",
+          "table": {
+            "columns": ["Pessoa", "O que os protagonistas presenciaram"],
+            "rows": [
+              ["Elara, Orian e Kazuo", "Discutiam o futuro da Vila e ajudaram a cuidar de Kael."],
+              ["Sélian e Maira", "Sélian rezava e tentou chamar a mãe para a refeição."],
+              ["Dalvo", "Acordou com o chamado e foi buscar vegetais para a comida."],
+              ["Elias", "Estudava insetos e recusou o convite para comer."],
+              ["Renji", "Acompanhou Connor na busca pelo Fragmentado."]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "A volta solitária",
+          "text": "Davi, ainda no Fragmentado, retornou sozinho à Clareira dos Lobos. Enfrentou três animais, ficou gravemente ferido e conseguiu voltar à Vila."
+        }
+      ]
+    },
+    {
+      "id": "riacho",
+      "number": "04",
+      "label": "O Riacho Claro",
+      "status": "canon",
+      "summary": "O luto de Nilo, o Eco de Liora e a Caixinha do Ontem.",
+      "tags": ["Sessão 3", "Nilo", "Liora", "Memória"],
+      "searchTerms": ["caixinha", "esfera", "tempo", "eco"],
+      "blocks": [
+        {
+          "kind": "lead",
+          "tone": "info",
+          "title": "Sessão 3 · 18 de julho de 2026",
+          "text": "Davi, Kairos e Kael chegaram ao Riacho Claro e viram Nilo ao lado de um Eco de Liora. A energia se desfez quando o grupo se aproximou."
+        },
+        {
+          "kind": "steps",
+          "title": "A Caixinha do Ontem",
+          "items": [
+            "Nilo mostrou e consertou o aparelho que rebobina instantes.",
+            "Ele voltou ao lago e ativou o mecanismo.",
+            "Davi recolheu uma esfera mágica criada pela ativação.",
+            "Kael convenceu Nilo a entregar a Caixinha do Ontem.",
+            "O grupo retornou à Vila levando a Caixinha e a esfera."
+          ]
+        },
+        {
+          "kind": "example",
+          "tone": "example",
+          "title": "Memória não é resposta",
+          "text": "O Riacho revelou o peso do passado de Nilo, mas não explicou por completo o funcionamento da Caixinha nem o destino de Liora."
+        }
+      ]
+    },
+    {
+      "id": "mapa-mundi",
+      "number": "05",
+      "label": "O mundo se abre",
+      "status": "canon",
+      "summary": "O galpão dos mapas, o Mapa Mundi e o caminho até o treinamento.",
+      "tags": ["Sessão 3", "MUN", "Treinamento"],
+      "searchTerms": ["mapa mundi", "campo de treinamento", "armazem"],
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "title": "O galpão dos mapas",
+          "text": "Connor e Grim acompanharam Kazuo e Orian ao Acampamento Comunitário. Viram o estoque de comida, entraram no galpão e liberaram o Mapa Mundi."
+        },
+        {
+          "kind": "lead",
+          "tone": "rule",
+          "title": "Nova frente",
+          "text": "Depois de se reunirem, os cinco protagonistas seguiram para o Campo de Treinamento, onde Renji preparava a próxima etapa."
+        }
+      ]
+    },
+    {
+      "id": "estado-atual",
+      "number": "06",
+      "label": "Registro atual",
+      "status": "development",
+      "summary": "O último ponto confirmado e o limite do que já foi publicado.",
+      "tags": ["Atual", "Sem spoiler", "Pendente"],
+      "searchTerms": ["sessao 4", "presente", "atual"],
+      "blocks": [
+        {
+          "kind": "table",
+          "title": "Estado conhecido",
+          "table": {
+            "columns": ["Elemento", "Situação pública"],
+            "rows": [
+              ["Mapa Mundi", "Liberado para o grupo."],
+              ["Caixinha do Ontem", "Em posse dos protagonistas."],
+              ["Esfera mágica", "Em posse dos protagonistas."],
+              ["Fragmentado", "O receptáculo ficou vazio e paralisado."],
+              ["Próxima frente registrada", "Treinamento Inicial no Campo de Treinamento."]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Crônica aguardando atualização",
+          "text": "A Sessão 4 ainda não possui um resumo canônico consolidado nesta edição. Nada além deste ponto deve ser tratado como acontecimento confirmado."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,359 @@
+{
+  "audience": "master",
+  "title": "FUSHI - Livro da História",
+  "subtitle": "Continuidade, bastidores e estado vivo da campanha",
+  "edition": "Edição Alpha 0.1 - Julho de 2026",
+  "confidentiality": "Material confidencial do Mestre. Contém natureza dos protagonistas, morte, metaplot, ganchos não revelados e lacunas de continuidade.",
+  "quickReference": [
+    {
+      "label": "Último cânone",
+      "detail": "A Sessão 3 termina com o MUN liberado e o grupo no Campo de Treinamento.",
+      "sectionId": "sessao-3"
+    },
+    {
+      "label": "Sessão 4",
+      "detail": "Ainda sem resumo canônico consolidado; não preencher por inferência.",
+      "sectionId": "estado-atual"
+    },
+    {
+      "label": "Fragmentado",
+      "detail": "Receptáculo vazio e paralisado após a saída de todas as consciências.",
+      "sectionId": "estado-atual"
+    },
+    {
+      "label": "Mundo vivo",
+      "detail": "Planejamento e simulação não contam como acontecimento até registro do Mestre.",
+      "sectionId": "frentes-do-mundo"
+    },
+    {
+      "label": "Atualizar",
+      "detail": "Log real primeiro; lore primária depois; planejamento nunca vira cânone sozinho.",
+      "sectionId": "protocolo"
+    }
+  ],
+  "sections": [
+    {
+      "id": "antes-da-campanha",
+      "number": "M01",
+      "label": "Antes do despertar",
+      "status": "canon",
+      "summary": "A verdade estrutural que sustenta a campanha sem ser pública.",
+      "tags": ["Segredo", "Protagonistas", "Identidade"],
+      "searchTerms": ["organismo", "matrizes", "vila", "liora"],
+      "blocks": [
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Natureza dos protagonistas",
+          "text": "As cinco consciências são equivalentes dentro de um único organismo alienígena microscópico coletivo. Não existe jogador original, núcleo superior ou consciência principal."
+        },
+        {
+          "kind": "bullets",
+          "title": "Fatos anteriores à mesa",
+          "items": [
+            "O organismo observou a Vila por anos e absorveu linguagem, emoção, memória e traços humanos.",
+            "Connor, Davi, Grim, Kael e Kairos são interpretações novas de matrizes humanas; não são cópias literais.",
+            "A Vila já sofria isolamento, queda demográfica e memórias presas ao FUSHI local.",
+            "Liora morreu em um acidente de rota causado por um animal em pânico após um pulso de FUSHI vindo das Ruínas.",
+            "Nilo ficou preso emocionalmente ao instante e desenvolveu a Caixinha do Ontem."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Matrizes humanas",
+          "table": {
+            "columns": ["Protagonista", "Matriz principal", "Regra de continuidade"],
+            "rows": [
+              ["Connor", "Renji e aspectos de Kazuo", "Expressa abandono, sobrevivência e busca por paz; não é Renji."],
+              ["Davi", "Elias", "Expressa curiosidade, corpo, experimento e risco; não é Elias."],
+              ["Grim", "Dalvo", "Expressa sobrevivência, cuidado, escassez e custo da cura."],
+              ["Kael Lebranc", "Nayr", "Expressa culpa, perda de controle e segredo; não é passado literal."],
+              ["Kairos", "Sélian", "Expressa voz, silêncio, ritual e pressão da tradição."],
+              ["Fragmentado", "Receptáculo coletivo", "Casca compartilhada, sem matriz humana única."]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "sessao-1",
+      "number": "M02",
+      "label": "Sessão 1 · Caverna e lobos",
+      "status": "canon",
+      "summary": "Log real de 31 de maio de 2026 e segredos ainda não revelados.",
+      "tags": ["Log real", "Caverna", "Lobos"],
+      "searchTerms": ["ovo", "wave", "fragmentado", "separacao"],
+      "blocks": [
+        {
+          "kind": "steps",
+          "title": "Acontecimentos confirmados",
+          "items": [
+            "O grupo despertou na Caverna do Primeiro Corpo e lambeu o ovo, recuperando 1 de Vida.",
+            "Usou um osso como alavanca para abrir a passagem bloqueada por pedras.",
+            "Na Clareira, enfrentou waves até a wave 4 e derrotou ao menos três lobos.",
+            "Connor, Kairos, Kael e Grim saíram do Fragmentado; Davi permaneceu no receptáculo.",
+            "O grupo fugiu e avistou a Vila."
+          ]
+        },
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "O ovo",
+          "text": "O ovo pode ser alimento produzido pelo organismo ou entidade alienígena para desenvolver o primeiro corpo. A mesa presenciou o efeito, mas não conhece essa explicação."
+        },
+        {
+          "kind": "paragraph",
+          "title": "Fonte",
+          "text": "docs/SESSION_1_ACTUAL_LOG_2026-05-31.md"
+        }
+      ]
+    },
+    {
+      "id": "sessao-2",
+      "number": "M03",
+      "label": "Sessão 2 · Primeiros vínculos",
+      "status": "canon",
+      "summary": "A chegada à Vila, o retorno de Davi à clareira e os ganchos intactos.",
+      "tags": ["Log real", "Vila", "Feixe azul"],
+      "searchTerms": ["Kael", "Nayr", "Nilo", "Renji", "Davi"],
+      "blocks": [
+        {
+          "kind": "bullets",
+          "title": "Acontecimentos confirmados",
+          "items": [
+            "Kael ficou incapacitado e foi levado para repouso.",
+            "O grupo conheceu diferentes moradores enquanto preparava a refeição.",
+            "Davi, ainda no Fragmentado, retornou sozinho à Clareira dos Lobos.",
+            "Ele enfrentou três lobos, ficou gravemente ferido e voltou sem conduzi-los à Vila.",
+            "Renji acompanhou Connor na busca pelo Fragmentado."
+          ]
+        },
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Feixe azul ignorado",
+          "text": "Depois de falhar em um teste, Davi viu um feixe azul seguir na direção do corpo de Kael. A pista representa o vínculo entre as consciências mesmo quando ocupam corpos diferentes."
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Ganchos que permaneceram intactos",
+          "text": "Nayr continuou escondido. Nilo e o Riacho Claro ainda não tinham sido explorados. A Cartoteca e a liberação completa do MUN ainda não tinham acontecido."
+        },
+        {
+          "kind": "paragraph",
+          "title": "Fonte",
+          "text": "docs/planejamento/SESSION_2_ACTUAL_LOG_2026-07-09.md"
+        }
+      ]
+    },
+    {
+      "id": "sessao-3",
+      "number": "M04",
+      "label": "Sessão 3 · Memória e mapa",
+      "status": "canon",
+      "summary": "O Fragmentado vazio, o Riacho Claro e a abertura do mundo.",
+      "tags": ["Log real", "Nilo", "MUN"],
+      "searchTerms": ["Liora", "Caixinha", "esfera", "campo de treinamento"],
+      "blocks": [
+        {
+          "kind": "steps",
+          "title": "Acontecimentos confirmados",
+          "items": [
+            "Fragmentado voltou ferido e o grupo se reuniu no centro da Vila.",
+            "Kairos passou mal; ao dizer que queria sair, levou Davi a se desvincular.",
+            "Todas as consciências deixaram o receptáculo, que caiu vazio e paralisado.",
+            "Davi, Kairos e Kael viram Nilo e o Eco de Liora no Riacho Claro.",
+            "Davi recolheu a esfera mágica criada pela ativação do mecanismo.",
+            "Kael obteve a Caixinha do Ontem prometendo trazer Liora de volta.",
+            "Connor e Grim liberaram o Mapa Mundi com Kazuo e Orian.",
+            "O grupo seguiu para o Campo de Treinamento."
+          ]
+        },
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Promessa falsa",
+          "text": "Kael mentiu para Nilo ao prometer trazer Liora de volta. A consequência ainda precisa acontecer em cena; não aplicar punição automática sem gatilho narrativo."
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Fragmentado vazio",
+          "text": "O receptáculo coletivo está sem consciência e paralisado. Reação social, proteção física e consequência ainda precisam de decisão do Mestre antes de entrar em cena."
+        },
+        {
+          "kind": "paragraph",
+          "title": "Fonte",
+          "text": "docs/planejamento/PLANICIE_SESSAO_03_RESULTADO_2026-07-18.md"
+        }
+      ]
+    },
+    {
+      "id": "estado-atual",
+      "number": "M05",
+      "label": "Estado atual",
+      "status": "development",
+      "summary": "O último estado confirmado e tudo que ainda não pode ser inferido.",
+      "tags": ["Sessão 4", "Pendente", "Controle"],
+      "searchTerms": ["atual", "treinamento", "recompensas", "traducao"],
+      "blocks": [
+        {
+          "kind": "table",
+          "title": "Checkpoint confirmado",
+          "table": {
+            "columns": ["Elemento", "Estado"],
+            "rows": [
+              ["Mapa Mundi", "Liberado."],
+              ["Caixinha do Ontem", "Em posse do grupo."],
+              ["Esfera mágica", "Em posse do grupo."],
+              ["Fragmentado", "Vazio e paralisado."],
+              ["Frente imediata", "Treinamento Inicial no Campo de Treinamento."],
+              ["Sessão 4", "Aguardando resumo canônico do Mestre."]
+            ]
+          }
+        },
+        {
+          "kind": "bullets",
+          "title": "Preparo registrado para o treinamento",
+          "items": [
+            "Arma 1d6 e/ou escudo ou lança para cada protagonista.",
+            "Um nível para cada jogador.",
+            "Seis itens, um por arquétipo, para escolha e absorção.",
+            "Cinco habilidades individuais.",
+            "Cinco aparelhos de tradução simultânea."
+          ]
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Limite desta edição",
+          "text": "Não existe resumo canônico da Sessão 4 nas fontes atuais. Treino implementado, fichas alteradas ou estado do app não provam que algo aconteceu na narrativa."
+        }
+      ]
+    },
+    {
+      "id": "frentes-do-mundo",
+      "number": "M06",
+      "label": "Frentes do mundo",
+      "status": "playtest",
+      "summary": "O que está definido como direção e o que ainda não aconteceu.",
+      "tags": ["MUN", "Planejamento", "Biomas"],
+      "searchTerms": ["Ryoku", "Vhazaryon", "Seraph", "faccoes"],
+      "blocks": [
+        {
+          "kind": "rule",
+          "tone": "rule",
+          "title": "Regra de continuidade",
+          "text": "Simulação, posição no MUN, evento preparado e ficha de boss são planejamento. Só um log real aprovado transforma isso em acontecimento."
+        },
+        {
+          "kind": "table",
+          "title": "Maturidade narrativa por região",
+          "table": {
+            "columns": ["Região", "Estado da história"],
+            "rows": [
+              ["Planície e Vila", "Base mais consolidada; Sessões 1 a 3 registradas."],
+              ["Montanhas", "Ordem do Vazio Sereno definida; encontros pré-desenvolvidos."],
+              ["Vulcão", "Guardiões e Vhazaryon definidos como arco futuro; não aconteceu."],
+              ["Gelo", "Mapas e pontos existem, mas a lore local ainda é rasa."],
+              ["Ruínas", "Ryoku, selos e Torre do Abismo pré-desenvolvidos; não aconteceu."],
+              ["Floresta Mística", "Núcleo vivo e conexões definidos; encontros ainda futuros."],
+              ["Véu Cinzento", "Facção e rotas definidas; agenda temporal ainda incompleta."],
+              ["Praia e Oceano", "Companhia da Maré Livre definida; vários pontos ainda têm lore rasa."]
+            ]
+          }
+        },
+        {
+          "kind": "secret",
+          "tone": "secret",
+          "title": "Cataclismos",
+          "text": "Ryoku e Vhazaryon são ameaças de escala insular. Devem entrar como eventos com estados, fases e consequências, nunca como encontros aleatórios."
+        }
+      ]
+    },
+    {
+      "id": "lacunas",
+      "number": "M07",
+      "label": "Lacunas de continuidade",
+      "status": "development",
+      "summary": "Decisões que não podem ser preenchidas por improviso ou inferência automática.",
+      "tags": ["P0", "P1", "Não inventar"],
+      "searchTerms": ["lore rasa", "morte", "ritual", "liora", "vilao"],
+      "blocks": [
+        {
+          "kind": "table",
+          "title": "Fila de atenção",
+          "table": {
+            "columns": ["Prioridade", "Ponto", "Ação segura"],
+            "rows": [
+              ["P0", "Sessão 4 sem log", "Receber e consolidar o resumo real do Mestre."],
+              ["P0", "Morte e renascimento", "Fechar ordem operacional em material exclusivo do Mestre."],
+              ["P0", "Fragmentado vazio", "Definir reações sociais e proteção antes de narrar."],
+              ["P0", "Liora sem fonte própria", "Criar uma fonte curta de memória e Eco sem contradizer Nilo."],
+              ["P0", "Promessa a Nilo", "Preparar reações possíveis sem punição automática."],
+              ["P1", "Ryoku e Vhazaryon", "Fechar matriz de estados antes de qualquer Cataclisma."],
+              ["P1", "Gelo e litoral", "Dar a cada bioma conflito, segredo, evento e conexão de facção."],
+              ["P1", "Agenda das facções", "Registrar o que cada grupo faz se os jogadores não intervirem."]
+            ]
+          }
+        },
+        {
+          "kind": "warning",
+          "tone": "warning",
+          "title": "Versões bloqueadas",
+          "items": [
+            "Liora não morreu de doença; a versão correta é o acidente após o pulso de FUSHI.",
+            "Liora não voltou como NPC viva; ela aparece como memória ou Eco limitado.",
+            "Matrizes da Vila não são passados literais dos protagonistas.",
+            "Ryoku não falsifica automaticamente as vozes internas do grupo.",
+            "Desejos ligados a Vhazaryon nunca são concedidos sem custo proporcional."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "protocolo",
+      "number": "M08",
+      "label": "Protocolo de atualização",
+      "status": "canon",
+      "summary": "Como manter o livro verdadeiro depois de cada sessão.",
+      "tags": ["Fonte única", "Checklist", "Cânone"],
+      "searchTerms": ["atualizar", "log", "fonte", "publicar"],
+      "blocks": [
+        {
+          "kind": "steps",
+          "title": "Fechamento de sessão",
+          "items": [
+            "Registrar somente o que realmente aconteceu na mesa.",
+            "Separar fatos públicos, segredos do Mestre e planejamento futuro.",
+            "Comparar nomes, relações e causas com a lore primária em 01_LORE.",
+            "Atualizar o estado presente sem apagar ganchos que permaneceram intactos.",
+            "Marcar divergências; nunca inventar uma ponte para escondê-las.",
+            "Liberar ao jogador apenas o que os protagonistas viram ou o Mestre aprovou.",
+            "Regenerar o Livro da História e executar o smoke de sigilo antes da release."
+          ]
+        },
+        {
+          "kind": "table",
+          "title": "Hierarquia da verdade",
+          "table": {
+            "columns": ["Ordem", "Fonte"],
+            "rows": [
+              ["1", "Logs reais e resultados de sessão."],
+              ["2", "Lore primária em RPG-FUSHI/01_LORE."],
+              ["3", "Planejamento atual e controle de campanha."],
+              ["4", "Mundo implementado no MUN."],
+              ["5", "Design futuro, eventos e materiais pré-desenvolvidos."]
+            ]
+          }
+        },
+        {
+          "kind": "paragraph",
+          "title": "Fonte consolidada",
+          "text": "docs/planejamento/LORE_COMPILADO_CONTEXTO.md"
+        }
+      ]
+    }
+  ]
+}

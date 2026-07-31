@@ -61,6 +61,9 @@ import {
   type TabletopTurnParticipantView,
 } from '../components/tabletop/TabletopTurnTracker'
 import { TabletopWeatherOverlay } from '../components/tabletop/TabletopWeatherOverlay'
+import { TabletopVfxLibrary } from '../components/tabletop/TabletopVfxLibrary'
+import { TabletopVfxPresentation } from '../components/tabletop/TabletopVfxPresentation'
+import { HistoryQuickReference } from '../components/product/HistoryQuickReference'
 import type {
   WorldMundiMapPlaceholderRequest,
 } from '../components/tabletop/TabletopWorldMundiPanel'
@@ -94,6 +97,11 @@ import type {
 import { getCharacterGrant } from '../data/grants/characterGrantCatalog'
 import { getInitialTrainingReward } from '../data/training/initialTrainingRewards'
 import { getBuildItems } from '../data/combatCatalog'
+import {
+  getTabletopVfxPreset,
+  type TabletopVfxPreset,
+  type TabletopVfxPresentationState,
+} from '../data/vfxCatalog'
 import {
   findTabletopStatusDefinition,
   getTabletopStatusDefinition,
@@ -395,6 +403,8 @@ type HudPanelId =
   | 'objects'
   | 'world'
   | 'cinematics'
+  | 'history'
+  | 'vfx'
   | 'book'
   | 'diagnostics'
   | 'settings'
@@ -2001,6 +2011,7 @@ export function TablePage() {
   const rollWindowRestoreTimeoutRef = useRef<number | null>(null)
   const diceQueueAdvanceTimeoutRef = useRef<number | null>(null)
   const boardImpactTimeoutRef = useRef<number | null>(null)
+  const vfxPresentationTimeoutRef = useRef<number | null>(null)
   const lastRollToastIdRef = useRef('')
   const isRollToastPlaybackArmedRef = useRef(false)
   const activeDiceRollEntryRef = useRef<TabletopLogEntry | null>(null)
@@ -2110,6 +2121,8 @@ export function TablePage() {
     useState<TabletopTransitionOverlayState | null>(null)
   const [cinematicOverlayState, setCinematicOverlayState] =
     useState<TabletopCinematicOverlayState | null>(null)
+  const [activeVfxPresentation, setActiveVfxPresentation] =
+    useState<TabletopVfxPresentationState | null>(null)
   const [audioTransportState, setAudioTransportState] =
     useState<TabletopAudioTransportState>('stopped')
   const [musicVolume, setMusicVolume] = useState(0.18)
@@ -2673,7 +2686,9 @@ export function TablePage() {
       { id: 'builds', label: 'Builds absorvidas', shortLabel: 'BUI' },
       { id: 'statuses', label: 'Buffs e debuffs', shortLabel: 'BUF' },
       { id: 'events', label: 'Eventos da mesa', shortLabel: 'EVE' },
+      { id: 'vfx', label: 'Efeitos visuais', shortLabel: 'VFX' },
       { id: 'world', label: 'Mapa Mundi', shortLabel: 'MUN' },
+      { id: 'history', label: 'Livro da Historia', shortLabel: 'HIS' },
       { id: 'turns', label: 'Turnos', shortLabel: 'TRN' },
       { id: 'diagnostics', label: 'Diagnostico multiplayer', shortLabel: 'NET' },
     ] as const,
@@ -2700,6 +2715,9 @@ export function TablePage() {
       }
       if (boardImpactTimeoutRef.current !== null) {
         window.clearTimeout(boardImpactTimeoutRef.current)
+      }
+      if (vfxPresentationTimeoutRef.current !== null) {
+        window.clearTimeout(vfxPresentationTimeoutRef.current)
       }
     }
   }, [])
@@ -4799,6 +4817,24 @@ export function TablePage() {
               }))
             }
             break
+          case 'vfx': {
+            if (broadcastEvent.vfxAction === 'clear') {
+              clearVfxPresentation()
+              break
+            }
+
+            const vfxPreset = broadcastEvent.vfxPresetId
+              ? getTabletopVfxPreset(broadcastEvent.vfxPresetId)
+              : null
+
+            if (vfxPreset) {
+              showVfxPresentation(
+                vfxPreset,
+                broadcastEvent.vfxTargetTokenId,
+              )
+            }
+            break
+          }
           case 'image-preview':
             if (broadcastEvent.src) {
               setImagePreviewState({
@@ -5207,6 +5243,9 @@ export function TablePage() {
           }%`,
         } as CSSProperties)
       : undefined
+  const activeVfxPreset = activeVfxPresentation
+    ? getTabletopVfxPreset(activeVfxPresentation.presetId)
+    : null
 
   const objectViews = sceneObjects
     .filter((object) => viewMode === 'gm' || object.visibility === 'public')
@@ -9134,6 +9173,73 @@ export function TablePage() {
     })
   }
 
+  function clearVfxPresentation() {
+    if (vfxPresentationTimeoutRef.current !== null) {
+      window.clearTimeout(vfxPresentationTimeoutRef.current)
+      vfxPresentationTimeoutRef.current = null
+    }
+
+    setActiveVfxPresentation(null)
+  }
+
+  function showVfxPresentation(
+    preset: TabletopVfxPreset,
+    targetTokenId?: string,
+  ) {
+    if (vfxPresentationTimeoutRef.current !== null) {
+      window.clearTimeout(vfxPresentationTimeoutRef.current)
+    }
+
+    const createdAt = getRuntimeTimestamp()
+    const presentation: TabletopVfxPresentationState = {
+      createdAt,
+      expiresAt: createdAt + preset.durationMs,
+      id: buildRuntimeEventId(`vfx-${preset.id}`),
+      presetId: preset.id,
+      targetTokenId,
+    }
+
+    setActiveVfxPresentation(presentation)
+    vfxPresentationTimeoutRef.current = window.setTimeout(() => {
+      vfxPresentationTimeoutRef.current = null
+      setActiveVfxPresentation((current) =>
+        current?.id === presentation.id ? null : current,
+      )
+    }, preset.durationMs + 40)
+  }
+
+  function previewVfx(preset: TabletopVfxPreset, targetTokenId?: string) {
+    showVfxPresentation(preset, targetTokenId)
+  }
+
+  function broadcastVfx(preset: TabletopVfxPreset, targetTokenId?: string) {
+    if (viewMode !== 'gm' || isRemotePlayerMode) {
+      return
+    }
+
+    showVfxPresentation(preset, targetTokenId)
+    appendBroadcastEvent({
+      type: 'vfx',
+      vfxAction: 'show',
+      vfxPresetId: preset.id,
+      vfxTargetTokenId: targetTokenId,
+      vfxExpiresAt: getRuntimeTimestamp() + preset.durationMs + 500,
+    })
+  }
+
+  function stopBroadcastVfx() {
+    if (viewMode !== 'gm' || isRemotePlayerMode) {
+      return
+    }
+
+    clearVfxPresentation()
+    appendBroadcastEvent({
+      type: 'vfx',
+      vfxAction: 'clear',
+      vfxExpiresAt: getRuntimeTimestamp() + 2500,
+    })
+  }
+
   function appendBroadcastEvent(
     event: Omit<TabletopBroadcastEvent, 'createdAt' | 'id'>,
   ) {
@@ -9147,12 +9253,19 @@ export function TablePage() {
       createdAt: getRuntimeTimestamp(),
     }
 
-    updateSession((currentSession) =>
-      createPersistedTabletopSession({
+    updateSession((currentSession) => {
+      const existingEvents =
+        event.type === 'vfx'
+          ? currentSession.broadcastEvents.filter(
+              (currentEvent) => currentEvent.type !== 'vfx',
+            )
+          : currentSession.broadcastEvents
+
+      return createPersistedTabletopSession({
         ...currentSession,
-        broadcastEvents: [...currentSession.broadcastEvents, nextEvent].slice(-40),
-      }),
-    )
+        broadcastEvents: [...existingEvents, nextEvent].slice(-40),
+      })
+    })
   }
 
   function appendLogEntry(entry: TabletopLogEntry) {
@@ -13818,6 +13931,14 @@ export function TablePage() {
                   <span />
                 </div>
               ) : null}
+              {boardMap && activeVfxPresentation && activeVfxPreset ? (
+                <TabletopVfxPresentation
+                  map={boardMap}
+                  presentation={activeVfxPresentation}
+                  preset={activeVfxPreset}
+                  tokens={tokenViews}
+                />
+              ) : null}
               {boardSceneRuntime ? (
                 <TabletopWeatherOverlay runtime={boardSceneRuntime.weather} />
               ) : null}
@@ -15158,6 +15279,52 @@ export function TablePage() {
                   onRestartTraining={handleRestartVillageTraining}
                   onStartRarityDraw={handleStartRarityDraw}
                   trainingState={session?.trainingState ?? null}
+                />
+              </TabletopHudPanel>
+            </FloatingWindow>
+          ) : null}
+
+          {activeHudPanel === 'vfx' ? (
+            <FloatingWindow
+              initialPosition={{ x: 98, y: 104 }}
+              initialSize={{ width: 980, height: 720 }}
+              onClose={() => setActiveHudPanel(null)}
+              subtitle="Presets visuais leves, efêmeros e sincronizados para a mesa."
+              title="VFX · Efeitos visuais"
+            >
+              <TabletopHudPanel
+                onClose={() => setActiveHudPanel(null)}
+                showChrome={false}
+                subtitle="Presets visuais leves, efêmeros e sincronizados para a mesa."
+                title="VFX · Efeitos visuais"
+              >
+                <TabletopVfxLibrary
+                  activePresetId={activeVfxPresentation?.presetId ?? ''}
+                  onBroadcast={broadcastVfx}
+                  onClear={stopBroadcastVfx}
+                  onPreview={previewVfx}
+                  participants={statusParticipants}
+                />
+              </TabletopHudPanel>
+            </FloatingWindow>
+          ) : null}
+
+          {activeHudPanel === 'history' ? (
+            <FloatingWindow
+              initialPosition={{ x: 116, y: 120 }}
+              initialSize={{ width: 980, height: 700 }}
+              onClose={() => setActiveHudPanel(null)}
+              subtitle="Crônica da campanha e continuidade do Mestre, sem sair da mesa."
+              title="HIS · Livro da História"
+            >
+              <TabletopHudPanel
+                onClose={() => setActiveHudPanel(null)}
+                showChrome={false}
+                subtitle="Crônica da campanha e continuidade do Mestre, sem sair da mesa."
+                title="HIS · Livro da História"
+              >
+                <HistoryQuickReference
+                  audience={viewMode === 'gm' ? 'master' : 'player'}
                 />
               </TabletopHudPanel>
             </FloatingWindow>

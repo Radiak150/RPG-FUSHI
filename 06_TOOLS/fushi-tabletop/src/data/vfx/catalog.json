@@ -1,0 +1,112 @@
+[
+  {
+    "id": "fushi-wave",
+    "label": "Onda de FUSHI",
+    "description": "Pulso azul atravessa toda a mesa a partir do centro.",
+    "category": "energia",
+    "color": "#56c8ff",
+    "durationMs": 2100,
+    "scope": "map",
+    "status": "ready",
+    "variant": "fushi-wave"
+  },
+  {
+    "id": "aura-cyan",
+    "label": "Aura Ciano",
+    "description": "Energia concentrada pulsa ao redor de um token.",
+    "category": "energia",
+    "color": "#43e6da",
+    "durationMs": 2200,
+    "scope": "token",
+    "status": "ready",
+    "variant": "aura-cyan"
+  },
+  {
+    "id": "damage-slash",
+    "label": "Impacto Cortante",
+    "description": "Corte vermelho curto para confirmar dano físico.",
+    "category": "impacto",
+    "color": "#f25767",
+    "durationMs": 1050,
+    "scope": "token",
+    "status": "ready",
+    "variant": "damage-slash"
+  },
+  {
+    "id": "heal-bloom",
+    "label": "Pulso de Cura",
+    "description": "Anéis verdes sobem do alvo e confirmam recuperação.",
+    "category": "impacto",
+    "color": "#5ce39a",
+    "durationMs": 1700,
+    "scope": "token",
+    "status": "ready",
+    "variant": "heal-bloom"
+  },
+  {
+    "id": "spell-fizzle",
+    "label": "Falha de Poder",
+    "description": "O pulso tenta se formar e se desfaz sobre o usuário.",
+    "category": "impacto",
+    "color": "#d7798f",
+    "durationMs": 1300,
+    "scope": "token",
+    "status": "ready",
+    "variant": "spell-fizzle"
+  },
+  {
+    "id": "phase-shift",
+    "label": "Mudança de Fase",
+    "description": "Giro violeta e clarão para troca de estágio ou aparência.",
+    "category": "transicao",
+    "color": "#b68cff",
+    "durationMs": 2300,
+    "scope": "token",
+    "status": "ready",
+    "variant": "phase-shift"
+  },
+  {
+    "id": "lightning-flash",
+    "label": "Relâmpago",
+    "description": "Clarão frio e linhas rápidas sobre toda a cena.",
+    "category": "ambiente",
+    "color": "#b7e6ff",
+    "durationMs": 1400,
+    "scope": "map",
+    "status": "ready",
+    "variant": "lightning-flash"
+  },
+  {
+    "id": "ember-rain",
+    "label": "Chuva de Brasas",
+    "description": "Partículas quentes atravessam a cena sem alterar o mapa.",
+    "category": "ambiente",
+    "color": "#ff9a4f",
+    "durationMs": 3600,
+    "scope": "map",
+    "status": "ready",
+    "variant": "ember-rain"
+  },
+  {
+    "id": "frost-breath",
+    "label": "Sopro Congelante",
+    "description": "Névoa azul e cristais leves passam pela mesa.",
+    "category": "ambiente",
+    "color": "#9ae8ff",
+    "durationMs": 3200,
+    "scope": "map",
+    "status": "ready",
+    "variant": "frost-breath"
+  },
+  {
+    "id": "shadow-veil",
+    "label": "Véu Sombrio",
+    "description": "Escurece as bordas por alguns segundos sem tocar na iluminação.",
+    "category": "ambiente",
+    "color": "#7566a9",
+    "durationMs": 3000,
+    "scope": "map",
+    "status": "ready",
+    "variant": "shadow-veil"
+  }
+]

@@ -22,6 +22,8 @@ REPORT_PATH = PDF_DIR / "FUSHI_Rulebook_QA_Alpha84.json"
 VOLUMES = {
     "player": PDF_DIR / "FUSHI_Livro_do_Jogador_Alpha84.pdf",
     "master": PDF_DIR / "FUSHI_Livro_do_Mestre_Alpha84.pdf",
+    "history_player": PDF_DIR / "FUSHI_Cronicas_da_Ilha_Alpha92.pdf",
+    "history_master": PDF_DIR / "FUSHI_Livro_da_Historia_Alpha92.pdf",
 }
 FORBIDDEN_PLAYER_TERMS = (
     "reencarnação",
@@ -29,6 +31,16 @@ FORBIDDEN_PLAYER_TERMS = (
     "progressão oculta",
     "disputa de posse",
     "esporos de fushi",
+)
+FORBIDDEN_PUBLIC_HISTORY_TERMS = (
+    *FORBIDDEN_PLAYER_TERMS,
+    "organismo alienígena",
+    "matrizes humanas",
+    "metaplot",
+    "ryoku",
+    "vhazaryon",
+    "seraph",
+    "natureza dos protagonistas",
 )
 
 
@@ -173,9 +185,14 @@ def audit_volume(name: str, pdf: Path) -> dict[str, Any]:
         label for label in ("DEVELOPMENT", "CONSTRUCTION") if label in all_text
     ]
     player_leaks = []
-    if name == "player":
+    if name in {"player", "history_player"}:
         searchable = normalized(all_text)
-        player_leaks = [term for term in FORBIDDEN_PLAYER_TERMS if normalized(term) in searchable]
+        forbidden_terms = (
+            FORBIDDEN_PUBLIC_HISTORY_TERMS
+            if name == "history_player"
+            else FORBIDDEN_PLAYER_TERMS
+        )
+        player_leaks = [term for term in forbidden_terms if normalized(term) in searchable]
     sheets = contact_sheets(renders, RENDER_ROOT / name, name)
     metadata = reader.metadata or {}
     return {
@@ -207,7 +224,7 @@ def main() -> int:
     report = {name: audit_volume(name, path) for name, path in VOLUMES.items()}
     report["passed"] = all(volume["passed"] for volume in report.values())
     REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-    for name in ("player", "master"):
+    for name in VOLUMES:
         volume = report[name]
         print(
             f"{name}: pages={volume['pages']} blanks={volume['blank_like_pages']} "

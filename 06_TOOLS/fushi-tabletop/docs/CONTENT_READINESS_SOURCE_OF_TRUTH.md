@@ -315,3 +315,25 @@ node scripts/update-combat-v2-readiness.mjs
 
 O resumo final da build deve citar se a planilha foi atualizada ou explicar por
 que nao foi.
+
+## Alpha.92: Historia publica, Historia do Mestre e VFX
+
+- `src/data/history/player-history.json` e a cronica publica. Ela pode ser
+  aberta por jogadores e nunca deve conter reencarnacao, natureza real dos
+  protagonistas, matrizes, metaplot ou ganchos exclusivos do Mestre.
+- `src/data/history/master-history.json` e o Livro da Historia confidencial.
+  Ele concentra continuidade, bastidores, lacunas, planejamento e fontes
+  primarias. Planejamento ou estado tecnico do app nunca vira acontecimento
+  canonico sem log real aprovado pelo Mestre.
+- Os PDFs correspondentes sao `output/pdf/FUSHI_Cronicas_da_Ilha_Alpha92.pdf`
+  e `output/pdf/FUSHI_Livro_da_Historia_Alpha92.pdf`. Ambos passam por
+  `npm run books:build`, `npm run books:audit` e pelo smoke de sigilo.
+- `src/data/vfx/catalog.json` e a fonte unica dos presets VFX. Preview e local;
+  broadcast e publico; todo broadcast tem `vfxExpiresAt`, e VFX vencido ou
+  limpo nao pode voltar ao reconnect, troca de mapa ou reabertura da Mesa.
+- O smoke especifico e `npm run smoke:history-vfx`; o gate empacotado e
+  `npm run smoke:history-vfx:release`. Ele testa a separacao de audiencia, a
+  quantidade do catalogo, preview local, broadcast e ausencia de replay.
+- MSC/audio esta fora da alpha.92 e so deve ser reorganizado depois do teste
+  fisico desta build. Nao criar uma segunda taxonomia ou mover a biblioteca
+  antes da aprovacao do Mestre.

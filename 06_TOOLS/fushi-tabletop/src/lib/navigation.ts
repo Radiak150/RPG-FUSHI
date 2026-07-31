@@ -46,6 +46,12 @@ export const navigationItems: NavigationItem[] = [
     allowedViews: ['gm', 'player'],
   },
   {
+    to: '/historia',
+    label: 'Historia',
+    description: 'Cronica publica da mesa e continuidade confidencial do Mestre.',
+    allowedViews: ['gm', 'player'],
+  },
+  {
     to: '/configuracoes',
     label: 'Configuracoes',
     description: 'Tema, graficos e preferencias locais desta instalacao.',
@@ -97,6 +103,13 @@ const routeMeta: Record<string, RouteMeta> = {
     description:
       'Consulta de regras do Jogador e escudo confidencial do Mestre.',
     eyebrow: 'Modulo',
+    allowedViews: ['gm', 'player'],
+  },
+  '/historia': {
+    title: 'Livro da Historia',
+    description:
+      'Memoria da campanha separada entre acontecimentos publicos e continuidade do Mestre.',
+    eyebrow: 'Campanha',
     allowedViews: ['gm', 'player'],
   },
   '/configuracoes': {
