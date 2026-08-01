@@ -92,6 +92,7 @@ export function TabletopLightingLayer({
   const idSuffix = rawId.replace(/[^a-zA-Z0-9_-]/g, '')
   const maskId = `tabletop-scene-light-mask-${idSuffix}`
   const holeGradientId = `tabletop-scene-light-hole-${idSuffix}`
+  const cursorHoleGradientId = `tabletop-cursor-light-hole-${idSuffix}`
   const activeLights = lighting.enabled
     ? lighting.lights.filter((light) => light.enabled)
     : []
@@ -256,6 +257,13 @@ export function TabletopLightingLayer({
             <stop offset="78%" stopColor="#d4d4d4" />
             <stop offset="100%" stopColor="white" />
           </radialGradient>
+          <radialGradient id={cursorHoleGradientId}>
+            <stop offset="0%" stopColor="#383838" />
+            <stop offset="18%" stopColor="#454545" />
+            <stop offset="52%" stopColor="#929292" />
+            <stop offset="82%" stopColor="#dedede" />
+            <stop offset="100%" stopColor="white" />
+          </radialGradient>
           <mask id={maskId} maskContentUnits="userSpaceOnUse">
             <rect fill="white" height="100" width="100" x="0" y="0" />
             {hasLightSource
@@ -275,9 +283,9 @@ export function TabletopLightingLayer({
                 className="tabletop-lighting-layer__cursor-hole"
                 cx={cursorLight.x * 100}
                 cy={cursorLight.y * 100}
-                fill={`url(#${holeGradientId})`}
+                fill={`url(#${cursorHoleGradientId})`}
                 opacity={cursorLight.intensity}
-                r={cursorLight.radius * 100}
+                r={cursorLight.radius * 72}
                 ref={cursorHoleRef}
               />
             ) : null}
@@ -315,8 +323,8 @@ export function TabletopLightingLayer({
           style={{
             left: `${cursorLight.x * 100}%`,
             top: `${cursorLight.y * 100}%`,
-            width: `${Math.max(10, cursorLight.radius * 200)}%`,
-            height: `${Math.max(10, cursorLight.radius * 200)}%`,
+            width: `${Math.max(8, cursorLight.radius * 136)}%`,
+            height: `${Math.max(8, cursorLight.radius * 136)}%`,
             '--tabletop-light-color': cursorLight.color,
             '--tabletop-light-intensity': cursorLight.intensity,
           } as React.CSSProperties}
