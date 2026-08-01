@@ -416,7 +416,11 @@ function writeSeedData() {
           nome: 'Planicie',
         },
       ],
-      clock: null,
+      clock: {
+        dia: 1,
+        hora: 20,
+        fase: 0,
+      },
       locations: [
         {
           biomaId: 'biome-1',
@@ -824,6 +828,14 @@ async function run() {
 
   if (publicStateMessage.payload?.world?.publicMap?.releasedToPlayers !== true) {
     throw new Error('Estado publico do Mundi veio incompleto para o jogador.')
+  }
+
+  if (
+    publicStateMessage.payload?.world?.clock?.dia !== 1 ||
+    publicStateMessage.payload?.world?.clock?.hora !== 20 ||
+    publicStateMessage.payload?.world?.clock?.fase !== 0
+  ) {
+    throw new Error('Relogio canonico de dia/noite nao chegou ao jogador.')
   }
 
   if (publicStateMessage.payload?.world?.publicLocations?.[0]?.id !== 'loc-1') {

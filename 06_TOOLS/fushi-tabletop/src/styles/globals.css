@@ -6396,6 +6396,8 @@ button.landing-action:disabled {
   padding: 20px;
   overscroll-behavior: contain;
   scrollbar-gutter: stable both-edges;
+  box-shadow: inset 0 0 0 100vmax rgba(2, 6, 16, 0);
+  transition: box-shadow 4.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .tabletop-board__viewport--panning {
@@ -6600,38 +6602,51 @@ button.landing-action:disabled {
   inset: 0;
   width: 100%;
   height: 100%;
+  opacity: 0;
   pointer-events: none;
+  transition: opacity 4.8s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity;
+}
+
+.tabletop-lighting-layer--night .tabletop-lighting-layer__mask {
+  opacity: 1;
 }
 
 .tabletop-lighting-layer__darkness {
-  fill: rgba(2, 5, 12, 0.82);
-  transition: opacity 180ms ease;
+  fill: rgba(1, 5, 15, 0.84);
 }
 
 .tabletop-lighting-layer__moon-wash {
   position: absolute;
   inset: -20%;
   pointer-events: none;
+  z-index: 1;
   background:
     linear-gradient(
-      118deg,
-      transparent 18%,
-      rgba(123, 164, 204, 0.025) 31%,
-      rgba(172, 207, 232, 0.13) 46%,
-      rgba(108, 151, 193, 0.045) 58%,
-      transparent 73%
+      116deg,
+      transparent 12%,
+      rgba(98, 143, 190, 0.035) 27%,
+      rgba(183, 215, 241, 0.2) 44%,
+      rgba(108, 156, 202, 0.07) 57%,
+      transparent 76%
     ),
     linear-gradient(
-      155deg,
-      rgba(115, 157, 197, 0.08) 0%,
-      transparent 44%,
-      rgba(80, 118, 162, 0.035) 100%
+      164deg,
+      rgba(88, 130, 176, 0.13) 0%,
+      transparent 39%,
+      rgba(58, 96, 144, 0.055) 100%
     );
   mix-blend-mode: screen;
-  filter: blur(18px) saturate(0.82);
-  opacity: 0.78;
+  filter: blur(16px) saturate(0.88);
+  opacity: 0;
   transform: translate3d(-4%, -2%, 0) scale(1.08);
   animation: tabletop-moon-drift 44s ease-in-out infinite alternate;
+  transition: opacity 5.2s ease 900ms;
+  will-change: opacity, transform;
+}
+
+.tabletop-lighting-layer--night .tabletop-lighting-layer__moon-wash {
+  opacity: 0.94;
 }
 
 @keyframes tabletop-moon-drift {
@@ -6647,23 +6662,102 @@ button.landing-action:disabled {
 .tabletop-lighting-layer__glow {
   position: absolute;
   transform: translate(-50%, -50%);
-  border-radius: 50%;
+  z-index: 2;
+  border-radius: 48% 52% 46% 54%;
   pointer-events: none;
-  opacity: calc(0.12 + (var(--tabletop-light-intensity, 0.7) * 0.18));
+  opacity: 0;
   background:
     radial-gradient(
-      circle,
-      color-mix(in srgb, var(--tabletop-light-color, #ffd58a) 85%, white) 0%,
-      color-mix(in srgb, var(--tabletop-light-color, #ffd58a) 42%, transparent) 34%,
-      transparent 72%
+      ellipse at 50% 46%,
+      color-mix(in srgb, var(--tabletop-light-color, #ffd58a) 86%, white) 0%,
+      color-mix(in srgb, var(--tabletop-light-color, #ffd58a) 62%, transparent) 18%,
+      color-mix(in srgb, var(--tabletop-light-color, #ffd58a) 34%, transparent) 43%,
+      transparent 76%
     );
   mix-blend-mode: screen;
-  filter: blur(2px);
+  filter: blur(3px) saturate(1.12);
+  transition: opacity 1.4s ease;
+  will-change: left, top, opacity, transform;
+}
+
+.tabletop-lighting-layer__glow::before,
+.tabletop-lighting-layer__glow::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.tabletop-lighting-layer__glow::before {
+  inset: 11% 17% 15%;
+  border-radius: 46% 54% 52% 48%;
+  background: radial-gradient(
+    ellipse at 52% 42%,
+    rgba(255, 248, 219, 0.48),
+    color-mix(in srgb, var(--tabletop-light-color, #ffd58a) 55%, transparent) 38%,
+    transparent 72%
+  );
+  filter: blur(5px);
+  animation: tabletop-lantern-breathe 2.8s ease-in-out infinite alternate;
+}
+
+.tabletop-lighting-layer__glow::after {
+  inset: 31% 34% 38%;
+  border-radius: 52% 48% 44% 56%;
+  background: rgba(255, 242, 193, 0.38);
+  filter: blur(7px);
+  animation: tabletop-lantern-flicker 1.9s ease-in-out infinite alternate;
+}
+
+.tabletop-lighting-layer--night .tabletop-lighting-layer__glow {
+  opacity: calc(0.18 + (var(--tabletop-light-intensity, 0.7) * 0.22));
 }
 
 .tabletop-lighting-layer__glow--cursor {
-  opacity: calc(0.14 + (var(--tabletop-light-intensity, 0.7) * 0.2));
-  filter: blur(3px);
+  border-radius: 43% 57% 49% 51%;
+  filter: blur(4px) saturate(1.18);
+}
+
+.tabletop-lighting-layer--night .tabletop-lighting-layer__glow--cursor {
+  opacity: calc(0.22 + (var(--tabletop-light-intensity, 0.7) * 0.24));
+}
+
+.tabletop-lighting-layer[data-gm='false']
+  .tabletop-lighting-layer__glow--cursor {
+  transition:
+    left 130ms linear,
+    top 130ms linear,
+    opacity 1.4s ease;
+}
+
+.tabletop-lighting-layer[data-gm='false']
+  .tabletop-lighting-layer__cursor-hole {
+  transition:
+    cx 130ms linear,
+    cy 130ms linear;
+}
+
+@keyframes tabletop-lantern-breathe {
+  from {
+    opacity: 0.74;
+    transform: translate3d(-1.5%, 1%, 0) scale(0.96, 1.02);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(1.5%, -1%, 0) scale(1.04, 0.98);
+  }
+}
+
+@keyframes tabletop-lantern-flicker {
+  from {
+    opacity: 0.62;
+    transform: translate3d(2%, -3%, 0) scale(0.94);
+  }
+
+  to {
+    opacity: 0.92;
+    transform: translate3d(-2%, 3%, 0) scale(1.06);
+  }
 }
 
 .tabletop-lighting-layer__handle {
@@ -6888,9 +6982,10 @@ button.landing-action:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tabletop-lighting-layer__moon-wash {
+  .tabletop-lighting-layer__moon-wash,
+  .tabletop-lighting-layer__glow::before,
+  .tabletop-lighting-layer__glow::after {
     animation: none;
-    transform: scale(1.08);
   }
 }
 
@@ -8947,6 +9042,153 @@ button.landing-action:disabled {
     radial-gradient(circle at top left, var(--tabletop-screen-glow), transparent 24%),
     radial-gradient(circle at top right, var(--tabletop-screen-edge), transparent 26%),
     linear-gradient(180deg, rgba(6, 8, 11, 0.98), rgba(4, 5, 8, 1));
+  transition: background-color 4.8s ease;
+  isolation: isolate;
+}
+
+.tabletop-screen--night {
+  --tabletop-screen-glow: rgba(54, 94, 142, 0.1);
+  --tabletop-screen-edge: rgba(117, 151, 190, 0.055);
+  --tabletop-board-glow: rgba(59, 103, 151, 0.09);
+  --tabletop-panel-surface:
+    linear-gradient(180deg, rgba(8, 13, 22, 0.97), rgba(4, 8, 15, 0.97));
+  --tabletop-ui-surface: rgba(4, 8, 15, 0.9);
+  --tabletop-map-wash:
+    linear-gradient(165deg, rgba(92, 136, 181, 0.07), rgba(1, 4, 11, 0.16));
+  background:
+    linear-gradient(135deg, rgba(41, 73, 111, 0.08), transparent 48%),
+    linear-gradient(180deg, #02060e, #01030a);
+}
+
+.tabletop-screen--night .tabletop-board__viewport {
+  box-shadow: inset 0 0 0 100vmax rgba(1, 5, 14, 0.58);
+}
+
+.tabletop-screen--night .tabletop-board__free-3d-layer .tabletop-3d-stage {
+  filter: brightness(0.68) saturate(0.78) contrast(1.06);
+}
+
+.tabletop-board__free-3d-layer .tabletop-3d-stage {
+  transition: filter 4.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tabletop-day-night-atmosphere {
+  display: contents;
+}
+
+.tabletop-day-night-atmosphere__cinematic {
+  position: fixed;
+  inset: 0;
+  z-index: 58;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tabletop-day-night-atmosphere__cinematic > span {
+  position: absolute;
+  inset: -12%;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.tabletop-day-night-atmosphere__cinematic--to-night
+  .tabletop-day-night-atmosphere__veil {
+  background: linear-gradient(
+    180deg,
+    rgba(2, 7, 17, 0.08),
+    rgba(1, 4, 12, 0.7)
+  );
+  animation: tabletop-nightfall-veil 6.2s ease both;
+}
+
+.tabletop-day-night-atmosphere__cinematic--to-night
+  .tabletop-day-night-atmosphere__horizon {
+  background: linear-gradient(
+    118deg,
+    transparent 24%,
+    rgba(171, 205, 233, 0.16) 47%,
+    transparent 66%
+  );
+  filter: blur(26px);
+  animation: tabletop-nightfall-moon 6.2s ease both;
+}
+
+.tabletop-day-night-atmosphere__cinematic--to-night
+  .tabletop-day-night-atmosphere__sky {
+  background: linear-gradient(
+    180deg,
+    rgba(37, 67, 104, 0.26),
+    rgba(2, 6, 15, 0.08) 52%,
+    transparent 78%
+  );
+  animation: tabletop-nightfall-sky 6.2s ease both;
+}
+
+.tabletop-day-night-atmosphere__cinematic--to-day
+  .tabletop-day-night-atmosphere__veil {
+  background: linear-gradient(
+    180deg,
+    rgba(12, 24, 38, 0.22),
+    rgba(238, 199, 126, 0.08) 54%,
+    transparent 86%
+  );
+  animation: tabletop-daybreak-veil 4.2s ease both;
+}
+
+.tabletop-day-night-atmosphere__cinematic--to-day
+  .tabletop-day-night-atmosphere__horizon {
+  background: linear-gradient(
+    104deg,
+    transparent 18%,
+    rgba(255, 220, 154, 0.2) 48%,
+    transparent 72%
+  );
+  filter: blur(28px);
+  animation: tabletop-daybreak-horizon 4.2s ease both;
+}
+
+.tabletop-day-night-atmosphere__cinematic--to-day
+  .tabletop-day-night-atmosphere__sky {
+  background: linear-gradient(
+    180deg,
+    rgba(190, 218, 226, 0.16),
+    transparent 68%
+  );
+  animation: tabletop-daybreak-sky 4.2s ease both;
+}
+
+@keyframes tabletop-nightfall-veil {
+  0% { opacity: 0; }
+  58% { opacity: 0.46; }
+  100% { opacity: 0; }
+}
+
+@keyframes tabletop-nightfall-moon {
+  0% { opacity: 0; transform: translate3d(-10%, -4%, 0); }
+  52% { opacity: 0.68; }
+  100% { opacity: 0; transform: translate3d(8%, 3%, 0); }
+}
+
+@keyframes tabletop-nightfall-sky {
+  0% { opacity: 0; }
+  54% { opacity: 0.78; }
+  100% { opacity: 0; }
+}
+
+@keyframes tabletop-daybreak-veil {
+  0% { opacity: 0.62; }
+  100% { opacity: 0; }
+}
+
+@keyframes tabletop-daybreak-horizon {
+  0% { opacity: 0; transform: translate3d(-8%, 4%, 0); }
+  42% { opacity: 0.74; }
+  100% { opacity: 0; transform: translate3d(8%, -4%, 0); }
+}
+
+@keyframes tabletop-daybreak-sky {
+  0% { opacity: 0.34; }
+  100% { opacity: 0; }
 }
 
 .tabletop-screen--fallback {

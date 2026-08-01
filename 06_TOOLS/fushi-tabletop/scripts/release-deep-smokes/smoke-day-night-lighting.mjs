@@ -345,6 +345,13 @@ async function readLightingState(send) {
         '.tabletop-lighting-layer__glow--cursor'
       )
       const boardImage = document.querySelector('.tabletop-board__image')
+      const atmosphere = document.querySelector('[data-day-night-atmosphere="true"]')
+      const darkness = document.querySelector(
+        '.tabletop-lighting-layer__mask'
+      )
+      const moonAmbience = document.querySelector(
+        '[data-moon-ambience="true"]'
+      )
 
       return {
         boardImageReady:
@@ -357,6 +364,18 @@ async function readLightingState(send) {
           cursorGlow instanceof HTMLElement ? cursorGlow.style.left : '',
         cursorTop:
           cursorGlow instanceof HTMLElement ? cursorGlow.style.top : '',
+        localCursorX: layer?.getAttribute('data-local-cursor-x') ?? '',
+        localCursorY: layer?.getAttribute('data-local-cursor-y') ?? '',
+        dayNightMode:
+          atmosphere?.getAttribute('data-day-night-mode') ?? null,
+        dayNightSound:
+          atmosphere?.getAttribute('data-day-night-sound') ?? null,
+        dayNightTransition:
+          atmosphere?.getAttribute('data-day-night-transition') ?? null,
+        darknessOpacity:
+          darkness instanceof Element
+            ? Number.parseFloat(getComputedStyle(darkness).opacity)
+            : -1,
         gmControls: controls?.getAttribute('data-gm-controls') ?? null,
         expanded: controls?.getAttribute('data-expanded') ?? null,
         hasAddButton: Boolean(
@@ -366,8 +385,12 @@ async function readLightingState(send) {
           document.querySelector('.tabletop-lighting-layer__mask')
         ),
         hasMoonAmbience: Boolean(
-          document.querySelector('[data-moon-ambience="true"]')
+          moonAmbience
         ),
+        moonOpacity:
+          moonAmbience instanceof Element
+            ? Number.parseFloat(getComputedStyle(moonAmbience).opacity)
+            : -1,
         lightCount: Number(layer?.getAttribute('data-light-count') ?? -1),
         lightingEnabled:
           layer?.getAttribute('data-lighting-enabled') ?? null,
@@ -399,7 +422,12 @@ async function main() {
   assert.equal(initial.gmControls, 'true')
   assert.equal(initial.expanded, 'false')
   assert.equal(initial.hasAddButton, false)
+  await setTableClockMode(send, 'day')
   await setTableClockMode(send, 'night')
+  const nightTransition = await readLightingState(send)
+  assert.equal(nightTransition.dayNightMode, 'night')
+  assert.equal(nightTransition.dayNightTransition, 'to-night')
+  assert.equal(nightTransition.dayNightSound, 'nightfall')
   await setLightingControlsExpanded(send, true)
 
   const lightAdded = await evaluate(
@@ -552,6 +580,7 @@ async function main() {
   await waitFor(
     send,
     `(() => {
+      const layer = document.querySelector('.tabletop-lighting-layer')
       const glow = document.querySelector(
         '.tabletop-lighting-layer__glow--cursor'
       )
@@ -563,6 +592,12 @@ async function main() {
       )
       const expectedX = ${JSON.stringify(cursorTarget.normalizedX * 100)}
       const expectedY = ${JSON.stringify(cursorTarget.normalizedY * 100)}
+      const localX = Number.parseFloat(
+        layer?.getAttribute('data-local-cursor-x') ?? ''
+      )
+      const localY = Number.parseFloat(
+        layer?.getAttribute('data-local-cursor-y') ?? ''
+      )
 
       return {
         expectedX,
@@ -570,8 +605,14 @@ async function main() {
         ok:
           Number.isFinite(x) &&
           Number.isFinite(y) &&
+          Number.isFinite(localX) &&
+          Number.isFinite(localY) &&
           Math.abs(x - expectedX) <= 1 &&
-          Math.abs(y - expectedY) <= 1,
+          Math.abs(y - expectedY) <= 1 &&
+          Math.abs(localX * 100 - expectedX) <= 1 &&
+          Math.abs(localY * 100 - expectedY) <= 1,
+        localX,
+        localY,
         x,
         y,
       }
@@ -587,6 +628,7 @@ async function main() {
   assert.equal(night.hasAddButton, true)
   assert.equal(night.hasDarkness, true)
   assert.equal(night.hasMoonAmbience, true)
+  assert.equal(night.dayNightMode, 'night')
   assert.equal(night.lightCount, 1)
   assert.equal(night.cursorEnabled, 'true')
   assert.ok(
@@ -607,11 +649,56 @@ async function main() {
   const day = await readLightingState(send)
   assert.equal(day.night, 'false')
   assert.equal(day.expanded, 'false')
-  assert.equal(day.hasDarkness, false)
-  assert.equal(day.hasMoonAmbience, false)
+  assert.equal(day.hasDarkness, true)
+  assert.equal(day.hasMoonAmbience, true)
+  assert.equal(day.dayNightMode, 'day')
+  assert.equal(day.dayNightTransition, 'to-day')
+  assert.equal(day.dayNightSound, 'daybreak')
   assert.equal(day.lightCount, 1)
 
+  await waitFor(
+    send,
+    `(() => {
+      const atmosphere = document.querySelector('[data-day-night-atmosphere="true"]')
+      const darkness = document.querySelector('.tabletop-lighting-layer__mask')
+      const moon = document.querySelector('[data-moon-ambience="true"]')
+      return {
+        darknessOpacity: darkness ? Number.parseFloat(getComputedStyle(darkness).opacity) : -1,
+        moonOpacity: moon ? Number.parseFloat(getComputedStyle(moon).opacity) : -1,
+        ok:
+          atmosphere?.getAttribute('data-day-night-transition') === 'idle' &&
+          darkness && Number.parseFloat(getComputedStyle(darkness).opacity) <= 0.02 &&
+          moon && Number.parseFloat(getComputedStyle(moon).opacity) <= 0.02,
+      }
+    })()`,
+    'fim visual do amanhecer',
+    7_000,
+  )
+
   await setTableClockMode(send, 'night')
+  const restoredNightTransition = await readLightingState(send)
+  assert.equal(restoredNightTransition.dayNightTransition, 'to-night')
+  assert.equal(restoredNightTransition.dayNightSound, 'nightfall')
+
+  await waitFor(
+    send,
+    `(() => {
+      const atmosphere = document.querySelector('[data-day-night-atmosphere="true"]')
+      const darkness = document.querySelector('.tabletop-lighting-layer__mask')
+      const moon = document.querySelector('[data-moon-ambience="true"]')
+      return {
+        darknessOpacity: darkness ? Number.parseFloat(getComputedStyle(darkness).opacity) : -1,
+        moonOpacity: moon ? Number.parseFloat(getComputedStyle(moon).opacity) : -1,
+        ok:
+          atmosphere?.getAttribute('data-day-night-transition') === 'idle' &&
+          darkness && Number.parseFloat(getComputedStyle(darkness).opacity) >= 0.98 &&
+          moon && Number.parseFloat(getComputedStyle(moon).opacity) >= 0.8,
+      }
+    })()`,
+    'fim visual do anoitecer',
+    9_000,
+  )
+
   const restoredNight = await readLightingState(send)
   assert.equal(restoredNight.night, 'true')
   assert.equal(restoredNight.expanded, 'false')
@@ -633,7 +720,9 @@ async function main() {
     issueEvents,
     networkFailures,
     night,
+    nightTransition,
     restoredNight,
+    restoredNightTransition,
     screenshotPath,
     stable:
       issueEvents.length === 0 &&

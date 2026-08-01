@@ -41,8 +41,15 @@ import { TabletopTrainingArc } from '../components/tabletop/TabletopTrainingArc'
 import { TabletopHelpPanel } from '../components/tabletop/TabletopHelpPanel'
 import { TabletopHud } from '../components/tabletop/TabletopHud'
 import { TabletopHudPanel } from '../components/tabletop/TabletopHudPanel'
+import {
+  TabletopDayNightAtmosphere,
+  type TabletopDayNightTransitionState,
+} from '../components/tabletop/TabletopDayNightAtmosphere'
 import { TabletopLightingControls } from '../components/tabletop/TabletopLightingControls'
-import { TabletopLightingLayer } from '../components/tabletop/TabletopLightingLayer'
+import {
+  TABLETOP_CURSOR_LIGHT_MOVE_EVENT,
+  TabletopLightingLayer,
+} from '../components/tabletop/TabletopLightingLayer'
 import { RulebookQuickReference } from '../components/product/RulebookContent'
 import {
   TabletopSessionLog,
@@ -234,7 +241,7 @@ import {
   resolveTabletopSceneRuntime,
 } from '../lib/tabletopRuntime'
 import { resolveTokenImage } from '../lib/tabletopTokenImages'
-import { playTabletopSfx } from '../lib/tabletopSfx'
+import { playTabletopSfx, preloadTabletopSfx } from '../lib/tabletopSfx'
 import {
   clearPersistedTabletopSession,
   clearSharedTransitionPlaybackState,
@@ -2081,6 +2088,10 @@ export function TablePage() {
   const [isBoardArtworkSuspended, setIsBoardArtworkSuspended] = useState(false)
   const [isLightingEditMode, setIsLightingEditMode] = useState(false)
   const [selectedSceneLightId, setSelectedSceneLightId] = useState('')
+  const [dayNightTransition, setDayNightTransition] =
+    useState<TabletopDayNightTransitionState | null>(null)
+  const previousBoardIsNightRef = useRef<boolean | null>(null)
+  const dayNightTransitionTimerRef = useRef<number | null>(null)
   const lightingWriteRef = useRef<{
     pending: TabletopSceneLighting | null
     sceneId: string
@@ -3392,6 +3403,83 @@ export function TablePage() {
     ? selectedSceneLightId
     : ''
   const boardIsNight = isTabletopNight(worldMundiState.clock)
+  const remoteBoardIsNight =
+    isRemotePlayerSession &&
+    multiplayerPublicState?.world &&
+    typeof multiplayerPublicState.world === 'object'
+      ? isTabletopNight(
+          (multiplayerPublicState.world as { clock?: WorldMundiClock }).clock,
+        )
+      : boardIsNight
+  const isBoardDayNightResolved =
+    !isRemotePlayerSession || remoteBoardIsNight === boardIsNight
+
+  useEffect(() => {
+    void preloadTabletopSfx(['nightfall', 'daybreak'])
+  }, [])
+
+  useEffect(() => {
+    previousBoardIsNightRef.current = null
+
+    if (dayNightTransitionTimerRef.current !== null) {
+      window.clearTimeout(dayNightTransitionTimerRef.current)
+    }
+
+    dayNightTransitionTimerRef.current = window.setTimeout(() => {
+      setDayNightTransition(null)
+      dayNightTransitionTimerRef.current = null
+    }, 0)
+  }, [activeCampaignId, isRemotePlayerMode])
+
+  useEffect(() => {
+    if (!hasBoardScene || !isBoardDayNightResolved) {
+      return
+    }
+
+    const previousMode = previousBoardIsNightRef.current
+
+    if (previousMode === null) {
+      previousBoardIsNightRef.current = boardIsNight
+      return
+    }
+
+    if (previousMode === boardIsNight) {
+      return
+    }
+
+    previousBoardIsNightRef.current = boardIsNight
+    const transition: TabletopDayNightTransitionState = {
+      direction: boardIsNight ? 'to-night' : 'to-day',
+      id: Date.now(),
+    }
+
+    setDayNightTransition(transition)
+    void playTabletopSfx(boardIsNight ? 'nightfall' : 'daybreak')
+
+    if (dayNightTransitionTimerRef.current !== null) {
+      window.clearTimeout(dayNightTransitionTimerRef.current)
+    }
+
+    dayNightTransitionTimerRef.current = window.setTimeout(
+      () => {
+        setDayNightTransition((current) =>
+          current?.id === transition.id ? null : current,
+        )
+        dayNightTransitionTimerRef.current = null
+      },
+      boardIsNight ? 6_200 : 4_200,
+    )
+  }, [boardIsNight, hasBoardScene, isBoardDayNightResolved])
+
+  useEffect(
+    () => () => {
+      if (dayNightTransitionTimerRef.current !== null) {
+        window.clearTimeout(dayNightTransitionTimerRef.current)
+        dayNightTransitionTimerRef.current = null
+      }
+    },
+    [],
+  )
   const boardMap =
     availableMaps.find((map) => map.id === boardScene?.mapId) ?? data?.tabletop.map ?? null
   const boardMapCellSize =
@@ -3521,6 +3609,12 @@ export function TablePage() {
     ) {
       return
     }
+
+    window.dispatchEvent(
+      new CustomEvent(TABLETOP_CURSOR_LIGHT_MOVE_EVENT, {
+        detail: input,
+      }),
+    )
 
     const now = performance.now()
 
@@ -13864,11 +13958,23 @@ export function TablePage() {
 
   return (
     <div
-      className="tabletop-screen"
+      className={`tabletop-screen tabletop-screen--${
+        boardIsNight ? 'night' : 'day'
+      }${
+        dayNightTransition
+          ? ` tabletop-screen--transition-${dayNightTransition.direction}`
+          : ''
+      }`}
+      data-day-night-mode={boardIsNight ? 'night' : 'day'}
+      data-day-night-transition={dayNightTransition?.direction ?? 'idle'}
       data-scene-theme={boardSceneRuntime?.uiTheme.id ?? 'ui-fushi-default'}
       data-weather={boardSceneRuntime?.weather.variant ?? 'none'}
       style={sceneThemeStyle}
     >
+      <TabletopDayNightAtmosphere
+        isNight={boardIsNight}
+        transition={dayNightTransition}
+      />
       <div
         className={`tabletop-screen__board${
           sceneReturnTransitionActive ? ' tabletop-screen__board--reentering' : ''

@@ -167,6 +167,28 @@ export const TABLETOP_SFX_CATALOG = {
     sourceUrl: 'https://kenney.nl/assets/rpg-audio',
     tags: ['inventario', 'comercio'],
   },
+  nightfall: {
+    category: 'rpg',
+    cooldownMs: 4_500,
+    defaultVolume: 0.48,
+    license: 'CC0',
+    name: 'Anoitecer - uivo distante',
+    priority: 3,
+    source: '/assets/audio/sfx/day-night/nightfall_wolf_howl_cc0.mp3',
+    sourceUrl: 'https://freesound.org/people/NaturesTemper/sounds/398430/',
+    tags: ['noite', 'lobo', 'transicao', 'ambiente'],
+  },
+  daybreak: {
+    category: 'rpg',
+    cooldownMs: 3_000,
+    defaultVolume: 0.44,
+    license: 'CC0',
+    name: 'Amanhecer - galo distante',
+    priority: 3,
+    source: '/assets/audio/sfx/day-night/daybreak_rooster_cc0.mp3',
+    sourceUrl: 'https://freesound.org/people/BenjaminNelan/sounds/435508/',
+    tags: ['dia', 'galo', 'transicao', 'ambiente'],
+  },
 } as const satisfies Record<string, TabletopSfxDefinition>
 
 export type TabletopSfxId = keyof typeof TABLETOP_SFX_CATALOG

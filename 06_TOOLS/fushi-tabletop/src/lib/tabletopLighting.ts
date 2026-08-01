@@ -9,7 +9,8 @@ export const TABLETOP_NIGHT_START_HOUR = 19
 export const TABLETOP_DAY_START_HOUR = 6
 
 const DEFAULT_LIGHT_COLOR = '#ffd58a'
-const DEFAULT_CURSOR_LIGHT_COLOR = '#d9ecff'
+const LEGACY_CURSOR_LIGHT_COLOR = '#d9ecff'
+const DEFAULT_CURSOR_LIGHT_COLOR = '#f3c071'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
@@ -51,6 +52,7 @@ function normalizeLight(value: unknown, index: number): TabletopSceneLight | nul
 
 function normalizeCursorLight(value: unknown): TabletopSceneCursorLight {
   const input = isRecord(value) ? value : {}
+  const normalizedColor = normalizeColor(input.color, DEFAULT_CURSOR_LIGHT_COLOR)
 
   return {
     enabled: input.enabled === true,
@@ -58,7 +60,10 @@ function normalizeCursorLight(value: unknown): TabletopSceneCursorLight {
     y: clampNumber(input.y, 0.5, 0, 1),
     radius: clampNumber(input.radius, 0.13, 0.05, 0.35),
     intensity: clampNumber(input.intensity, 0.72, 0.2, 1),
-    color: normalizeColor(input.color, DEFAULT_CURSOR_LIGHT_COLOR),
+    color:
+      normalizedColor === LEGACY_CURSOR_LIGHT_COLOR
+        ? DEFAULT_CURSOR_LIGHT_COLOR
+        : normalizedColor,
   }
 }
 

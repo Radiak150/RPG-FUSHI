@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useId,
   useRef,
   type PointerEvent as ReactPointerEvent,
@@ -23,6 +24,14 @@ interface LightDragState {
   lightId: string
   pointerId: number
   mode: 'move' | 'resize'
+}
+
+export const TABLETOP_CURSOR_LIGHT_MOVE_EVENT =
+  'fushi:tabletop-cursor-light-move'
+
+interface TabletopCursorLightMoveDetail {
+  x: number
+  y: number
 }
 
 function clampUnit(value: number) {
@@ -74,6 +83,10 @@ export function TabletopLightingLayer({
   onResizeLight,
 }: TabletopLightingLayerProps) {
   const layerRef = useRef<HTMLDivElement | null>(null)
+  const cursorGlowRef = useRef<HTMLSpanElement | null>(null)
+  const cursorHoleRef = useRef<SVGCircleElement | null>(null)
+  const cursorFrameRef = useRef<number | null>(null)
+  const pendingCursorRef = useRef<TabletopCursorLightMoveDetail | null>(null)
   const dragRef = useRef<LightDragState | null>(null)
   const rawId = useId()
   const idSuffix = rawId.replace(/[^a-zA-Z0-9_-]/g, '')
@@ -85,6 +98,70 @@ export function TabletopLightingLayer({
   const cursorLight =
     lighting.enabled && lighting.cursorLight.enabled ? lighting.cursorLight : null
   const hasLightSource = activeLights.length > 0 || Boolean(cursorLight)
+
+  useEffect(() => {
+    function paintCursorLight() {
+      const point = pendingCursorRef.current
+      cursorFrameRef.current = null
+
+      if (!point) {
+        return
+      }
+
+      pendingCursorRef.current = null
+      const x = clampUnit(point.x)
+      const y = clampUnit(point.y)
+      const cursorGlow = cursorGlowRef.current
+      const cursorHole = cursorHoleRef.current
+
+      if (cursorGlow) {
+        cursorGlow.style.left = `${x * 100}%`
+        cursorGlow.style.top = `${y * 100}%`
+      }
+
+      if (cursorHole) {
+        cursorHole.setAttribute('cx', `${x * 100}`)
+        cursorHole.setAttribute('cy', `${y * 100}`)
+      }
+
+      layerRef.current?.setAttribute('data-local-cursor-x', x.toFixed(4))
+      layerRef.current?.setAttribute('data-local-cursor-y', y.toFixed(4))
+    }
+
+    function moveCursorLight(event: Event) {
+      const detail = (event as CustomEvent<TabletopCursorLightMoveDetail>).detail
+
+      if (
+        !detail ||
+        !Number.isFinite(detail.x) ||
+        !Number.isFinite(detail.y)
+      ) {
+        return
+      }
+
+      pendingCursorRef.current = detail
+
+      if (cursorFrameRef.current === null) {
+        cursorFrameRef.current = window.requestAnimationFrame(paintCursorLight)
+      }
+    }
+
+    window.addEventListener(TABLETOP_CURSOR_LIGHT_MOVE_EVENT, moveCursorLight)
+
+    return () => {
+      window.removeEventListener(
+        TABLETOP_CURSOR_LIGHT_MOVE_EVENT,
+        moveCursorLight,
+      )
+
+      if (cursorFrameRef.current !== null) {
+        window.cancelAnimationFrame(cursorFrameRef.current)
+        cursorFrameRef.current = null
+      }
+
+      pendingCursorRef.current = null
+    }
+  }, [])
 
   function beginDrag(
     event: ReactPointerEvent<HTMLButtonElement>,
@@ -159,82 +236,82 @@ export function TabletopLightingLayer({
         isNight ? ' tabletop-lighting-layer--night' : ''
       }`}
       data-cursor-enabled={cursorLight ? 'true' : 'false'}
+      data-gm={isGm ? 'true' : 'false'}
       data-light-count={activeLights.length}
       data-lighting-enabled={lighting.enabled ? 'true' : 'false'}
       data-night={isNight ? 'true' : 'false'}
       ref={layerRef}
     >
-      {isNight ? (
-        <svg
-          aria-hidden="true"
-          className="tabletop-lighting-layer__mask"
-          preserveAspectRatio="none"
-          viewBox="0 0 100 100"
-        >
-          <defs>
-            <radialGradient id={holeGradientId}>
-              <stop offset="0%" stopColor="black" />
-              <stop offset="58%" stopColor="black" />
-              <stop offset="100%" stopColor="white" />
-            </radialGradient>
-            <mask id={maskId} maskContentUnits="userSpaceOnUse">
-              <rect fill="white" height="100" width="100" x="0" y="0" />
-              {hasLightSource
-                ? activeLights.map((light) => (
-                    <circle
-                      cx={light.x * 100}
-                      cy={light.y * 100}
-                      fill={`url(#${holeGradientId})`}
-                      key={light.id}
-                      opacity={light.intensity}
-                      r={light.radius * 100}
-                    />
-                  ))
-                : null}
-              {cursorLight ? (
-                <circle
-                  cx={cursorLight.x * 100}
-                  cy={cursorLight.y * 100}
-                  fill={`url(#${holeGradientId})`}
-                  opacity={cursorLight.intensity}
-                  r={cursorLight.radius * 100}
-                />
-              ) : null}
-            </mask>
-          </defs>
-          <rect
-            className="tabletop-lighting-layer__darkness"
-            height="100"
-            mask={`url(#${maskId})`}
-            width="100"
-            x="0"
-            y="0"
-          />
-        </svg>
-      ) : null}
+      <svg
+        aria-hidden="true"
+        className="tabletop-lighting-layer__mask"
+        preserveAspectRatio="none"
+        viewBox="0 0 100 100"
+      >
+        <defs>
+          <radialGradient id={holeGradientId}>
+            <stop offset="0%" stopColor="black" />
+            <stop offset="16%" stopColor="black" />
+            <stop offset="48%" stopColor="#626262" />
+            <stop offset="78%" stopColor="#d4d4d4" />
+            <stop offset="100%" stopColor="white" />
+          </radialGradient>
+          <mask id={maskId} maskContentUnits="userSpaceOnUse">
+            <rect fill="white" height="100" width="100" x="0" y="0" />
+            {hasLightSource
+              ? activeLights.map((light) => (
+                  <circle
+                    cx={light.x * 100}
+                    cy={light.y * 100}
+                    fill={`url(#${holeGradientId})`}
+                    key={light.id}
+                    opacity={light.intensity}
+                    r={light.radius * 100}
+                  />
+                ))
+              : null}
+            {cursorLight ? (
+              <circle
+                className="tabletop-lighting-layer__cursor-hole"
+                cx={cursorLight.x * 100}
+                cy={cursorLight.y * 100}
+                fill={`url(#${holeGradientId})`}
+                opacity={cursorLight.intensity}
+                r={cursorLight.radius * 100}
+                ref={cursorHoleRef}
+              />
+            ) : null}
+          </mask>
+        </defs>
+        <rect
+          className="tabletop-lighting-layer__darkness"
+          height="100"
+          mask={`url(#${maskId})`}
+          width="100"
+          x="0"
+          y="0"
+        />
+      </svg>
 
-      {isNight ? (
+      <span
+        aria-hidden="true"
+        className="tabletop-lighting-layer__moon-wash"
+        data-moon-ambience="true"
+      />
+
+      {activeLights.map((light) => (
         <span
           aria-hidden="true"
-          className="tabletop-lighting-layer__moon-wash"
-          data-moon-ambience="true"
+          className="tabletop-lighting-layer__glow"
+          key={`glow-${light.id}`}
+          style={resolveLightStyle(light)}
         />
-      ) : null}
-
-      {isNight
-        ? activeLights.map((light) => (
-            <span
-              aria-hidden="true"
-              className="tabletop-lighting-layer__glow"
-              key={`glow-${light.id}`}
-              style={resolveLightStyle(light)}
-            />
-          ))
-        : null}
-      {isNight && cursorLight ? (
+      ))}
+      {cursorLight ? (
         <span
           aria-hidden="true"
           className="tabletop-lighting-layer__glow tabletop-lighting-layer__glow--cursor"
+          ref={cursorGlowRef}
           style={{
             left: `${cursorLight.x * 100}%`,
             top: `${cursorLight.y * 100}%`,
