@@ -225,12 +225,20 @@ function writeSeedData() {
           id: 'music-smoke',
           libraryType: 'music',
           name: 'Trilha Smoke',
+          previewImage: '/assets/audio/smoke-cover.png',
           source: '/assets/audio/smoke-theme.ogg',
           summary: 'Trilha global para validar reconexao no MSC.',
         },
       ],
       customTransitions: [],
       mapOverrides: {},
+      trackOverrides: {
+        'music-stock-smoke': {
+          category: 'Musicas temas',
+          name: 'Tema editado pelo Mestre',
+          previewImage: '/assets/audio/smoke-stock-cover.png',
+        },
+      },
       trackVolumes: {
         'music-smoke': 0.42,
       },
@@ -1207,10 +1215,28 @@ async function run() {
     publicStateMessage.payload?.tabletopSession?.audioMixerState?.tracks?.['music-smoke']
       ?.status !== 'playing' ||
     !publicStateMessage.payload?.libraryState?.customMusicTracks?.some?.(
-      (track) => track.id === 'music-smoke',
-    )
+      (track) =>
+        track.id === 'music-smoke' &&
+        track.previewImage === '/assets/audio/smoke-cover.png',
+    ) ||
+    publicStateMessage.payload?.libraryState?.trackOverrides?.['music-stock-smoke']
+      ?.name !== 'Tema editado pelo Mestre'
   ) {
-    throw new Error('MSC global ativo nao foi enviado ao jogador ao entrar na mesa.')
+    throw new Error(
+      `MSC global, capa ou edicao do Mestre nao chegou ao jogador: ${JSON.stringify({
+        mixerTrack:
+          publicStateMessage.payload?.tabletopSession?.audioMixerState?.tracks?.[
+            'music-smoke'
+          ],
+        customTrack: publicStateMessage.payload?.libraryState?.customMusicTracks?.find?.(
+          (track) => track.id === 'music-smoke',
+        ),
+        override:
+          publicStateMessage.payload?.libraryState?.trackOverrides?.[
+            'music-stock-smoke'
+          ],
+      })}`,
+    )
   }
 
   const revealTurnPromise = waitForMessage(

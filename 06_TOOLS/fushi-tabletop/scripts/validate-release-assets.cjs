@@ -11,6 +11,7 @@ const releaseDir = path.resolve(
 )
 const assetRoot = path.join(releaseDir, 'resources', 'assets')
 const releaseAssetBudgetBytes = 700 * 1024 * 1024
+const expectedCoreAudioCount = 50
 const audioExtensions = new Set(['.aac', '.flac', '.m4a', '.mp3', '.ogg', '.wav'])
 
 const requiredFiles = [
@@ -30,6 +31,8 @@ const requiredFiles = [
   'audio/sfx/rpg/bookOpen.ogg',
   'audio/ambience/weather/rain_window_gentle_01.ogg',
   'audio/ambience/weather/rain_thunder_inside_ccby3.ogg',
+  'audio/sfx/day-night/daybreak_rooster_cc0.mp3',
+  'audio/sfx/day-night/nightfall_wolf_howl_cc0.mp3',
   'ui/icons/hud-log-d20.svg',
   'factions/faction-a.svg',
 ]
@@ -212,8 +215,8 @@ function validatePackagedAudio(failures) {
   })
 
   assert(
-    packagedAudioFiles.length === 48,
-    `Release precisa conter 48 audios core, encontrou ${packagedAudioFiles.length}`,
+    packagedAudioFiles.length === expectedCoreAudioCount,
+    `Release precisa conter ${expectedCoreAudioCount} audios core, encontrou ${packagedAudioFiles.length}`,
     failures,
   )
 
@@ -316,7 +319,7 @@ function main() {
   }
 
   console.log(
-    `release:assets ok: ${formatBytes(releaseAssetBytes)} em assets core, 48 audios decodificados, sem copias publicas no ASAR e manifest de Base consistente.`,
+    `release:assets ok: ${formatBytes(releaseAssetBytes)} em assets core, ${expectedCoreAudioCount} audios decodificados, sem copias publicas no ASAR e manifest de Base consistente.`,
   )
 }
 

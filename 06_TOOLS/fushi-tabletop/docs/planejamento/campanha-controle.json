@@ -1,6 +1,6 @@
 {
   "version": "campanha-controle-v1",
-  "updatedAt": "2026-07-31",
+  "updatedAt": "2026-08-01",
   "purpose": "Painel simples de producao da campanha. Use OK para pronto/estavel, FOCO para atencao atual e CRITICO para bloqueio/placeholder.",
   "rules": [
     "O app estavel vem antes de conteudo novo.",
@@ -20,7 +20,7 @@
     "Combat V2 e a fonte ativa para CA, Bloqueio, Esquiva, critico, manobras, escala de mobs e simulacao; FUSHI_COMBAT_V2.md prevalece sobre regra V1 conflitante.",
     "Estagios/Fases usam uma unica ficha canonica ativa; catalogo privado do Mestre fica em snapshots nao recursivos, Jogador recebe apenas fase ativa e revision, e toda troca precisa de VFX idempotente e teste Mestre > Jogador.",
     "Alpha.90: troca de mapa preserva a ultima superficie decodificada; Ctrl+A recupera o renderer sem trocar mapa, tokens ou sessao; Relogio MUN e fonte canonica de Dia/Noite; iluminacao fica na metadata da cena e so Mestre edita.",
-    "Alpha.92: Cronicas da Ilha sao publicas e o Livro da Historia e exclusivo do Mestre; VFX sao apresentacoes efemeras com vfxExpiresAt, sem replay no reconnect; MSC fica bloqueado ate o teste fisico."
+    "Alpha.92: Cronicas da Ilha sao publicas e o Livro da Historia e exclusivo do Mestre; VFX sao apresentacoes efemeras com vfxExpiresAt, sem replay no reconnect; MSC usa uma biblioteca unica, com pastas persistentes, capas opcionais e estado sanitizado no multiplayer."
   ],
   "lanes": [
     {
@@ -186,6 +186,14 @@
       "next": "Nao promover conteudo sem fechar o executavel oficial, rodar smoke:release e o gate especifico da area alterada."
     },
     {
+      "area": "Dependencias",
+      "item": "Alertas npm audit",
+      "status": "FOCO",
+      "acceptance": "Nenhuma correcao de dependencia pode regredir launcher, navegacao, Mesa ou multiplayer; alvo final e zero alerta alto aplicavel ao runtime.",
+      "evidence": "01/08/2026: 0 criticas, 0 moderadas e 3 altas residuais; brace-expansion e transitivo, react-router-dom e direto.",
+      "next": "Testar atualizacao em branch dedicada com build, smoke:ui, smoke:multiplayer e smoke:release; nao aplicar npm audit fix automatico na build de sessao."
+    },
+    {
       "area": "Livros",
       "item": "Livro do Jogador e Livro do Mestre",
       "status": "OK",
@@ -207,7 +215,15 @@
       "status": "OK tecnico",
       "acceptance": "Preview local nao vaza; broadcast do Mestre aparece uma vez para a mesa; clear/expiracao impedem replay em reconnect e troca de mapa.",
       "evidence": "Alpha.92: catalogo declarativo com 10 presets, vfxExpiresAt obrigatorio e filtro de pulso antigo; smoke:history-vfx e gate empacotado dedicados.",
-      "next": "Playtest fisico de um preview, um broadcast e um reconnect; MSC continua bloqueado ate esse teste."
+      "next": "Playtest fisico de um preview, um broadcast e um reconnect."
+    },
+    {
+      "area": "Audio",
+      "item": "Biblioteca MSC de sessao",
+      "status": "OK tecnico",
+      "acceptance": "Pastas permanecem visiveis; busca, favoritos, tocando agora, volume, play/pause/stop, criar, editar, excluir e capas opcionais sobrevivem ao fechamento; metadados chegam ao Jogador sem vazar controles do Mestre.",
+      "evidence": "Alpha.92: interface visual em grade validada no release empacotado; smoke:release edita nome/capa e reabre a biblioteca; smoke:multiplayer protege custom track, previewImage e override de faixa nativa.",
+      "next": "Playtest fisico Mestre/Jogador de volume, troca de pasta, edicao de capa e retorno a Mesa; depois catalogar temas por cena/personagem sem mover os arquivos atuais."
     },
     {
       "area": "Combate",
@@ -291,7 +307,7 @@
       "item": "Trilhas por personagem/evento",
       "status": "FOCO",
       "acceptance": "Cada personagem/evento importante tem tema, ambiencia e SFX marcados.",
-      "next": "Preencher depois do protocolo de pack/audio."
+      "next": "Usar a biblioteca MSC ja estabilizada para catalogar por cena, bioma, personagem, combate, tensao, descanso, boss e interludio; nao baixar mais assets antes dessa curadoria."
     },
     {
       "area": "VFX",
@@ -434,11 +450,11 @@
     {
       "id": "msc_audio_hub",
       "label": "MSC / audio de sessao",
-      "status": "FOCO",
+      "status": "OK tecnico",
       "whyNow": "Musica e som precisam ser encontrados rapido sem travar nem confundir durante narracao.",
-      "whatGoodLooksLike": "MSC separa cena, bioma, personagem, combate, tensao, descanso, boss, interludio e favoritos da sessao.",
-      "nextQuestion": "Voce quer organizar MSC por lugar da mesa, emocao da cena ou personagem?",
-      "suggestedFirstMove": "Criar taxonomia de audio antes de baixar/adicionar mais sons."
+      "whatGoodLooksLike": "MSC mantem pastas visiveis, busca, favoritos e tocando agora; cada som tem arte, transporte e volume individuais sem perder a sincronizacao da mesa.",
+      "nextQuestion": "No teste fisico, voce encontra e dispara o som desejado sem interromper a narracao?",
+      "suggestedFirstMove": "Validar Mestre/Jogador e depois organizar as faixas existentes por cena, bioma, personagem, combate, tensao, descanso, boss e interludio."
     },
     {
       "id": "conteudo_proximas_sessoes",

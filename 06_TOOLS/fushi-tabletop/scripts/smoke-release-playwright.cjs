@@ -505,6 +505,108 @@ async function smokePackagedAudio(page) {
   )
 }
 
+async function smokePackagedMusicLibrary(page) {
+  await openShortcutsRail(page)
+
+  const musicButton = page.getByRole('button', { name: 'Musicas', exact: true })
+  if (!(await waitForVisible(musicButton, 500))) {
+    const toolsButton = page.getByRole('button', { name: 'Abrir ferramentas' })
+    if (await waitForVisible(toolsButton, 5_000)) {
+      await toolsButton.click()
+    }
+  }
+
+  await musicButton.waitFor({ state: 'visible', timeout: 8_000 })
+  await musicButton.click()
+
+  const library = page.locator('[data-testid="tabletop-msc-library"]')
+  await library.waitFor({ state: 'visible', timeout: 10_000 })
+  const sidebar = library.locator('[data-testid="tabletop-msc-folders"]')
+  const trackGrid = library.locator('[data-testid="tabletop-msc-track-grid"]')
+  await sidebar.waitFor({ state: 'visible', timeout: 5_000 })
+  await trackGrid.waitFor({ state: 'visible', timeout: 5_000 })
+
+  const cards = trackGrid.locator('.tabletop-msc-track')
+  assert((await cards.count()) > 0, 'Release MSC abriu sem cartoes de audio.')
+  const firstCard = cards.first()
+  const trackId = await firstCard.getAttribute('data-track-id')
+  const originalName = (await firstCard.locator('.tabletop-msc-track__identity strong').innerText()).trim()
+  assert(trackId && originalName, 'Release MSC nao identificou a primeira faixa.')
+
+  const folderButton = sidebar.locator('.tabletop-msc-folder__select').first()
+  await folderButton.waitFor({ state: 'visible', timeout: 5_000 })
+  await folderButton.click()
+  assert(await sidebar.isVisible(), 'Release MSC perdeu a barra de pastas apos navegar.')
+  await library.getByRole('button', { name: 'Biblioteca', exact: true }).click()
+
+  const targetCard = library.locator(`.tabletop-msc-track[data-track-id="${trackId}"]`)
+  await targetCard.waitFor({ state: 'visible', timeout: 5_000 })
+  await targetCard.getByRole('button', { name: `Editar ${originalName}` }).click()
+
+  const editor = library.locator(`section[aria-label="Editar ${originalName}"]`)
+  await editor.waitFor({ state: 'visible', timeout: 5_000 })
+  const editedName = `${originalName} MSC Smoke`
+  await editor.getByLabel('Nome').fill(editedName)
+  await editor.locator('input[type="file"][accept*="image/png"]').setInputFiles({
+    name: 'msc-smoke-cover.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVR42mNk+M/wHwMDAwMjjAIAHBgCAfd4rJQAAAAASUVORK5CYII=',
+      'base64',
+    ),
+  })
+  await editor.getByText(/Capa pronta:/i).waitFor({ state: 'visible', timeout: 10_000 })
+  await editor.getByRole('button', { name: 'Salvar', exact: true }).click()
+
+  const editedCard = library.locator(`.tabletop-msc-track[data-track-id="${trackId}"]`)
+  await editedCard.getByText(editedName, { exact: true }).waitFor({ timeout: 8_000 })
+  assert(
+    (await editedCard.locator('.tabletop-msc-track__art img').count()) === 1,
+    'Release MSC nao aplicou a capa editada ao cartao.',
+  )
+
+  const persisted = await page.evaluate(({ expectedTrackId }) => {
+    const workspace = window.fushiDesktop?.loadJson?.({ name: 'workspace', scope: 'app' })
+    const campaignId = workspace?.campaigns?.activeCampaignId
+    const state = window.fushiDesktop?.loadJson?.({
+      campaignId,
+      name: 'library',
+      scope: 'campaign',
+    })
+    const customTrack = [
+      ...(state?.customMusicTracks ?? []),
+      ...(state?.customAmbienceTracks ?? []),
+    ].find((track) => track?.id === expectedTrackId)
+    const override = state?.trackOverrides?.[expectedTrackId]
+    return {
+      name: override?.name ?? customTrack?.name ?? '',
+      previewImage: override?.previewImage ?? customTrack?.previewImage ?? '',
+    }
+  }, { expectedTrackId: trackId })
+  assert(persisted.name === editedName, 'Release MSC nao persistiu o nome editado.')
+  assert(Boolean(persisted.previewImage), 'Release MSC nao persistiu a capa editada.')
+
+  const musicWindow = page.locator('.floating-window').filter({ has: library })
+  await musicWindow.locator('button[aria-label="Fechar janela"]').click()
+  await library.waitFor({ state: 'detached', timeout: 5_000 })
+  await musicButton.click()
+  await library.waitFor({ state: 'visible', timeout: 5_000 })
+  await library.getByText(editedName, { exact: true }).waitFor({ timeout: 8_000 })
+
+  const artifactDirectory = path.resolve(__dirname, '../.codex-dev/artifact-work')
+  fs.mkdirSync(artifactDirectory, { recursive: true })
+  await page.screenshot({
+    path: path.join(artifactDirectory, 'music-library-release.png'),
+    fullPage: true,
+  })
+
+  await page
+    .locator('.floating-window')
+    .filter({ has: library })
+    .locator('button[aria-label="Fechar janela"]')
+    .click()
+}
+
 async function seedPackagedTrainingState(page) {
   return page.evaluate(() => {
     const desktop = window.fushiDesktop
@@ -1372,6 +1474,7 @@ async function main() {
     await openShortcutsRail(page)
     await smokePackagedBuildManager(page)
     await smokePackagedCharacterStages(page)
+    await smokePackagedMusicLibrary(page)
     await openShortcutsRail(page)
 
     await page.getByRole('button', { name: 'Abrir anotacoes pessoais' }).click()

@@ -1,6 +1,6 @@
 # Content Readiness - Fonte De Verdade
 
-Data: 2026-07-30
+Data: 2026-08-01
 
 Este arquivo aponta para os artefatos que devem guiar o trabalho de estabilidade,
 otimizacao e conteudo novo do FUSHI Tabletop.
@@ -19,6 +19,7 @@ otimizacao e conteudo novo do FUSHI Tabletop.
 | `docs/fushi-system/FUSHI_EVENT_SYSTEM_V1.md` | Protocolo do hub EVE: ciclo de vida, coexistencia, limpeza, privacidade e regras para eventos futuros. |
 | `docs/fushi-system/FUSHI_CHARACTER_STAGES_V1.md` | Contrato canonico de Estagios/Fases: snapshots privados do Mestre, fase ativa unica, troca atomica, VFX e multiplayer. |
 | `docs/planejamento/ALPHA91_RULEBOOK_REFRESH_2026-07-30.md` | Registro do fechamento editorial alpha.91, portoes de PDF/release e limites do que nao foi alterado. |
+| `docs/planejamento/ALPHA92_MSC_LIBRARY_REWORK_2026-08-01.md` | Contrato do rework visual da biblioteca MSC, persistencia, privacidade multiplayer e gates da release. |
 | `src/data/training/village-training-arc.json` | Fonte unica das regras exibidas pelo painel de treinamento; React apenas renderiza. |
 | `output/pdf/FUSHI_Livro_do_Jogador_Alpha84.pdf` | Caminho legado estavel do volume publico; conteudo alpha.91 com 28 paginas, destaques semanticos, diagramas taticos e bibliografia filtrada. |
 | `output/pdf/FUSHI_Livro_do_Mestre_Alpha84.pdf` | Caminho legado estavel do volume confidencial; conteudo alpha.91 com 392 paginas, regras publicas, escudo e compendio vivo. |
@@ -71,7 +72,10 @@ otimizacao e conteudo novo do FUSHI Tabletop.
 - `base:diagnose`: 8 bases, 88 upgrades e 24 topdowns validos.
 - `asset:audit`: 103 imagens pesadas cobertas por derivados e GLB de 61 MB
   protegido por proxy fora do Ultra; nenhum pesado sem cobertura runtime.
-- `npm audit` em 2026-07-25: zero criticas, zero moderadas e 21 altas residuais.
+- `npm audit` em 2026-08-01: zero criticas, zero moderadas e 3 altas residuais
+  (`brace-expansion` transitivo e `react-router-dom`). A correcao do roteador
+  precisa de branch e smokes de navegacao/multiplayer; nao usar `npm audit fix`
+  automatico na build de sessao.
   As correcoes sem quebra foram aplicadas; o restante exige `--force` e mudancas
   maiores de tooling/runtime, portanto continua como risco tecnico registrado,
   sem promover uma atualizacao forcada na vespera da release.
@@ -334,6 +338,13 @@ que nao foi.
 - O smoke especifico e `npm run smoke:history-vfx`; o gate empacotado e
   `npm run smoke:history-vfx:release`. Ele testa a separacao de audiencia, a
   quantidade do catalogo, preview local, broadcast e ausencia de replay.
-- MSC/audio esta fora da alpha.92 e so deve ser reorganizado depois do teste
-  fisico desta build. Nao criar uma segunda taxonomia ou mover a biblioteca
-  antes da aprovacao do Mestre.
+- A biblioteca MSC agora usa uma unica superficie visual com pastas persistentes
+  na lateral, busca, favoritos, tocando agora, cards com capa opcional e controles
+  por icone. O rework preserva o motor de audio e o mixer sincronizado existentes.
+- Edicoes de faixas nativas ficam em `trackOverrides`; faixas locais continuam em
+  `customAudio`. Ambos aceitam `previewImage` e passam pelo sanitizador publico.
+  Jogadores recebem somente os metadados necessarios para reproduzir e desenhar
+  a faixa; controles de autoria permanecem exclusivos do Mestre.
+- O smoke empacotado abre o MSC, navega mantendo a lateral, edita nome e capa,
+  fecha, reabre e confirma persistencia. O smoke multiplayer exige custom track,
+  capa e override na visao do Jogador.

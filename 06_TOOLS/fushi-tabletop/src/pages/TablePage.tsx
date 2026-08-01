@@ -26,6 +26,7 @@ import type {
   TabletopMixerTrackState,
   TabletopMusicCreateInput,
   TabletopMusicLibraryItem,
+  TabletopMusicUpdateInput,
 } from '../components/tabletop/TabletopMusicLibrary'
 import { TabletopNotesPanel } from '../components/tabletop/TabletopNotesPanel'
 import { TabletopReadinessGate } from '../components/tabletop/TabletopReadinessGate'
@@ -3275,6 +3276,10 @@ export function TablePage() {
               ...data.tabletop.assetLibrary.ambienceTracks,
               ...libraryState.customAmbienceTracks,
             ]
+              .map((track) => ({
+                ...track,
+                ...(libraryState.trackOverrides[track.id] ?? {}),
+              }))
               .filter((track) => !libraryState.hiddenItems.music[track.id])
               .map((track) => ({
                 ...track,
@@ -3289,6 +3294,10 @@ export function TablePage() {
               ...data.tabletop.assetLibrary.musicTracks,
               ...libraryState.customMusicTracks,
             ]
+              .map((track) => ({
+                ...track,
+                ...(libraryState.trackOverrides[track.id] ?? {}),
+              }))
               .filter((track) => !libraryState.hiddenItems.music[track.id])
               .map((track) => ({
                 ...track,
@@ -3308,6 +3317,7 @@ export function TablePage() {
       libraryState.customAmbienceTracks,
       libraryState.customMusicTracks,
       libraryState.hiddenItems.music,
+      libraryState.trackOverrides,
       remoteAssetBaseUrl,
     ],
   )
@@ -7647,6 +7657,7 @@ export function TablePage() {
       summary: input.summary,
       category: input.category,
       folderId: input.folderId,
+      previewImage: input.previewImage,
       source: input.source,
     }
 
@@ -7668,6 +7679,34 @@ export function TablePage() {
         },
       },
     }))
+  }
+
+  function handleUpdateMusicTrack(
+    trackId: string,
+    input: TabletopMusicUpdateInput,
+  ) {
+    updateLibraryState((currentState) => {
+      const updateTrack = (track: TabletopMediaAsset) =>
+        track.id === trackId ? { ...track, ...input } : track
+      const isCustomTrack =
+        currentState.customMusicTracks.some((track) => track.id === trackId) ||
+        currentState.customAmbienceTracks.some((track) => track.id === trackId)
+
+      return {
+        ...currentState,
+        customAmbienceTracks: currentState.customAmbienceTracks.map(updateTrack),
+        customMusicTracks: currentState.customMusicTracks.map(updateTrack),
+        trackOverrides: isCustomTrack
+          ? removeRecordKey(currentState.trackOverrides, trackId)
+          : {
+              ...currentState.trackOverrides,
+              [trackId]: {
+                ...currentState.trackOverrides[trackId],
+                ...input,
+              },
+            },
+      }
+    })
   }
 
   function deleteLibraryMap(mapId: string) {
@@ -7850,6 +7889,7 @@ export function TablePage() {
           ...currentState.itemFolders,
           music: removeRecordKey(currentState.itemFolders.music, trackId),
         },
+        trackOverrides: removeRecordKey(currentState.trackOverrides, trackId),
         trackVolumes: removeRecordKey(currentState.trackVolumes, trackId),
       }
     })
@@ -16035,8 +16075,8 @@ export function TablePage() {
 
           {activeHudPanel === 'music' ? (
             <FloatingWindow
-              initialPosition={{ x: 104, y: 220 }}
-              initialSize={{ width: 880, height: 720 }}
+              initialPosition={{ x: 72, y: 118 }}
+              initialSize={{ width: 1180, height: 780 }}
               onClose={() => setActiveHudPanel(null)}
               subtitle="Biblioteca musical para tocar previews isolados e preparar a cena sem autoplay acidental."
               title="Biblioteca de Musicas"
@@ -16079,6 +16119,7 @@ export function TablePage() {
                     onStopTrack={stopMixerTrack}
                     onToggleFavorite={toggleFavoriteTrack}
                     onTrackVolumeChange={setMixerTrackVolume}
+                    onUpdateTrack={handleUpdateMusicTrack}
                     statusMessage={libraryAudioStatusMessage}
                     trackFolders={libraryState.itemFolders.music}
                     trackVolumes={libraryState.trackVolumes}

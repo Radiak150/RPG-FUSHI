@@ -67,6 +67,7 @@ export interface PersistedTabletopLibraryState {
   customMusicTracks: TabletopMediaAsset[]
   customAmbienceTracks: TabletopMediaAsset[]
   mapOverrides: Record<string, Partial<TabletopMap>>
+  trackOverrides: Record<string, Partial<TabletopMediaAsset>>
   favoriteTrackIds: string[]
   favoritePresets: TabletopMusicFavoritePreset[]
   trackVolumes: Record<string, number>
@@ -106,6 +107,7 @@ export const EMPTY_TABLETOP_LIBRARY_STATE: PersistedTabletopLibraryState = {
   customMusicTracks: [],
   customAmbienceTracks: [],
   mapOverrides: {},
+  trackOverrides: {},
   favoriteTrackIds: [],
   favoritePresets: [],
   trackVolumes: {},
@@ -337,18 +339,71 @@ function normalizeMediaAssets(value: unknown): TabletopMediaAsset[] {
     return []
   }
 
-  return value.filter((item): item is TabletopMediaAsset => {
-    if (!isRecord(item)) {
-      return false
+  return value
+    .filter((item): item is TabletopMediaAsset => {
+      if (!isRecord(item)) {
+        return false
+      }
+
+      return (
+        typeof item.id === 'string' &&
+        typeof item.name === 'string' &&
+        typeof item.summary === 'string' &&
+        typeof item.source === 'string'
+      )
+    })
+    .map((item) => ({
+      ...item,
+      previewImage: normalizeLibraryAssetReference(item.previewImage) as
+        | string
+        | undefined,
+      source: normalizeLibraryAssetReference(item.source) as string,
+    }))
+}
+
+function normalizeTrackOverrides(
+  value: unknown,
+): Record<string, Partial<TabletopMediaAsset>> {
+  if (!isRecord(value)) {
+    return {}
+  }
+
+  const entries: Array<[string, Partial<TabletopMediaAsset>]> = []
+
+  Object.entries(value).forEach(([trackId, override]) => {
+    if (!isRecord(override)) {
+      return
     }
 
-    return (
-      typeof item.id === 'string' &&
-      typeof item.name === 'string' &&
-      typeof item.summary === 'string' &&
-      typeof item.source === 'string'
-    )
+    const nextOverride: Partial<TabletopMediaAsset> = {}
+
+    if (typeof override.name === 'string') {
+      nextOverride.name = override.name
+    }
+    if (typeof override.summary === 'string') {
+      nextOverride.summary = override.summary
+    }
+    if (typeof override.category === 'string') {
+      nextOverride.category = override.category
+    }
+    if (typeof override.folderId === 'string') {
+      nextOverride.folderId = override.folderId
+    }
+    if (typeof override.source === 'string') {
+      nextOverride.source = normalizeLibraryAssetReference(override.source) as string
+    }
+    if (typeof override.previewImage === 'string') {
+      nextOverride.previewImage = normalizeLibraryAssetReference(
+        override.previewImage,
+      ) as string
+    }
+
+    if (Object.keys(nextOverride).length > 0) {
+      entries.push([trackId, nextOverride])
+    }
   })
+
+  return Object.fromEntries(entries)
 }
 
 function normalizeObjectType(value: unknown): TabletopBoardObject['objectType'] {
@@ -566,6 +621,7 @@ export function createTabletopLibraryState(
     customMusicTracks: normalizeMediaAssets(input?.customMusicTracks),
     customAmbienceTracks: normalizeMediaAssets(input?.customAmbienceTracks),
     mapOverrides: normalizeMapOverrides(input?.mapOverrides),
+    trackOverrides: normalizeTrackOverrides(input?.trackOverrides),
     favoriteTrackIds: normalizeStringArray(input?.favoriteTrackIds),
     favoritePresets: normalizeFavoritePresets(input?.favoritePresets),
     trackVolumes: normalizeNumberRecord(input?.trackVolumes),

@@ -841,6 +841,9 @@ function sanitizeLibraryForPlayer(libraryState, activeMapId = '') {
     customMusicTracks: Array.isArray(libraryState.customMusicTracks)
       ? cloneValue(libraryState.customMusicTracks)
       : [],
+    trackOverrides: isRecord(libraryState.trackOverrides)
+      ? cloneValue(libraryState.trackOverrides)
+      : {},
     customTransitions: Array.isArray(libraryState.customTransitions)
       ? cloneValue(libraryState.customTransitions)
       : [],
