@@ -91,13 +91,13 @@ async function connectCdp(webSocketUrl) {
   function send(method, params = {}) {
     const id = nextId
     nextId += 1
-    socket.send(JSON.stringify({ id, method, params }))
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         pending.delete(id)
         reject(new Error(`CDP timeout: ${method}`))
       }, 30000)
       pending.set(id, { resolve, reject, timeoutId })
+      socket.send(JSON.stringify({ id, method, params }))
     })
   }
 

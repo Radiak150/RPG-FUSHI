@@ -13,6 +13,14 @@ import {
   type ReactNode,
 } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import {
+  BookOpen,
+  Box,
+  Film,
+  History,
+  Layers3,
+  Plus,
+} from 'lucide-react'
 import { TabletopCinematicOverlay } from '../components/tabletop/TabletopCinematicOverlay'
 import type {
   MapConfigurationFolderOption,
@@ -71,6 +79,7 @@ import {
 import { TabletopWeatherOverlay } from '../components/tabletop/TabletopWeatherOverlay'
 import { TabletopVfxLibrary } from '../components/tabletop/TabletopVfxLibrary'
 import { TabletopVfxPresentation } from '../components/tabletop/TabletopVfxPresentation'
+import { TabletopVisualLibrary } from '../components/tabletop/TabletopVisualLibrary'
 import { HistoryQuickReference } from '../components/product/HistoryQuickReference'
 import type {
   WorldMundiMapPlaceholderRequest,
@@ -2077,6 +2086,9 @@ export function TablePage() {
   const [objectLibraryTab, setObjectLibraryTab] = useState<'animations' | 'objects'>(
     'objects',
   )
+  const [objectLibraryView, setObjectLibraryView] =
+    useState<'catalog' | 'scene'>('catalog')
+  const [objectLibrarySearch, setObjectLibrarySearch] = useState('')
   const [isObjectPresetImportOpen, setIsObjectPresetImportOpen] = useState(false)
   const [selectedObjectId, setSelectedObjectId] = useState('')
   const [objectMoveTargetId, setObjectMoveTargetId] = useState('')
@@ -3863,15 +3875,29 @@ export function TablePage() {
   )
   const visibleObjectPresets = useMemo(() => {
     const selectedLibraryKind = objectLibraryTab === 'animations' ? 'animation' : 'object'
+    const normalizedSearch = objectLibrarySearch.trim().toLocaleLowerCase('pt-BR')
 
     return allObjectPresets.filter(
       (preset) =>
         (preset.libraryKind ?? 'object') === selectedLibraryKind &&
-        isBundledObjectPresetAvailable(preset),
+        isBundledObjectPresetAvailable(preset) &&
+        (!normalizedSearch ||
+          `${preset.name} ${preset.description}`
+            .toLocaleLowerCase('pt-BR')
+            .includes(normalizedSearch)),
     )
   },
-    [allObjectPresets, objectLibraryTab],
+    [allObjectPresets, objectLibrarySearch, objectLibraryTab],
   )
+  const visibleSceneObjects = useMemo(() => {
+    const normalizedSearch = objectLibrarySearch.trim().toLocaleLowerCase('pt-BR')
+    if (!normalizedSearch) return sceneObjects
+    return sceneObjects.filter((object) =>
+      `${object.name} ${object.description ?? ''} ${object.renderMode}`
+        .toLocaleLowerCase('pt-BR')
+        .includes(normalizedSearch),
+    )
+  }, [objectLibrarySearch, sceneObjects])
 
   const activePlayerProfileId = getPlayerProfileId(effectiveActiveAccessProfile)
   const focusedPlayerSharedBodyHostId = getSharedBodyHostId(focusedPlayerCharacter)
@@ -6443,6 +6469,23 @@ export function TablePage() {
       })
 
       return nextState
+    })
+  }
+
+  function setLibraryVisualThumbnail(key: string, value: string) {
+    updateLibraryState((currentState) => {
+      const visualThumbnails = { ...currentState.visualThumbnails }
+
+      if (value) {
+        visualThumbnails[key] = value
+      } else {
+        delete visualThumbnails[key]
+      }
+
+      return {
+        ...currentState,
+        visualThumbnails,
+      }
     })
   }
 
@@ -14771,7 +14814,108 @@ export function TablePage() {
                 subtitle="Itens e props colocados sobre o mapa atual."
                 title="Objetos da Cena"
               >
-                <div className="list-stack">
+                <TabletopVisualLibrary
+                  actions={
+                    <button
+                      aria-label="Adicionar preset"
+                      className="tabletop-visual-library-icon-button"
+                      data-testid="object-preset-add"
+                      onClick={() => setIsObjectPresetImportOpen(true)}
+                      title="Adicionar preset com imagem"
+                      type="button"
+                    >
+                      <Plus size={18} />
+                    </button>
+                  }
+                  className="tabletop-object-browser"
+                  code="OBJ"
+                  contentHeader={
+                    <div>
+                      <p className="eyebrow">
+                        {objectLibraryView === 'scene'
+                          ? 'Cena atual'
+                          : objectLibraryTab === 'animations'
+                            ? 'Animações'
+                            : 'Objetos'}
+                      </p>
+                      <h3>
+                        {objectLibraryView === 'scene'
+                          ? `${visibleSceneObjects.length} objeto(s) colocado(s)`
+                          : `${visibleObjectPresets.length} preset(s)`}
+                      </h3>
+                      <p className="support-copy">
+                        {objectLibraryView === 'scene'
+                          ? 'Selecione, mova, configure ou remova elementos do mapa atual.'
+                          : 'Escolha um cartão e clique no mapa ou no 3D GM para posicionar.'}
+                      </p>
+                    </div>
+                  }
+                  icon={Box}
+                  onSearchChange={setObjectLibrarySearch}
+                  searchPlaceholder="Buscar objeto ou animação"
+                  searchValue={objectLibrarySearch}
+                  sidebar={
+                    <nav
+                      aria-label="Seções da biblioteca de objetos"
+                      className="tabletop-visual-library__nav"
+                    >
+                      <button
+                        className={
+                          objectLibraryView === 'catalog' && objectLibraryTab === 'objects'
+                            ? 'is-active'
+                            : ''
+                        }
+                        onClick={() => {
+                          setObjectLibraryView('catalog')
+                          setObjectLibraryTab('objects')
+                        }}
+                        type="button"
+                      >
+                        <Box aria-hidden="true" size={17} />
+                        <span>Objetos</span>
+                        <small>
+                          {allObjectPresets.filter(
+                            (preset) => (preset.libraryKind ?? 'object') === 'object',
+                          ).length}
+                        </small>
+                      </button>
+                      <button
+                        className={
+                          objectLibraryView === 'catalog' && objectLibraryTab === 'animations'
+                            ? 'is-active'
+                            : ''
+                        }
+                        onClick={() => {
+                          setObjectLibraryView('catalog')
+                          setObjectLibraryTab('animations')
+                        }}
+                        type="button"
+                      >
+                        <Film aria-hidden="true" size={17} />
+                        <span>Animações</span>
+                        <small>
+                          {allObjectPresets.filter(
+                            (preset) => preset.libraryKind === 'animation',
+                          ).length}
+                        </small>
+                      </button>
+                      <button
+                        className={objectLibraryView === 'scene' ? 'is-active' : ''}
+                        onClick={() => setObjectLibraryView('scene')}
+                        type="button"
+                      >
+                        <Layers3 aria-hidden="true" size={17} />
+                        <span>Cena atual</span>
+                        <small>{sceneObjects.length}</small>
+                      </button>
+                    </nav>
+                  }
+                  testId="object-library"
+                  title="Biblioteca visual"
+                >
+                <div
+                  className={`list-stack tabletop-object-browser__content is-${objectLibraryView}`}
+                >
                   <article className="list-card">
                     <div className="list-card__top">
                       <div>
@@ -14792,7 +14936,7 @@ export function TablePage() {
                         ) : null}
                         <button
                           className="button button--ghost"
-                          data-testid="object-preset-add"
+                          data-testid="object-preset-add-legacy"
                           onClick={() => setIsObjectPresetImportOpen(true)}
                           type="button"
                         >
@@ -14880,8 +15024,8 @@ export function TablePage() {
                     </div>
 
                     <div className="list-stack">
-                      {sceneObjects.length > 0 ? (
-                        sceneObjects.map((object) => (
+                      {visibleSceneObjects.length > 0 ? (
+                        visibleSceneObjects.map((object) => (
                           <article
                             className={`summary-card${
                               selectedObjectId === object.id ? ' summary-card--active' : ''
@@ -15348,6 +15492,7 @@ export function TablePage() {
                     </div>
                   </article>
                 </div>
+                </TabletopVisualLibrary>
               </TabletopHudPanel>
             </FloatingWindow>
           ) : null}
@@ -15407,8 +15552,11 @@ export function TablePage() {
                 title="BUI · Builds Absorvidas"
               >
                 <TabletopBuildManager
+                  campaignId={activeCampaignId}
                   characters={data.characters.items}
                   onChangeCharacter={commitCanonicalCharacterUpdate}
+                  onSetVisualThumbnail={setLibraryVisualThumbnail}
+                  visualThumbnails={libraryState.visualThumbnails}
                 />
               </TabletopHudPanel>
             </FloatingWindow>
@@ -15453,6 +15601,7 @@ export function TablePage() {
                 title="EVE · Eventos"
               >
                 <TabletopEventManager
+                  campaignId={activeCampaignId}
                   characters={data.characters.items}
                   eventState={eventState}
                   onActivate={handleActivateTabletopEvent}
@@ -15463,7 +15612,9 @@ export function TablePage() {
                   onOpenTraining={handleOpenTrainingControl}
                   onRestartTraining={handleRestartVillageTraining}
                   onStartRarityDraw={handleStartRarityDraw}
+                  onSetVisualThumbnail={setLibraryVisualThumbnail}
                   trainingState={session?.trainingState ?? null}
+                  visualThumbnails={libraryState.visualThumbnails}
                 />
               </TabletopHudPanel>
             </FloatingWindow>
@@ -15485,10 +15636,13 @@ export function TablePage() {
               >
                 <TabletopVfxLibrary
                   activePresetId={activeVfxPresentation?.presetId ?? ''}
+                  campaignId={activeCampaignId}
                   onBroadcast={broadcastVfx}
                   onClear={stopBroadcastVfx}
                   onPreview={previewVfx}
+                  onSetVisualThumbnail={setLibraryVisualThumbnail}
                   participants={statusParticipants}
+                  visualThumbnails={libraryState.visualThumbnails}
                 />
               </TabletopHudPanel>
             </FloatingWindow>
@@ -16184,42 +16338,64 @@ export function TablePage() {
                 title={viewMode === 'gm' ? 'Escudo do Mestre' : 'Livro do Jogador'}
               >
                 {viewMode === 'gm' ? (
-                  <div
-                    aria-label="Conteudo do Escudo do Mestre"
-                    className="rulebook-segmented master-shield-switch"
-                    data-testid="master-shield-section-tabs"
-                    role="tablist"
+                  <TabletopVisualLibrary
+                    className="tabletop-master-shield"
+                    code="ESC"
+                    contentHeader={
+                      <div>
+                        <p className="eyebrow">
+                          {masterBookView === 'history' ? 'Continuidade' : 'Consulta rápida'}
+                        </p>
+                        <h3>
+                          {masterBookView === 'history'
+                            ? 'Livro da História'
+                            : 'Regras do Mestre'}
+                        </h3>
+                        <p className="support-copy">
+                          {masterBookView === 'history'
+                            ? 'Crônica e continuidade confidencial da campanha.'
+                            : 'Regras, DTs e protocolos sem sair da mesa.'}
+                        </p>
+                      </div>
+                    }
+                    icon={BookOpen}
+                    sidebar={
+                      <nav
+                        aria-label="Conteúdo do Escudo do Mestre"
+                        className="tabletop-visual-library__nav"
+                        data-testid="master-shield-section-tabs"
+                      >
+                        <button
+                          aria-current={masterBookView === 'rules' ? 'page' : undefined}
+                          className={masterBookView === 'rules' ? 'is-active' : ''}
+                          onClick={() => setMasterBookView('rules')}
+                          type="button"
+                        >
+                          <BookOpen aria-hidden="true" size={17} />
+                          <span>Regras</span>
+                        </button>
+                        <button
+                          aria-current={masterBookView === 'history' ? 'page' : undefined}
+                          className={masterBookView === 'history' ? 'is-active' : ''}
+                          onClick={() => setMasterBookView('history')}
+                          type="button"
+                        >
+                          <History aria-hidden="true" size={17} />
+                          <span>Livro da História</span>
+                        </button>
+                      </nav>
+                    }
+                    testId="master-shield-library"
+                    title="Escudo do Mestre"
                   >
-                    <button
-                      aria-pressed={masterBookView === 'rules'}
-                      className={
-                        masterBookView === 'rules' ? 'rulebook-segmented__active' : ''
-                      }
-                      onClick={() => setMasterBookView('rules')}
-                      role="tab"
-                      type="button"
-                    >
-                      Regras
-                    </button>
-                    <button
-                      aria-pressed={masterBookView === 'history'}
-                      className={
-                        masterBookView === 'history' ? 'rulebook-segmented__active' : ''
-                      }
-                      onClick={() => setMasterBookView('history')}
-                      role="tab"
-                      type="button"
-                    >
-                      Livro da Historia
-                    </button>
-                  </div>
-                ) : null}
-                {viewMode === 'gm' && masterBookView === 'history' ? (
-                  <HistoryQuickReference audience="master" />
+                    {masterBookView === 'history' ? (
+                      <HistoryQuickReference audience="master" />
+                    ) : (
+                      <RulebookQuickReference audience="master" />
+                    )}
+                  </TabletopVisualLibrary>
                 ) : (
-                  <RulebookQuickReference
-                    audience={viewMode === 'gm' ? 'master' : 'player'}
-                  />
+                  <RulebookQuickReference audience="player" />
                 )}
               </TabletopHudPanel>
             </FloatingWindow>

@@ -25,6 +25,7 @@ const smokeCases = [
     name: 'readiness-stability',
     script: 'scripts/release-deep-smokes/smoke-readiness-stability.mjs',
     timeoutMs: 150_000,
+    linkFullAssetLibrary: true,
   },
   {
     name: 'day-night-lighting',

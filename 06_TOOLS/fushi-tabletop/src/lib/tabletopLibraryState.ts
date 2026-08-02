@@ -71,6 +71,7 @@ export interface PersistedTabletopLibraryState {
   favoriteTrackIds: string[]
   favoritePresets: TabletopMusicFavoritePreset[]
   trackVolumes: Record<string, number>
+  visualThumbnails: Record<string, string>
 }
 
 export const TABLETOP_LIBRARY_STORAGE_KEY = 'fushi-tabletop:asset-library:v1'
@@ -111,6 +112,7 @@ export const EMPTY_TABLETOP_LIBRARY_STATE: PersistedTabletopLibraryState = {
   favoriteTrackIds: [],
   favoritePresets: [],
   trackVolumes: {},
+  visualThumbnails: {},
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -625,6 +627,7 @@ export function createTabletopLibraryState(
     favoriteTrackIds: normalizeStringArray(input?.favoriteTrackIds),
     favoritePresets: normalizeFavoritePresets(input?.favoritePresets),
     trackVolumes: normalizeNumberRecord(input?.trackVolumes),
+    visualThumbnails: normalizeStringRecord(input?.visualThumbnails),
   }
 }
 

@@ -1,5 +1,14 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import {
+  Crosshair,
+  HeartPulse,
+  Shield,
+  Sparkles,
+  Swords,
+  WandSparkles,
+  type LucideIcon,
+} from 'lucide-react'
+import {
   BUILD_ARCHETYPES,
   BUILD_ITEMS,
   BUILD_MODIFIER_LABELS,
@@ -18,15 +27,28 @@ import {
   removeCharacterBuildItemForDebug,
   replaceCharacterBuildItemRarityForMaster,
 } from '../../lib/characterBuilds'
+import { TabletopVisualLibrary } from './TabletopVisualLibrary'
+import { TabletopVisualThumbnailPicker } from './TabletopVisualThumbnailPicker'
 
 type StandardRarity = Exclude<FushiItemRarity, 'secreto'>
 
 interface TabletopBuildManagerProps {
+  campaignId?: string
   characters: CharacterSheet[]
   onChangeCharacter: (character: CharacterSheet) => void
+  onSetVisualThumbnail: (key: string, value: string) => void
+  visualThumbnails: Record<string, string>
 }
 
 const rarityOrder: StandardRarity[] = ['comum', 'raro', 'epico', 'lendario', 'mitico']
+const archetypeIcons: Record<FushiBuildArchetype, LucideIcon> = {
+  tank: Shield,
+  assassino: Crosshair,
+  suporte: HeartPulse,
+  lutador: Swords,
+  atirador: Crosshair,
+  ocultista: WandSparkles,
+}
 
 function rarityFromRoll(roll: number): StandardRarity {
   if (roll <= 2) return 'comum'
@@ -37,10 +59,14 @@ function rarityFromRoll(roll: number): StandardRarity {
 }
 
 export function TabletopBuildManager({
+  campaignId,
   characters,
   onChangeCharacter,
+  onSetVisualThumbnail,
+  visualThumbnails,
 }: TabletopBuildManagerProps) {
   const [archetypeId, setArchetypeId] = useState<FushiBuildArchetype>('tank')
+  const [searchQuery, setSearchQuery] = useState('')
   const [selectedItemId, setSelectedItemId] = useState(
     () => BUILD_ITEMS.find((item) => item.archetype === 'tank')?.id ?? '',
   )
@@ -51,8 +77,19 @@ export function TabletopBuildManager({
   const [rerollResults, setRerollResults] = useState<Array<{ rarity: StandardRarity; roll: number }>>([])
 
   const archetype = BUILD_ARCHETYPES.find((entry) => entry.id === archetypeId)
-  const visibleItems = BUILD_ITEMS.filter((item) => item.archetype === archetypeId)
+  const normalizedSearchQuery = searchQuery.trim().toLocaleLowerCase('pt-BR')
+  const visibleItems = BUILD_ITEMS
+    .filter((item) => item.archetype === archetypeId)
+    .filter((item) =>
+      !normalizedSearchQuery ||
+      [item.name, item.passive, item.biomeId]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase('pt-BR')
+        .includes(normalizedSearchQuery),
+    )
   const selectedItem = visibleItems.find((item) => item.id === selectedItemId) ?? visibleItems[0]
+  const SelectedArchetypeIcon = archetypeIcons[archetypeId]
   const selectedCharacter = characters.find((character) => character.id === characterId) ?? characters[0]
   const previewItem = selectedItem ? resolveBuildItemByRarity(selectedItem, rarity) : null
   const absorbedItems = getBuildItems(selectedCharacter?.combatProfile?.build)
@@ -109,8 +146,95 @@ export function TabletopBuildManager({
     )
   }
 
+  const sidebar = (
+    <>
+      <div className="tabletop-visual-library__sidebar-heading">
+        <span>Arquetipos</span>
+        <Sparkles aria-hidden="true" size={15} />
+      </div>
+      <nav className="tabletop-visual-library__nav" aria-label="Arquetipos de build">
+        {BUILD_ARCHETYPES.map((entry) => {
+          const Icon = archetypeIcons[entry.id]
+          return (
+            <button
+              aria-selected={entry.id === archetypeId}
+              className={entry.id === archetypeId ? 'is-active' : ''}
+              key={entry.id}
+              onClick={() => chooseArchetype(entry.id)}
+              style={{ '--build-accent': entry.color } as CSSProperties}
+              type="button"
+            >
+              <Icon size={17} />
+              <span>{entry.label}</span>
+              <small>{BUILD_ITEMS.filter((item) => item.archetype === entry.id).length}</small>
+            </button>
+          )
+        })}
+      </nav>
+
+      <div className="tabletop-visual-library__sidebar-heading">
+        <span>Itens</span>
+        <small>{visibleItems.length}</small>
+      </div>
+      <div className="tabletop-visual-library__folder-list build-manager__visual-items build-manager__item-list">
+        {visibleItems.map((item) => (
+          <button
+            className={`tabletop-visual-library-folder__select${item.id === selectedItem?.id ? ' is-active' : ''}`}
+            key={item.id}
+            onClick={() => {
+              setSelectedItemId(item.id)
+              setFeedback('')
+            }}
+            type="button"
+          >
+            <Sparkles size={15} />
+            <span>{item.name}</span>
+          </button>
+        ))}
+      </div>
+
+      <label className="field build-manager__visual-character-select">
+        <span>Ficha selecionada</span>
+        <select
+          className="field__input"
+          onChange={(event) => {
+            setCharacterId(event.target.value)
+            setFeedback('')
+            setSecretTargetId('')
+            setRerollResults([])
+          }}
+          value={selectedCharacter?.id ?? ''}
+        >
+          {charactersByType.map((character) => (
+            <option key={character.id} value={character.id}>{character.nome} - {character.tipo}</option>
+          ))}
+        </select>
+      </label>
+    </>
+  )
+
   return (
-    <div className="build-manager" data-testid="build-manager">
+    <TabletopVisualLibrary
+      code="BUI"
+      contentHeader={
+        <>
+          <div>
+            <p className="eyebrow">{archetype?.label ?? 'Build'}</p>
+            <h2>{selectedItem?.name ?? 'Catalogo de builds'}</h2>
+            <small>{FUSHI_BUILD_CATALOG.items.length} itens canonicos no catalogo</small>
+          </div>
+          <span className="tag">{absorbedItems.length} em {selectedCharacter?.nome ?? 'nenhuma ficha'}</span>
+        </>
+      }
+      icon={Sparkles}
+      onSearchChange={setSearchQuery}
+      searchPlaceholder="Buscar item de build"
+      searchValue={searchQuery}
+      sidebar={sidebar}
+      testId="build-manager"
+      title="Builds absorvidas"
+    >
+    <div className="build-manager build-manager--visual">
       <header className="build-manager__header">
         <div>
           <p className="eyebrow">BUI · Mestre</p>
@@ -139,7 +263,7 @@ export function TabletopBuildManager({
       </div>
 
       <div className="build-manager__workspace">
-        <aside className="build-manager__item-list" aria-label="Itens do arquétipo">
+        <aside className="build-manager__item-list-legacy" aria-label="Itens do arquétipo">
           {visibleItems.map((item) => (
             <button
               className={item.id === selectedItem?.id ? 'is-active' : ''}
@@ -159,6 +283,16 @@ export function TabletopBuildManager({
         <section className="build-manager__detail">
           {selectedItem && previewItem ? (
             <>
+              <TabletopVisualThumbnailPicker
+                alt={selectedItem.name}
+                campaignId={campaignId}
+                className="tabletop-visual-thumbnail--feature build-manager__thumbnail"
+                fallback={<SelectedArchetypeIcon size={42} />}
+                onChange={(value) =>
+                  onSetVisualThumbnail(`build:${selectedItem.id}`, value)
+                }
+                value={visualThumbnails[`build:${selectedItem.id}`]}
+              />
               <header>
                 <div>
                   <p className="eyebrow">{archetype?.label}</p>
@@ -322,5 +456,6 @@ export function TabletopBuildManager({
 
       {feedback ? <p className="build-manager__feedback" role="status">{feedback}</p> : null}
     </div>
+    </TabletopVisualLibrary>
   )
 }

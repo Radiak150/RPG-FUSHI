@@ -1,9 +1,24 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronRight,
+  Folder,
+  FolderOpen,
+  FolderPlus,
+  Plus,
+  Save,
+  Settings,
+  UserPlus,
+  Users,
+  X,
+} from 'lucide-react'
 import type { CharacterSheet, FactionItem } from '../../data/types'
 import type { TabletopLibraryFolder } from '../../lib/tabletopLibraryState'
 import { getCharacterSheetModel } from '../../lib/characterSheet'
 import { getFactionLogoUrl } from '../../lib/factionAssets'
 import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
+import { TabletopVisualLibrary } from './TabletopVisualLibrary'
 
 interface TabletopNpcLibraryProps {
   activeCharacterIds: string[]
@@ -33,6 +48,11 @@ interface NpcDragPayload {
   id: string
 }
 
+interface FolderRow {
+  depth: number
+  folder: FolderView
+}
+
 interface FolderContextMenuState {
   folderId: string
   x: number
@@ -40,6 +60,7 @@ interface FolderContextMenuState {
 }
 
 const ROOT_FOLDER_ID = ''
+const ALL_ITEMS_FOLDER_ID = 'virtual:all-items'
 const LIBRARY_DRAG_DATA_TYPE = 'application/x-fushi-library-item'
 const PROTAGONISTS_FOLDER_ID = 'virtual:npcs:protagonistas'
 const MAIN_CHARACTERS_FOLDER_ID = 'virtual:npcs:personagens-principais'
@@ -202,6 +223,31 @@ function compareFolders(a: FolderView, b: FolderView) {
   return a.name.localeCompare(b.name)
 }
 
+function buildFolderRows(folders: FolderView[]) {
+  const rows: FolderRow[] = []
+  const visited = new Set<string>()
+
+  function visit(parentId: string, depth: number) {
+    folders
+      .filter((folder) => folder.parentId === parentId)
+      .sort(compareFolders)
+      .forEach((folder) => {
+        if (visited.has(folder.id)) return
+        visited.add(folder.id)
+        rows.push({ depth, folder })
+        visit(folder.id, depth + 1)
+      })
+  }
+
+  visit(ROOT_FOLDER_ID, 0)
+  folders
+    .filter((folder) => !visited.has(folder.id))
+    .sort(compareFolders)
+    .forEach((folder) => rows.push({ depth: 0, folder }))
+
+  return rows
+}
+
 function buildBreadcrumb(folders: FolderView[], selectedFolderId: string) {
   const breadcrumb: FolderView[] = []
   let currentId = selectedFolderId
@@ -308,8 +354,9 @@ export function TabletopNpcLibrary({
   onSpawn,
   onRemoveFromScene,
 }: TabletopNpcLibraryProps) {
-  const [selectedFolderId, setSelectedFolderId] = useState(ROOT_FOLDER_ID)
+  const [selectedFolderId, setSelectedFolderId] = useState(ALL_ITEMS_FOLDER_ID)
   const [newFolderName, setNewFolderName] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [renamingFolderId, setRenamingFolderId] = useState('')
   const [renamingFolderName, setRenamingFolderName] = useState('')
   const [folderContextMenu, setFolderContextMenu] =
@@ -322,22 +369,35 @@ export function TabletopNpcLibrary({
     ...virtualFolders,
     ...(folders.filter((folder) => folder.category === 'npcs') as FolderView[]),
   ]
-  const currentFolderId =
+  const isAllItemsView = selectedFolderId === ALL_ITEMS_FOLDER_ID
+  const selectedFolderExists =
+    isAllItemsView ||
     selectedFolderId === ROOT_FOLDER_ID ||
     effectiveFolders.some((folder) => folder.id === selectedFolderId)
-      ? selectedFolderId
-      : ROOT_FOLDER_ID
+  const currentFolderId =
+    isAllItemsView || !selectedFolderExists ? ROOT_FOLDER_ID : selectedFolderId
   const breadcrumb = buildBreadcrumb(effectiveFolders, currentFolderId)
+  const folderRows = buildFolderRows(effectiveFolders)
   const directFolders = effectiveFolders
     .filter((folder) => folder.parentId === currentFolderId)
     .sort(compareFolders)
   const characterFolderIds = characters.map((character) =>
     resolveCharacterFolderId(character, characterFolders),
   )
+  const normalizedSearchQuery = searchQuery.trim().toLocaleLowerCase('pt-BR')
   const selectedCharacters = characters
     .filter(
       (character) =>
+        isAllItemsView ||
         resolveCharacterFolderId(character, characterFolders) === currentFolderId,
+    )
+    .filter((character) =>
+      !normalizedSearchQuery ||
+      [character.nome, character.faccao, character.classe, character.origem, character.tipo]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase('pt-BR')
+        .includes(normalizedSearchQuery),
     )
     .sort((a, b) => a.nome.localeCompare(b.nome))
   const activeCount = characters.filter((character) =>
@@ -451,72 +511,166 @@ export function TabletopNpcLibrary({
     }
   }, [folderContextMenu])
 
-  return (
-    <section className="tabletop-library tabletop-library--folders">
-      <div className="tabletop-library__hero">
-        <div>
-          <p className="eyebrow">NPC</p>
-          <h3>Personagens por pastas</h3>
-          <p className="support-copy">
-            Protagonistas, faccoes, mobs e pastas livres para arrastar personagens sem alterar a ficha.
-          </p>
-        </div>
-        <div className="tag-row">
-          <span className="tag">{characters.length} personagens</span>
-          <span className="tag">{activeCount} na cena</span>
-        </div>
+  const sidebar = (
+    <>
+      <nav className="tabletop-visual-library__nav" aria-label="Visoes de personagens">
+        <button
+          className={isAllItemsView ? 'is-active' : ''}
+          onClick={() => setSelectedFolderId(ALL_ITEMS_FOLDER_ID)}
+          type="button"
+        >
+          <Users size={17} />
+          <span>Todos</span>
+          <small>{characters.length}</small>
+        </button>
+        <button
+          className={!isAllItemsView && currentFolderId === ROOT_FOLDER_ID ? 'is-active' : ''}
+          onClick={() => setSelectedFolderId(ROOT_FOLDER_ID)}
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => handleFolderDrop(event, ROOT_FOLDER_ID)}
+          type="button"
+        >
+          <Users size={17} />
+          <span>Sem pasta</span>
+          <small>{characterFolderIds.filter((id) => id === ROOT_FOLDER_ID).length}</small>
+        </button>
+        <button
+          className={currentFolderId === PROTAGONISTS_FOLDER_ID ? 'is-active' : ''}
+          onClick={() => setSelectedFolderId(PROTAGONISTS_FOLDER_ID)}
+          type="button"
+        >
+          <UserPlus size={17} />
+          <span>Protagonistas</span>
+          <small>{characterFolderIds.filter((id) => id === PROTAGONISTS_FOLDER_ID).length}</small>
+        </button>
+      </nav>
+
+      <div className="tabletop-visual-library__sidebar-heading">
+        <span>Pastas e faccoes</span>
+        <FolderPlus aria-hidden="true" size={15} />
+      </div>
+      <div className="tabletop-visual-library__folder-list">
+        {folderRows.map(({ depth, folder }) => {
+          const itemCount = getFolderItemCount(folder.id, effectiveFolders, characterFolderIds)
+          const isRenaming = renamingFolderId === folder.id
+
+          return (
+            <div
+              className={`tabletop-visual-library-folder${
+                currentFolderId === folder.id ? ' is-active' : ''
+              }`}
+              key={folder.id}
+              onContextMenu={(event) => handleFolderContextMenu(event, folder.id)}
+              style={{ paddingLeft: `${Math.min(depth, 4) * 12}px` }}
+            >
+              <button
+                className="tabletop-visual-library-folder__select"
+                onClick={() => setSelectedFolderId(folder.id)}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => handleFolderDrop(event, folder.id)}
+                onKeyDown={(event) => handleFolderKeyDown(event, folder.id)}
+                title="Abrir pasta ou soltar um personagem aqui"
+                type="button"
+              >
+                {getFolderLogoUrl(folder)
+                  ? renderFolderIcon(folder, 'tabletop-visual-library-folder__logo')
+                  : currentFolderId === folder.id
+                    ? <FolderOpen size={16} />
+                    : <Folder size={16} />}
+                {isRenaming ? (
+                  <input
+                    autoFocus
+                    onChange={(event) => setRenamingFolderName(event.target.value)}
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => {
+                      event.stopPropagation()
+                      if (event.key === 'Enter') handleSaveFolderRename(folder.id)
+                      if (event.key === 'Escape') setRenamingFolderId('')
+                    }}
+                    value={renamingFolderName}
+                  />
+                ) : (
+                  <span>{folder.name}</span>
+                )}
+                <small>{itemCount}</small>
+              </button>
+              {!folder.isVirtual ? (
+                <div className="tabletop-visual-library-folder__actions">
+                  {isRenaming ? (
+                    <>
+                      <button aria-label="Salvar nome" onClick={() => handleSaveFolderRename(folder.id)} title="Salvar nome" type="button"><Save size={13} /></button>
+                      <button aria-label="Cancelar" onClick={() => setRenamingFolderId('')} title="Cancelar" type="button"><X size={13} /></button>
+                    </>
+                  ) : (
+                    <>
+                      <button aria-label="Renomear pasta" onClick={() => beginRenameFolder(folder)} title="Renomear pasta" type="button"><Settings size={13} /></button>
+                      <button aria-label="Mover para cima" onClick={() => onMoveFolder(folder.id, 'up')} title="Mover para cima" type="button"><ArrowUp size={13} /></button>
+                      <button aria-label="Mover para baixo" onClick={() => onMoveFolder(folder.id, 'down')} title="Mover para baixo" type="button"><ArrowDown size={13} /></button>
+                    </>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          )
+        })}
       </div>
 
-      <div className="tabletop-library-toolbar">
-        <div className="tabletop-library-breadcrumb">
-          <button
-            className="tabletop-library-breadcrumb__item"
-            onClick={() => setSelectedFolderId(ROOT_FOLDER_ID)}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => handleFolderDrop(event, ROOT_FOLDER_ID)}
-            type="button"
-          >
-            Todos
-          </button>
-          {breadcrumb.map((folder) => (
-            <button
-              className="tabletop-library-breadcrumb__item"
-              key={folder.id}
-              onClick={() => setSelectedFolderId(folder.id)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => handleFolderDrop(event, folder.id)}
-              type="button"
-            >
-              {getFolderLogoUrl(folder) ? (
-                <img
-                  alt=""
-                  className="tabletop-library-breadcrumb__logo"
-                  src={resolveRuntimeAssetUrl(getFolderLogoUrl(folder))}
-                />
-              ) : (
-                getFolderVisualLabel(folder)
-              )}{' '}
-              {folder.name}
-            </button>
-          ))}
-        </div>
-        <div className="tabletop-library-toolbar__actions">
-          <input
-            className="field__input tabletop-library-toolbar__input"
-            onChange={(event) => setNewFolderName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                handleCreateFolder()
-              }
-            }}
-            placeholder="Nome da pasta"
-            value={newFolderName}
-          />
-          <button className="button" onClick={handleCreateFolder} type="button">
-            + Pasta
-          </button>
-        </div>
+      <div className="tabletop-visual-library__new-folder">
+        <input
+          onChange={(event) => setNewFolderName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') handleCreateFolder()
+          }}
+          placeholder="Nova pasta"
+          value={newFolderName}
+        />
+        <button aria-label="Criar pasta" onClick={handleCreateFolder} title="Criar pasta" type="button"><Plus size={16} /></button>
       </div>
+    </>
+  )
+
+  return (
+    <TabletopVisualLibrary
+      actions={
+        <button aria-label="Criar pasta" onClick={handleCreateFolder} title="Criar pasta" type="button">
+          <Plus size={17} />
+        </button>
+      }
+      className="tabletop-library tabletop-library--visual"
+      code="NPC"
+      contentHeader={
+        <>
+          <div>
+            <div className="tabletop-visual-library__breadcrumb">
+              <button onClick={() => setSelectedFolderId(ALL_ITEMS_FOLDER_ID)} type="button">Biblioteca</button>
+              {breadcrumb.map((folder) => (
+                <span key={folder.id}>
+                  <ChevronRight size={13} />
+                  <button onClick={() => setSelectedFolderId(folder.id)} type="button">{folder.name}</button>
+                </span>
+              ))}
+            </div>
+            <h2>{
+              isAllItemsView
+                ? 'Todos os personagens'
+                : breadcrumb.at(-1)?.name ?? 'Personagens sem pasta'
+            }</h2>
+            <small>{selectedCharacters.length} personagem(ns) nesta visao</small>
+          </div>
+          <div className="tag-row">
+            <span className="tag">{characters.length} fichas</span>
+            <span className="tag">{activeCount} na cena</span>
+          </div>
+        </>
+      }
+      icon={Users}
+      onSearchChange={setSearchQuery}
+      searchPlaceholder="Buscar personagem"
+      searchValue={searchQuery}
+      sidebar={sidebar}
+      testId="npc-library"
+      title="Personagens e criaturas"
+    >
 
       <div className="tabletop-library-folder-grid">
         {currentFolderId ? (
@@ -783,6 +937,13 @@ export function TabletopNpcLibrary({
           </div>
         )
       })() : null}
-    </section>
+      {selectedCharacters.length === 0 ? (
+        <div className="tabletop-visual-library__empty">
+          <Users size={26} />
+          <strong>Nenhum personagem nesta pasta</strong>
+          <span>Arraste uma ficha para ca ou escolha outra pasta.</span>
+        </div>
+      ) : null}
+    </TabletopVisualLibrary>
   )
 }

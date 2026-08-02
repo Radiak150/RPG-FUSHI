@@ -748,7 +748,6 @@ export function TabletopBoard({
   const [isPanning, setIsPanning] = useState(false)
   const [draggingTokenId, setDraggingTokenId] = useState('')
   const [draggingObjectId, setDraggingObjectId] = useState('')
-  const [hoveredTokenId, setHoveredTokenId] = useState('')
   const [measurement, setMeasurement] = useState<MeasurementState | null>(null)
 
   const resolveCellFromPoint = useCallback(
@@ -1720,12 +1719,6 @@ export function TabletopBoard({
                     event.stopPropagation()
                     onTokenOpen(token.id)
                   }}
-                  onPointerEnter={() => setHoveredTokenId(token.id)}
-                  onPointerLeave={() =>
-                    setHoveredTokenId((currentTokenId) =>
-                      currentTokenId === token.id ? '' : currentTokenId,
-                    )
-                  }
                   style={{
                     left: `${(token.cell.column / map.gridColumns) * 100}%`,
                     top: `${(token.cell.row / map.gridRows) * 100}%`,
@@ -1756,7 +1749,6 @@ export function TabletopBoard({
                     detailSide={
                       token.cell.column / map.gridColumns < 0.35 ? 'right' : 'left'
                     }
-                    isExpanded={hoveredTokenId === token.id}
                     marks={token.combatMarks}
                     sourceNameByTokenId={tokenNameById}
                     tokenName={token.name}

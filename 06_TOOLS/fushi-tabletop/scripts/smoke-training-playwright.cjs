@@ -8,6 +8,12 @@ const port = Number(process.env.FUSHI_TRAINING_SMOKE_PORT || 5178)
 const baseUrl = `http://127.0.0.1:${port}`
 const root = path.resolve(__dirname, '..')
 const artifactDirectory = path.join(root, '.codex-dev', 'artifact-work')
+const isolatedRuntimeDirectory = path.join(
+  root,
+  '.codex-dev',
+  'smoke-training-runtime',
+  String(process.pid),
+)
 
 function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds))
@@ -44,7 +50,11 @@ function startDevServer() {
 
   return spawn(process.execPath, [viteEntry, '--host', '127.0.0.1', '--port', String(port)], {
     cwd: root,
-    env: process.env,
+    env: {
+      ...process.env,
+      FUSHI_ASSET_DIR: path.join(isolatedRuntimeDirectory, 'assets'),
+      FUSHI_AUTOSAVE_DIR: path.join(isolatedRuntimeDirectory, 'autosave'),
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
 }
@@ -371,6 +381,9 @@ async function main() {
     const gmPage = await context.newPage()
     const gmErrors = []
     const gmHttpErrors = []
+    gmPage.on('pageerror', (error) => {
+      gmErrors.push(`pageerror: ${error.message}`)
+    })
     gmPage.on('console', (message) => {
       if (
         message.type() === 'error' &&
@@ -551,6 +564,8 @@ async function main() {
 
     for (const characterId of characterIds) {
       await characterSelect.selectOption(characterId)
+      // The controlled select updates before React finishes swapping the canonical sheet.
+      await gmPage.waitForTimeout(100)
       for (const grantId of grantIds) {
         const candidate = skillControls.locator(
           `[data-testid="assign-character-grant-${grantId}"]`,
@@ -568,7 +583,68 @@ async function main() {
     if (!assignButton || !assignedCharacterId || !smokeGrantId) {
       throw new Error('EVE nao encontrou uma combinacao limpa de ficha e habilidade para o smoke.')
     }
+    const selectedCharacterBeforeAssign = await characterSelect.inputValue()
+    const assignButtonText = (await assignButton.innerText()).trim()
     await assignButton.click()
+    try {
+      await gmPage.waitForFunction(
+        ({ characterId, grantId }) => {
+          const workspace = JSON.parse(
+            window.localStorage.getItem('fushi-tabletop:workspace:v1') || 'null',
+          )
+          const characters = Array.isArray(workspace?.characters)
+            ? workspace.characters
+            : workspace?.characters?.items ?? []
+          const character = characters.find?.(
+            (candidate) => candidate.id === characterId,
+          )
+          return character?.habilidadesDetalhadas?.some?.(
+            (feature) => feature.id === grantId,
+          ) === true
+        },
+        { characterId: assignedCharacterId, grantId: smokeGrantId },
+        { timeout: 10_000 },
+      )
+    } catch (error) {
+      const diagnostics = await gmPage.evaluate(
+        ({ expectedCharacterId, grantId }) => {
+          const workspace = JSON.parse(
+            window.localStorage.getItem('fushi-tabletop:workspace:v1') || 'null',
+          )
+          const characters = Array.isArray(workspace?.characters)
+            ? workspace.characters
+            : workspace?.characters?.items ?? []
+          return {
+            characterFeatures: characters.map((character) => ({
+              grants: (character.habilidadesDetalhadas ?? [])
+                .filter((feature) => feature.id === grantId)
+                .map((feature) => feature.id),
+              id: character.id,
+              name: character.nome,
+            })),
+            expectedCharacterId,
+            feedback: document.body.innerText
+              .split('\n')
+              .filter((line) => /atribu|construcao|ficha real|ja possui/i.test(line))
+              .slice(-8),
+            grantId,
+            localStorageKeys: Object.keys(window.localStorage),
+            selectedCharacterId:
+              document.querySelector('[data-testid="skill-grant-character"]')?.value ?? '',
+          }
+        },
+        {
+          expectedCharacterId: assignedCharacterId,
+          grantId: smokeGrantId,
+        },
+      )
+      throw new Error(
+        `EVE nao persistiu a habilidade selecionada. ` +
+        `Select antes=${selectedCharacterBeforeAssign}; botao=${assignButtonText}; ` +
+        `diagnostico=${JSON.stringify(diagnostics)}; erros=${JSON.stringify(gmErrors)}`,
+        { cause: error },
+      )
+    }
     await assignButton.waitFor({ state: 'visible' })
     if (!(await assignButton.isDisabled())) {
       throw new Error('Atribuicao repetida continuou habilitada depois de gravar a habilidade.')

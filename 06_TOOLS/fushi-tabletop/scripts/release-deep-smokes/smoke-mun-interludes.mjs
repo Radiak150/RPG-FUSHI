@@ -122,7 +122,6 @@ async function connectCdp(webSocketUrl) {
   function send(method, params = {}) {
     const id = nextId
     nextId += 1
-    socket.send(JSON.stringify({ id, method, params }))
 
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
@@ -131,6 +130,14 @@ async function connectCdp(webSocketUrl) {
       }, 30_000)
 
       pending.set(id, { resolve, reject, timeoutId })
+
+      try {
+        socket.send(JSON.stringify({ id, method, params }))
+      } catch (error) {
+        clearTimeout(timeoutId)
+        pending.delete(id)
+        reject(error)
+      }
     })
   }
 
@@ -900,11 +907,13 @@ async function exerciseBoardRenderRecovery(send, reconnectAfterRendererReload) {
   } catch (error) {
     const message = String(error?.message ?? error)
 
-    if (!/navigated|closed|target|websocket|socket/i.test(message)) {
+    if (!/CDP timeout|navigated|closed|target|websocket|socket/i.test(message)) {
       throw error
     }
 
+    console.log(`[mun-interludes] renderer reload detectado: ${message}`)
     await reconnectAfterRendererReload()
+    console.log('[mun-interludes] renderer reconectado; validando restauracao da mesa')
     hardAfter = await waitForHardAfter()
   }
 
@@ -921,187 +930,142 @@ async function exerciseBoardRenderRecovery(send, reconnectAfterRendererReload) {
 }
 
 async function openM5InterludeFromLibrary(send) {
-  const opened = await evaluate(
-    send,
-    `(async () => {
-      const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-      const isVisible = (element) => {
-        if (!(element instanceof HTMLElement)) return false
-        const rect = element.getBoundingClientRect()
-        const style = getComputedStyle(element)
-        return (
-          rect.width > 0 &&
-          rect.height > 0 &&
-          style.display !== 'none' &&
-          style.visibility !== 'hidden'
-        )
-      }
-      const poll = async (finder, timeoutMs = 12_000) => {
-        const startedAt = Date.now()
-        while (Date.now() - startedAt < timeoutMs) {
-          const result = finder()
-          if (result) return result
-          await wait(120)
-        }
-        return null
-      }
-      const findVisibleButton = (predicate) =>
-        Array.from(document.querySelectorAll('button')).find(
-          (button) => isVisible(button) && predicate(button),
-        )
-      const findFolder = (text) =>
-        Array.from(document.querySelectorAll('.tabletop-library-folder-card')).find(
-          (item) =>
-            isVisible(item) &&
-            item.querySelector('strong')?.textContent?.trim() === text,
-        )
-      const findLibraryTab = () => {
-        const library = Array.from(document.querySelectorAll('.tabletop-library'))
-          .find(isVisible)
-        return library
-          ? Array.from(library.querySelectorAll('button')).find(
-              (button) =>
-                isVisible(button) && button.textContent?.trim() === 'INTERLUDIOS',
-            )
-          : null
-      }
-      const openLibrary = async () => {
-        for (let attempt = 0; attempt < 4; attempt += 1) {
-          const existingTab = await poll(findLibraryTab, 1_500)
-          if (existingTab) return existingTab
+  const hasTransitionControl = () =>
+    evaluate(
+      send,
+      `(() => {
+        const control = document.querySelector('[data-library-view="transitions"]')
+        if (!(control instanceof HTMLElement)) return false
+        const rect = control.getBoundingClientRect()
+        const style = getComputedStyle(control)
+        return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden'
+      })()`,
+    )
 
-          const toolsButton = findVisibleButton(
-            (button) => button.getAttribute('aria-label') === 'Abrir ferramentas',
-          )
-          if (toolsButton) {
-            toolsButton.click()
-            await wait(220)
-          }
+  for (let attempt = 0; attempt < 4 && !(await hasTransitionControl()); attempt += 1) {
+    let mapsButton = await getVisibleButtonCenter(
+      send,
+      `(button) => button.getAttribute('aria-label') === 'Mapas' || button.title === 'Mapas'`,
+    )
 
-          let mapsButton = await poll(
-            () =>
-              findVisibleButton(
-                (button) =>
-                  button.getAttribute('aria-label') === 'Mapas' ||
-                  button.title === 'Mapas',
-              ),
-            2_000,
-          )
-          if (mapsButton?.classList.contains('tabletop-hud__button--active')) {
-            const delayedTab = await poll(findLibraryTab, 1_500)
-            if (delayedTab) return delayedTab
-
-            mapsButton.click()
-            await wait(320)
-            mapsButton = await poll(
-              () =>
-                findVisibleButton(
-                  (button) =>
-                    button.getAttribute('aria-label') === 'Mapas' ||
-                    button.title === 'Mapas',
-                ),
-              2_000,
-            )
-          }
-          if (mapsButton) {
-            mapsButton.click()
-            const tab = await poll(findLibraryTab, 3_000)
-            if (tab) return tab
-          }
-        }
-        return null
-      }
-
-      let transitionTab = null
-      let munFolder = null
-
-      for (let attempt = 0; attempt < 4; attempt += 1) {
-        transitionTab = await openLibrary()
-        if (!(transitionTab instanceof HTMLElement)) continue
-        transitionTab.click()
-        munFolder = await poll(() => {
-          const library = Array.from(document.querySelectorAll('.tabletop-library'))
-            .find(isVisible)
-          return library ? findFolder('MUN') : null
-        }, 3_500)
-        if (munFolder instanceof HTMLElement) break
-      }
-
-      if (!(transitionTab instanceof HTMLElement)) {
-        return {
-          step: 'tab',
-          visibleButtons: Array.from(document.querySelectorAll('button'))
-            .filter(isVisible)
-            .map((button) => ({
-              ariaLabel: button.getAttribute('aria-label'),
-              text: button.textContent?.trim(),
-              title: button.title,
-            }))
-          .slice(0, 30),
-        }
-      }
-      if (!(munFolder instanceof HTMLElement)) {
-        const library = Array.from(document.querySelectorAll('.tabletop-library')).find(isVisible)
-        return {
-          step: 'mun-folder',
-          folderCards: Array.from(document.querySelectorAll('.tabletop-library-folder-card'))
-            .filter(isVisible)
-            .map((item) => item.textContent?.trim())
-            .slice(0, 30),
-          bodyText: document.body.innerText.slice(0, 2_500),
-          visibleButtons: Array.from(document.querySelectorAll('button'))
-            .filter(isVisible)
-            .map((button) => ({
-              ariaLabel: button.getAttribute('aria-label'),
-              text: button.textContent?.trim(),
-              title: button.title,
-            }))
-            .slice(0, 50),
-          libraryText: library?.textContent?.trim().slice(0, 1_500) ?? '',
-          transitionCards: Array.from(document.querySelectorAll('.tabletop-library-card'))
-            .filter(isVisible)
-            .map((item) => item.textContent?.trim())
-            .slice(0, 12),
-        }
-      }
-      munFolder.click()
-
-      const planicieFolder = await poll(() =>
-        Array.from(document.querySelectorAll('.tabletop-library-folder-card')).find(
-          (item) => isVisible(item) && /Plan/i.test(item.textContent ?? ''),
-        ),
+    if (!mapsButton?.found) {
+      const toolsButton = await getVisibleButtonCenter(
+        send,
+        `(button) => ['Abrir atalhos', 'Abrir ferramentas'].includes(button.getAttribute('aria-label') ?? '')`,
       )
-      if (!(planicieFolder instanceof HTMLElement)) {
-        return {
-          step: 'biome-folder',
-          bodyText: document.body.innerText.slice(0, 2_500),
-          folderCards: Array.from(document.querySelectorAll('.tabletop-library-folder-card'))
-            .filter(isVisible)
-            .map((item) => item.textContent?.trim())
-            .slice(0, 30),
-        }
+      if (toolsButton?.found) {
+        await clickAt(send, toolsButton.x, toolsButton.y)
+        await delay(220)
       }
-      planicieFolder.click()
+      mapsButton = await getVisibleButtonCenter(
+        send,
+        `(button) => button.getAttribute('aria-label') === 'Mapas' || button.title === 'Mapas'`,
+      )
+    }
 
-      const card = await poll(() =>
-        Array.from(document.querySelectorAll('.tabletop-library-card')).find(
-          (item) =>
-            isVisible(item) &&
-            item.textContent?.includes(${JSON.stringify(targetMapName)}) &&
-            item.querySelector('button')?.closest('.tabletop-library-card'),
-        ),
+    if (mapsButton?.found) {
+      await clickAt(send, mapsButton.x, mapsButton.y)
+      await delay(420)
+    }
+  }
+
+  if (!(await hasTransitionControl())) {
+    const diagnostic = await evaluate(
+      send,
+      `(() => {
+        const isVisible = (element) => {
+          if (!(element instanceof HTMLElement)) return false
+          const rect = element.getBoundingClientRect()
+          const style = getComputedStyle(element)
+          return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden'
+        }
+        return {
+          bodyText: document.body.innerText.slice(0, 1800),
+          buttons: Array.from(document.querySelectorAll('button')).filter(isVisible).map((button) => ({
+            ariaLabel: button.getAttribute('aria-label') ?? '',
+            className: button.className,
+            text: button.textContent?.trim() ?? '',
+            title: button.title,
+          })).slice(0, 60),
+          windows: Array.from(document.querySelectorAll('.floating-window')).filter(isVisible).map(
+            (windowElement) => windowElement.textContent?.trim().slice(0, 180),
+          ),
+        }
+      })()`,
+    )
+    throw new Error(
+      `Biblioteca de mapas nao abriu no layout visual atual: ${JSON.stringify(diagnostic)}`,
+    )
+  }
+
+  const clickLibraryElement = async (expression, label, timeoutMs = 8_000) => {
+    const startedAt = Date.now()
+    let lastState = null
+
+    while (Date.now() - startedAt < timeoutMs) {
+      lastState = await evaluate(
+        send,
+        `(() => {
+          const element = (${expression})
+          if (!(element instanceof HTMLElement)) return { clicked: false }
+          element.scrollIntoView({ block: 'center', inline: 'nearest' })
+          element.click()
+          return { clicked: true }
+        })()`,
       )
-      if (!(card instanceof HTMLElement)) return { step: 'transition-card' }
-      const showButton = Array.from(card.querySelectorAll('button')).find(
-        (item) => item.textContent?.trim() === 'Mostrar interludio',
-      )
-      if (!(showButton instanceof HTMLElement)) return { step: 'show-button' }
-      showButton.click()
-      return { step: 'done' }
-    })()`,
+      if (lastState?.clicked) return
+      await delay(180)
+    }
+
+    throw new Error(`Controle ${label} nao ficou disponivel: ${JSON.stringify(lastState)}`)
+  }
+
+  await clickLibraryElement(
+    `document.querySelector('[data-library-view="transitions"]')`,
+    'Interludios',
   )
-
-  assert(opened?.step === 'done', `Falha abrindo interludio pela biblioteca: ${JSON.stringify(opened)}`)
+  await waitFor(
+    send,
+    `() => document.querySelector('[data-library-view="transitions"]')?.classList.contains('is-active') === true`,
+    'visao de interludios',
+    8_000,
+  )
+  await waitFor(
+    send,
+    `() => {
+      const transitionCards = Array.from(
+        document.querySelectorAll('[data-library-item-type="transition"]'),
+      )
+      const mapCards = Array.from(document.querySelectorAll('[data-library-item-type="map"]'))
+      const targetReady = transitionCards.some(
+        (item) => (item.getAttribute('data-library-item-name') ?? '').includes(${JSON.stringify(targetMapName)}),
+      )
+      return {
+        activeView: document.querySelector('[data-library-view].is-active')?.getAttribute(
+          'data-library-view',
+        ) ?? '',
+        mapCards: mapCards.length,
+        ready: targetReady,
+        transitionCards: transitionCards.length,
+        transitionNames: transitionCards.slice(0, 8).map(
+          (item) => item.getAttribute('data-library-item-name') ?? '',
+        ),
+      }
+    }`,
+    'card do interludio M5-S1',
+    10_000,
+  )
+  await clickLibraryElement(
+    `(() => {
+      const card = Array.from(document.querySelectorAll('[data-library-item-type="transition"]')).find(
+        (item) => (item.getAttribute('data-library-item-name') ?? '').includes(${JSON.stringify(targetMapName)}),
+      )
+      return Array.from(card?.querySelectorAll('button') ?? []).find(
+        (button) => button.textContent?.trim() === 'Mostrar interludio',
+      )
+    })()`,
+    'Mostrar interludio',
+  )
 }
 
 async function exerciseFolderOrganization(send) {
@@ -1140,38 +1104,26 @@ async function exerciseFolderOrganization(send) {
       }
       const clickFolder = async (label) => {
         const folder = Array.from(
-          document.querySelectorAll('.tabletop-library-folder-card'),
-        ).find((item) => item.querySelector('strong')?.textContent?.trim() === label)
+          document.querySelectorAll('[data-library-folder-name]'),
+        ).find((item) => item.getAttribute('data-library-folder-name')?.trim() === label)
         if (!(folder instanceof HTMLElement)) return false
-        folder.click()
+        const selectButton = folder.querySelector('.tabletop-visual-library-folder__select')
+        ;(selectButton instanceof HTMLElement ? selectButton : folder).click()
         await wait(260)
         return true
       }
       const ensureTransitionsRoot = async () => {
         for (let attempt = 0; attempt < 30; attempt += 1) {
-          const transitionTab = Array.from(
-            document.querySelectorAll('.tabletop-library-tabs__button'),
-          ).find((item) => isVisible(item) && item.textContent?.trim() === 'INTERLUDIOS')
+          const transitionTab = document.querySelector('[data-library-view="transitions"]')
           if (!(transitionTab instanceof HTMLElement)) {
             await wait(200)
             continue
           }
-          if (!transitionTab.classList.contains('tabletop-library-tabs__button--active')) {
-            transitionTab.click()
-            await wait(160)
-          }
-          const rootButton = Array.from(
-            document.querySelectorAll('.tabletop-library-breadcrumb__item'),
-          ).find((item) => isVisible(item) && item.textContent?.trim() === 'Todas')
-          if (rootButton instanceof HTMLElement) {
-            rootButton.click()
-            await wait(160)
-          }
+          transitionTab.click()
+          await wait(160)
           if (
-            transitionTab.classList.contains('tabletop-library-tabs__button--active') &&
-            Array.from(document.querySelectorAll('input[placeholder="Nome da pasta"]')).some(
-              isVisible,
-            )
+            transitionTab.classList.contains('is-active') &&
+            Array.from(document.querySelectorAll('[data-testid="map-library-new-folder-name"]')).some(isVisible)
           ) {
             return true
           }
@@ -1200,10 +1152,13 @@ async function exerciseFolderOrganization(send) {
       mapsButton.click()
       await wait(380)
       if (!(await ensureTransitionsRoot())) return { step: 'tab' }
-      const input = document.querySelector('input[placeholder="Nome da pasta"]')
+      const input = document.querySelector('[data-testid="map-library-new-folder-name"]')
       if (!(input instanceof HTMLInputElement)) return { step: 'folder-input' }
       setValue(input, 'Teste Riacho')
-      if (!(await clickButton('+ Pasta'))) return { step: 'create-folder' }
+      const createFolderButton = document.querySelector('[data-testid="map-library-create-folder"]')
+      if (!(createFolderButton instanceof HTMLElement)) return { step: 'create-folder' }
+      createFolderButton.click()
+      await wait(260)
 
       const newFolder = Array.from(document.querySelectorAll('.tabletop-library-folder-card')).find(
         (item) => item.textContent?.includes('Teste Riacho'),
@@ -1215,9 +1170,9 @@ async function exerciseFolderOrganization(send) {
           folderTexts: Array.from(
             document.querySelectorAll('.tabletop-library-folder-card'),
           ).map((item) => item.textContent?.trim()).slice(0, 12),
-          tabTexts: Array.from(document.querySelectorAll('.tabletop-library-tabs__button')).map(
+          tabTexts: Array.from(document.querySelectorAll('[data-library-view]')).map(
             (item) => ({
-              active: item.classList.contains('tabletop-library-tabs__button--active'),
+              active: item.classList.contains('is-active'),
               text: item.textContent?.trim(),
             }),
           ),
@@ -1277,7 +1232,10 @@ async function exerciseFolderOrganization(send) {
       )
       await wait(320)
 
-      await clickButton('Todas')
+      const transitionRootButton = document.querySelector('[data-library-view="transitions"]')
+      if (!(transitionRootButton instanceof HTMLElement)) return { step: 'transition-root' }
+      transitionRootButton.click()
+      await wait(260)
       const movedFolder = Array.from(document.querySelectorAll('.tabletop-library-folder-card')).find(
         (item) => item.textContent?.includes('Teste Riacho'),
       )
@@ -1513,33 +1471,32 @@ async function exercisePrepareMapForGm(send) {
 
       if (!(await openMapLibrary())) return { step: 'open-library' }
 
-      const mapsTab = findVisibleButton((button) => button.textContent?.trim() === 'MAPAS')
+      const mapsTab = document.querySelector('[data-library-view="maps"]')
       if (!(mapsTab instanceof HTMLElement)) return { step: 'maps-tab' }
       mapsTab.click()
       await wait(260)
 
-      const rootButton = findVisibleButton((button) => button.textContent?.trim() === 'Todas')
-      if (rootButton instanceof HTMLElement) {
-        rootButton.click()
-        await wait(180)
-      }
-
-      const planicieFolder = Array.from(
-        document.querySelectorAll('.tabletop-library-folder-card'),
-      ).find(
-        (item) =>
-          isVisible(item) &&
-          /plan/i.test(item.querySelector('strong')?.textContent ?? item.textContent ?? ''),
-      )
+      const planicieFolders = Array.from(
+        document.querySelectorAll('[data-library-folder-name]'),
+      ).filter((item) => /plan/i.test(item.getAttribute('data-library-folder-name') ?? ''))
+      const planicieFolder =
+        planicieFolders.find((item) =>
+          (item.getAttribute('data-library-folder-name') ?? '')
+            .toLocaleLowerCase('pt-BR')
+            .includes('planicie / floresta inicial'),
+        ) ?? planicieFolders[0]
       if (!(planicieFolder instanceof HTMLElement)) {
         return {
           step: 'planicie-folder',
           folderTexts: Array.from(
-            document.querySelectorAll('.tabletop-library-folder-card'),
-          ).map((item) => item.textContent?.trim()).slice(0, 20),
+            document.querySelectorAll('[data-library-folder-name]'),
+          ).map((item) => item.getAttribute('data-library-folder-name')).slice(0, 20),
         }
       }
-      planicieFolder.click()
+      const planicieSelect = planicieFolder.querySelector(
+        '.tabletop-visual-library-folder__select',
+      )
+      ;(planicieSelect instanceof HTMLElement ? planicieSelect : planicieFolder).click()
       await wait(360)
 
       const card = Array.from(document.querySelectorAll('.tabletop-library-card')).find(
@@ -1600,7 +1557,9 @@ async function exercisePrepareMapForGm(send) {
 
       if (!(await openMapLibrary())) return { step: 'reopen-library' }
       const returnButton = findVisibleButton(
-        (button) => button.textContent?.trim() === 'Voltar ao mapa ativo dos jogadores',
+        (button) =>
+          button.getAttribute('aria-label') === 'Voltar ao mapa ativo' ||
+          button.title === 'Voltar ao mapa ativo dos jogadores',
       )
       if (!(returnButton instanceof HTMLElement)) return { step: 'return-button' }
       returnButton.click()
@@ -1702,7 +1661,9 @@ async function main() {
   }
 
   try {
+    console.log('[mun-interludes] etapa=abrir-mesa')
     await openGmTable(send, evaluate, delay)
+    console.log('[mun-interludes] etapa=abrir-mun-riacho')
     await openMundiRiachoInterlude(send)
 
     const cycles = []
@@ -1722,22 +1683,28 @@ async function main() {
       `Interludio renderizou preto ou vazio: ${JSON.stringify(renderedImageProbe)}`,
     )
     cycles[0].board = await skipTransitionAndAssertBoard(send, 'MUN')
+    console.log('[mun-interludes] etapa=recuperacao-render')
     const boardRenderRecovery = await exerciseBoardRenderRecovery(
       send,
       reconnectAfterRendererReload,
     )
 
     for (let cycle = 1; cycle <= 4; cycle += 1) {
+      console.log(`[mun-interludes] etapa=interludio-biblioteca ciclo=${cycle}`)
       await openM5InterludeFromLibrary(send)
       const transition = await assertTransitionLoaded(send, `biblioteca-${cycle}`)
       const board = await skipTransitionAndAssertBoard(send, `biblioteca-${cycle}`)
       cycles.push({ transition, board })
     }
 
+    console.log('[mun-interludes] etapa=organizacao-pastas')
     const folderOrganization = await exerciseFolderOrganization(send)
     await captureScreenshot(send, libraryScreenshotPath)
+    console.log('[mun-interludes] etapa=base-release')
     const baseRelease = await exerciseBaseRelease(send)
+    console.log('[mun-interludes] etapa=preparar-mapa')
     const prepareMap = await exercisePrepareMapForGm(send)
+    console.log('[mun-interludes] etapa=estado-final')
 
     const finalState = await evaluate(
       send,

@@ -8,7 +8,6 @@ import { TabletopStatusIcon } from './TabletopStatusIcon'
 
 interface TabletopTokenStatusClusterProps {
   detailSide: 'left' | 'right'
-  isExpanded: boolean
   marks: TabletopCombatMark[]
   sourceNameByTokenId: ReadonlyMap<string, string>
   tokenName: string
@@ -32,7 +31,6 @@ function getStatusKindLabel(kind: TabletopStatusKind | 'mark') {
 
 export function TabletopTokenStatusCluster({
   detailSide,
-  isExpanded,
   marks,
   sourceNameByTokenId,
   tokenName,
@@ -70,9 +68,7 @@ export function TabletopTokenStatusCluster({
   return (
     <span
       aria-label={`${tokenName}: ${statusViews.length} efeito(s) ativo(s)`}
-      className={`tabletop-token__status-cluster tabletop-token__status-cluster--detail-${detailSide}${
-        isExpanded ? ' tabletop-token__status-cluster--expanded' : ''
-      }`}
+      className={`tabletop-token__status-cluster tabletop-token__status-cluster--detail-${detailSide}`}
       data-status-count={statusViews.length}
       data-testid="token-status-cluster"
       onClick={(event) => event.stopPropagation()}

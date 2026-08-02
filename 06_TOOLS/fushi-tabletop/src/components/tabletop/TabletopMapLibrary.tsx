@@ -1,10 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronRight,
+  Clapperboard,
+  Folder,
+  FolderOpen,
+  FolderPlus,
+  Globe2,
+  Grid3X3,
+  Map as MapIcon,
+  MapPinned,
+  Plus,
+  Save,
+  Settings,
+  X,
+} from 'lucide-react'
 import type { TabletopBiome, TabletopMap, TabletopTransitionAsset } from '../../data/types'
 import { resolveRuntimeAssetUrl } from '../../lib/runtimeAssets'
 import type {
   TabletopLibraryCategory,
   TabletopLibraryFolder,
 } from '../../lib/tabletopLibraryState'
+import { TabletopVisualLibrary } from './TabletopVisualLibrary'
 
 interface TabletopMapLibraryProps {
   currentMapId: string
@@ -52,6 +70,11 @@ interface LibraryDragPayload {
   id: string
 }
 
+interface FolderRow {
+  depth: number
+  folder: FolderView
+}
+
 interface FolderContextMenuState {
   folderId: string
   x: number
@@ -59,6 +82,7 @@ interface FolderContextMenuState {
 }
 
 const ROOT_FOLDER_ID = ''
+const ALL_ITEMS_FOLDER_ID = 'virtual:all-items'
 const LIBRARY_DRAG_DATA_TYPE = 'application/x-fushi-library-item'
 const BASE_MAP_FOLDER_ID = 'virtual:maps:bases'
 const BASE_TRANSITION_FOLDER_ID = 'virtual:transitions:bases'
@@ -165,6 +189,31 @@ function getTransitionMediaType(transition: TabletopTransitionAsset): TabletopTr
   }
 
   return transition.type
+}
+
+function buildFolderRows(folders: FolderView[]) {
+  const rows: FolderRow[] = []
+  const visited = new Set<string>()
+
+  function visit(parentId: string, depth: number) {
+    folders
+      .filter((folder) => folder.parentId === parentId)
+      .sort(compareFolders)
+      .forEach((folder) => {
+        if (visited.has(folder.id)) return
+        visited.add(folder.id)
+        rows.push({ depth, folder })
+        visit(folder.id, depth + 1)
+      })
+  }
+
+  visit(ROOT_FOLDER_ID, 0)
+  folders
+    .filter((folder) => !visited.has(folder.id))
+    .sort(compareFolders)
+    .forEach((folder) => rows.push({ depth: 0, folder }))
+
+  return rows
 }
 
 function slugify(value: string) {
@@ -406,10 +455,11 @@ export function TabletopMapLibrary({
 }: TabletopMapLibraryProps) {
   const [activeTab, setActiveTab] = useState<MapLibraryTab>('maps')
   const [selectedFolderIds, setSelectedFolderIds] = useState<Record<MapLibraryTab, string>>({
-    maps: ROOT_FOLDER_ID,
-    transitions: ROOT_FOLDER_ID,
+    maps: ALL_ITEMS_FOLDER_ID,
+    transitions: ALL_ITEMS_FOLDER_ID,
   })
   const [newFolderName, setNewFolderName] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [renamingFolderId, setRenamingFolderId] = useState('')
   const [renamingFolderName, setRenamingFolderName] = useState('')
   const [folderContextMenu, setFolderContextMenu] = useState<FolderContextMenuState | null>(null)
@@ -446,11 +496,15 @@ export function TabletopMapLibrary({
   }, [activeTab, biomes, maps, transitions])
   const effectiveFolders = [...virtualFolders, ...categoryFolders]
   const selectedFolderId = selectedFolderIds[activeTab]
+  const isAllItemsView = selectedFolderId === ALL_ITEMS_FOLDER_ID
   const selectedFolderExists =
+    isAllItemsView ||
     selectedFolderId === ROOT_FOLDER_ID ||
     effectiveFolders.some((folder) => folder.id === selectedFolderId)
-  const currentFolderId = selectedFolderExists ? selectedFolderId : ROOT_FOLDER_ID
+  const currentFolderId =
+    isAllItemsView || !selectedFolderExists ? ROOT_FOLDER_ID : selectedFolderId
   const breadcrumb = buildBreadcrumb(effectiveFolders, currentFolderId)
+  const folderRows = buildFolderRows(effectiveFolders)
   const directFolders = effectiveFolders
     .filter((folder) => folder.parentId === currentFolderId)
     .sort(compareFolders)
@@ -460,13 +514,34 @@ export function TabletopMapLibrary({
     resolveTransitionFolderId(transition, transitionFolders),
   )
   const currentMapName = maps.find((map) => map.id === currentMapId)?.name ?? 'Sem mapa'
+  const normalizedSearchQuery = searchQuery.trim().toLocaleLowerCase('pt-BR')
   const selectedMaps = maps
-    .filter((map) => resolveMapFolderId(map, mapFolders) === currentFolderId)
+    .filter(
+      (map) =>
+        isAllItemsView || resolveMapFolderId(map, mapFolders) === currentFolderId,
+    )
+    .filter((map) =>
+      !normalizedSearchQuery ||
+      [map.name, map.summary, map.biome, map.biomeId, map.type]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase('pt-BR')
+        .includes(normalizedSearchQuery),
+    )
     .sort((a, b) => a.name.localeCompare(b.name))
   const selectedTransitions = transitions
     .filter(
       (transition) =>
+        isAllItemsView ||
         resolveTransitionFolderId(transition, transitionFolders) === currentFolderId,
+    )
+    .filter((transition) =>
+      !normalizedSearchQuery ||
+      [transition.name, transition.summary, transition.biomeId, transition.description]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase('pt-BR')
+        .includes(normalizedSearchQuery),
     )
     .sort((a, b) => a.name.localeCompare(b.name))
   const itemFolderIds = activeTab === 'maps' ? mapFolderIds : transitionFolderIds
@@ -723,120 +798,221 @@ export function TabletopMapLibrary({
     }
   }
 
+  const visibleItemCount = activeTab === 'maps' ? selectedMaps.length : selectedTransitions.length
+  const sidebar = (
+    <>
+      <nav className="tabletop-visual-library__nav" aria-label="Tipo de biblioteca">
+        <button
+          className={activeTab === 'maps' && isAllItemsView ? 'is-active' : ''}
+          data-library-view="maps"
+          onClick={() => {
+            setActiveTab('maps')
+            setSelectedFolderIds((current) => ({ ...current, maps: ALL_ITEMS_FOLDER_ID }))
+          }}
+          type="button"
+        >
+          <MapIcon size={17} />
+          <span>Mapas</span>
+          <small>{maps.length}</small>
+        </button>
+        <button
+          className={activeTab === 'transitions' && isAllItemsView ? 'is-active' : ''}
+          data-library-view="transitions"
+          onClick={() => {
+            setActiveTab('transitions')
+            setSelectedFolderIds((current) => ({
+              ...current,
+              transitions: ALL_ITEMS_FOLDER_ID,
+            }))
+          }}
+          type="button"
+        >
+          <Clapperboard size={17} />
+          <span>Interludios</span>
+          <small>{transitions.length}</small>
+        </button>
+        <button
+          className={!isAllItemsView && currentFolderId === ROOT_FOLDER_ID ? 'is-active' : ''}
+          data-library-view="unfiled"
+          onClick={() => selectFolder(ROOT_FOLDER_ID)}
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => handleFolderDrop(event, ROOT_FOLDER_ID)}
+          type="button"
+        >
+          <FolderOpen size={17} />
+          <span>Sem pasta</span>
+          <small>{itemFolderIds.filter((id) => id === ROOT_FOLDER_ID).length}</small>
+        </button>
+      </nav>
+
+      <div className="tabletop-visual-library__sidebar-heading">
+        <span>Pastas</span>
+        <FolderPlus aria-hidden="true" size={15} />
+      </div>
+      <div className="tabletop-visual-library__folder-list">
+        {folderRows.map(({ depth, folder }) => {
+          const itemCount = getFolderItemCount(folder.id, effectiveFolders, itemFolderIds)
+          const isRenaming = renamingFolderId === folder.id
+
+          if (folder.isVirtual && itemCount === 0 && folder.id !== MUN_TRANSITION_FOLDER_ID) {
+            return null
+          }
+
+          return (
+            <div
+              className={`tabletop-visual-library-folder${
+                currentFolderId === folder.id ? ' is-active' : ''
+              }`}
+              data-library-folder-id={folder.id}
+              data-library-folder-name={folder.name}
+              key={folder.id}
+              onContextMenu={(event) => handleFolderContextMenu(event, folder.id)}
+              style={{ paddingLeft: `${Math.min(depth, 4) * 12}px` }}
+            >
+              <button
+                className="tabletop-visual-library-folder__select"
+                onClick={() => selectFolder(folder.id)}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => handleFolderDrop(event, folder.id)}
+                onKeyDown={(event) => handleFolderKeyDown(event, folder.id)}
+                title="Abrir pasta ou soltar um item aqui"
+                type="button"
+              >
+                {currentFolderId === folder.id ? <FolderOpen size={16} /> : <Folder size={16} />}
+                {isRenaming ? (
+                  <input
+                    autoFocus
+                    onChange={(event) => setRenamingFolderName(event.target.value)}
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => {
+                      event.stopPropagation()
+                      if (event.key === 'Enter') handleSaveFolderRename(folder.id)
+                      if (event.key === 'Escape') setRenamingFolderId('')
+                    }}
+                    value={renamingFolderName}
+                  />
+                ) : (
+                  <span>{folder.name}</span>
+                )}
+                <small>{itemCount}</small>
+              </button>
+              {!folder.isVirtual ? (
+                <div className="tabletop-visual-library-folder__actions">
+                  {isRenaming ? (
+                    <>
+                      <button aria-label="Salvar nome" onClick={() => handleSaveFolderRename(folder.id)} title="Salvar nome" type="button">
+                        <Save size={13} />
+                      </button>
+                      <button aria-label="Cancelar" onClick={() => setRenamingFolderId('')} title="Cancelar" type="button">
+                        <X size={13} />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button aria-label="Renomear pasta" onClick={() => beginFolderRename(folder)} title="Renomear pasta" type="button">
+                        <Settings size={13} />
+                      </button>
+                      <button aria-label="Mover pasta para cima" onClick={() => onMoveFolder(folder.id, 'up')} title="Mover para cima" type="button">
+                        <ArrowUp size={13} />
+                      </button>
+                      <button aria-label="Mover pasta para baixo" onClick={() => onMoveFolder(folder.id, 'down')} title="Mover para baixo" type="button">
+                        <ArrowDown size={13} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="tabletop-visual-library__new-folder">
+        <input
+          data-testid="map-library-new-folder-name"
+          onChange={(event) => setNewFolderName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') handleCreateFolder()
+          }}
+          placeholder="Nova pasta"
+          value={newFolderName}
+        />
+        <button aria-label="Criar pasta" data-testid="map-library-create-folder" onClick={handleCreateFolder} title="Criar pasta" type="button">
+          <Plus size={16} />
+        </button>
+      </div>
+    </>
+  )
+
   return (
-    <section
-      className="tabletop-library tabletop-library--folders"
-      onDragEnd={() => setDraggingPayload(null)}
-      onDragOver={handleLibraryDragOver}
-    >
-      <div className="tabletop-library__hero">
-        <div>
-          <p className="eyebrow">Biblioteca da mesa</p>
-          <h3>Mapas e interludios</h3>
-          <p className="support-copy">
-            Arraste mapas e cenas para dentro das pastas, ou organize por bioma e regiao.
-          </p>
-        </div>
-        <div className="tabletop-library__hero-actions">
+    <TabletopVisualLibrary
+      actions={
+        <>
+          {onReturnToActiveMap ? (
+            <button aria-label="Voltar ao mapa ativo" onClick={onReturnToActiveMap} title="Voltar ao mapa ativo dos jogadores" type="button">
+              <MapPinned size={17} />
+            </button>
+          ) : null}
+          {onReturnToWorld ? (
+            <button aria-label="Voltar ao MUN" onClick={onReturnToWorld} title="Voltar ao MUN" type="button">
+              <Globe2 size={17} />
+            </button>
+          ) : null}
+          <button
+            aria-label={isGridVisible ? 'Esconder grid' : 'Mostrar grid'}
+            className={isGridVisible ? 'is-active' : ''}
+            onClick={onToggleGrid}
+            title={isGridVisible ? 'Esconder grid' : 'Mostrar grid'}
+            type="button"
+          >
+            <Grid3X3 size={17} />
+          </button>
+          <button
+            aria-label={activeTab === 'maps' ? 'Criar mapa' : 'Criar interludio'}
+            onClick={() => activeTab === 'maps' ? onCreateMap(currentFolderId) : onCreateTransition(currentFolderId)}
+            title={activeTab === 'maps' ? 'Criar mapa' : 'Criar interludio'}
+            type="button"
+          >
+            <Plus size={17} />
+          </button>
+        </>
+      }
+      className="tabletop-library tabletop-library--visual"
+      code="MAP"
+      contentHeader={
+        <>
+          <div>
+            <div className="tabletop-visual-library__breadcrumb">
+              <button onClick={() => selectFolder(ALL_ITEMS_FOLDER_ID)} type="button">Biblioteca</button>
+              {breadcrumb.map((folder) => (
+                <span key={folder.id}>
+                  <ChevronRight size={13} />
+                  <button onClick={() => selectFolder(folder.id)} type="button">{folder.name}</button>
+                </span>
+              ))}
+            </div>
+            <h2>{
+              isAllItemsView
+                ? activeTab === 'maps' ? 'Todos os mapas' : 'Todos os interludios'
+                : breadcrumb.at(-1)?.name ?? 'Sem pasta'
+            }</h2>
+            <small>{visibleItemCount} item(ns) nesta visao</small>
+          </div>
           <div className="tag-row">
-            <span className="tag">Mapa atual: {currentMapName}</span>
-            <span className="tag">{isGridVisible ? 'Grid visivel' : 'Grid oculto'}</span>
+            <span className="tag">Atual: {currentMapName}</span>
             {focusedMapId ? <span className="tag">Foco MUN</span> : null}
           </div>
-          <div className="tabletop-hud-panel__actions">
-            {onReturnToActiveMap ? (
-              <button className="button" onClick={onReturnToActiveMap} type="button">
-                Voltar ao mapa ativo dos jogadores
-              </button>
-            ) : null}
-            {onReturnToWorld ? (
-              <button className="button" onClick={onReturnToWorld} type="button">
-                Voltar ao MUN
-              </button>
-            ) : null}
-            <button className="button" onClick={onToggleGrid} type="button">
-              {isGridVisible ? 'Esconder grid' : 'Mostrar grid'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="tabletop-library-tabs">
-        <button
-          className={`tabletop-library-tabs__button${
-            activeTab === 'maps' ? ' tabletop-library-tabs__button--active' : ''
-          }`}
-          onClick={() => setActiveTab('maps')}
-          type="button"
-        >
-          MAPAS
-        </button>
-        <button
-          className={`tabletop-library-tabs__button${
-            activeTab === 'transitions' ? ' tabletop-library-tabs__button--active' : ''
-          }`}
-          onClick={() => setActiveTab('transitions')}
-          type="button"
-        >
-          INTERLUDIOS
-        </button>
-      </div>
-
-      <div className="tabletop-library-toolbar">
-        <div className="tabletop-library-breadcrumb">
-          <button
-            className="tabletop-library-breadcrumb__item"
-            onClick={() => selectFolder(ROOT_FOLDER_ID)}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => handleFolderDrop(event, ROOT_FOLDER_ID)}
-            type="button"
-          >
-            Todas
-          </button>
-          {breadcrumb.map((folder) => (
-            <button
-              className="tabletop-library-breadcrumb__item"
-              key={folder.id}
-              onClick={() => selectFolder(folder.id)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => handleFolderDrop(event, folder.id)}
-              type="button"
-            >
-              <span className="tabletop-library-breadcrumb__folder-icon">
-                {folder.icon ?? 'DIR'}
-              </span>
-              {folder.name}
-            </button>
-          ))}
-        </div>
-        <div className="tabletop-library-toolbar__actions">
-          <input
-            className="field__input tabletop-library-toolbar__input"
-            onChange={(event) => setNewFolderName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                handleCreateFolder()
-              }
-            }}
-            placeholder="Nome da pasta"
-            value={newFolderName}
-          />
-          <button className="button" onClick={handleCreateFolder} type="button">
-            + Pasta
-          </button>
-          <button
-            className="button button--primary"
-            onClick={() =>
-              activeTab === 'maps'
-                ? onCreateMap(currentFolderId)
-                : onCreateTransition(currentFolderId)
-            }
-            type="button"
-          >
-            {activeTab === 'maps' ? '+ Mapa' : '+ Interludio'}
-          </button>
-        </div>
-      </div>
+        </>
+      }
+      icon={activeTab === 'maps' ? MapIcon : Clapperboard}
+      onSearchChange={setSearchQuery}
+      searchPlaceholder={activeTab === 'maps' ? 'Buscar mapas' : 'Buscar interludios'}
+      searchValue={searchQuery}
+      sidebar={sidebar}
+      testId="map-library"
+      title="Mapas e interludios"
+    >
+      <div onDragEnd={() => setDraggingPayload(null)} onDragOver={handleLibraryDragOver}>
 
       {draggingPayload?.category === activeTab ? (
         <div className="tabletop-library-drop-dock" role="region" aria-label="Mover item">
@@ -863,6 +1039,7 @@ export function TabletopMapLibrary({
         {currentFolderId ? (
           <button
             className="tabletop-library-folder-card tabletop-library-folder-card--back"
+            data-library-folder-action="back"
             onClick={() =>
               selectFolder(
                 effectiveFolders.find((folder) => folder.id === currentFolderId)?.parentId ??
@@ -887,6 +1064,8 @@ export function TabletopMapLibrary({
           return (
             <article
               className="tabletop-library-folder-card"
+              data-library-folder-id={folder.id}
+              data-library-folder-name={folder.name}
               key={folder.id}
               onClick={() => selectFolder(folder.id)}
               onDragOver={(event) => event.preventDefault()}
@@ -1047,6 +1226,9 @@ export function TabletopMapLibrary({
                   isActive ? ' tabletop-library-card--active' : ''
                 }${isFocused ? ' tabletop-library-card--highlighted' : ''
                 }`}
+                data-library-item-id={map.id}
+                data-library-item-name={map.name}
+                data-library-item-type="map"
                 draggable
                 key={map.id}
                 onDragEnd={() => setDraggingPayload(null)}
@@ -1156,6 +1338,9 @@ export function TabletopMapLibrary({
             return (
               <article
                 className="tabletop-library-card"
+                data-library-item-id={transition.id}
+                data-library-item-name={transition.name}
+                data-library-item-type="transition"
                 draggable
                 key={transition.id}
                 onDragEnd={() => setDraggingPayload(null)}
@@ -1261,6 +1446,14 @@ export function TabletopMapLibrary({
           })}
         </div>
       )}
-    </section>
+      {visibleItemCount === 0 ? (
+        <div className="tabletop-visual-library__empty">
+          {activeTab === 'maps' ? <MapIcon size={26} /> : <Clapperboard size={26} />}
+          <strong>Nenhum item nesta pasta</strong>
+          <span>Crie um novo item ou mova um card para esta pasta.</span>
+        </div>
+      ) : null}
+      </div>
+    </TabletopVisualLibrary>
   )
 }

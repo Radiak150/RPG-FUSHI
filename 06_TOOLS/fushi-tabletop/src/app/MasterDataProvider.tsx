@@ -30,7 +30,6 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
     typeof readMasterWorkspace
   > | null>(null)
   const skipNextWorkspaceSaveRef = useRef(false)
-  const latestWorkspaceRef = useRef<ReturnType<typeof readMasterWorkspace> | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const data = useMemo(() => {
@@ -107,8 +106,6 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
   }, [])
 
   useLayoutEffect(() => {
-    latestWorkspaceRef.current = workspace
-
     if (!workspace) {
       return
     }
@@ -120,21 +117,6 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
 
     writeMasterWorkspace(workspace)
   }, [workspace])
-
-  useEffect(() => {
-    function flushWorkspaceBeforeClose() {
-      if (latestWorkspaceRef.current) {
-        writeMasterWorkspace(latestWorkspaceRef.current)
-      }
-    }
-
-    window.addEventListener('beforeunload', flushWorkspaceBeforeClose)
-
-    return () => {
-      window.removeEventListener('beforeunload', flushWorkspaceBeforeClose)
-      flushWorkspaceBeforeClose()
-    }
-  }, [])
 
   useEffect(() => {
     const unsubscribe = window.fushiDesktop?.onStorageChanged((event) => {
@@ -160,7 +142,6 @@ export function MasterDataProvider({ children }: PropsWithChildren) {
       const nextWorkspace = updater(currentWorkspace)
 
       if (nextWorkspace) {
-        latestWorkspaceRef.current = nextWorkspace
         writeMasterWorkspace(nextWorkspace)
       }
 

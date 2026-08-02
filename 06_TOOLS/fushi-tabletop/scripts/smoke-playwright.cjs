@@ -45,13 +45,16 @@ async function waitForServer() {
 
 function startDevServer() {
   const viteEntry = path.resolve(__dirname, '../node_modules/vite/bin/vite.js')
-  const isolatedAutosaveDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fushi-tabletop-ui-smoke-'))
+  const isolatedRuntimeDirectory = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'fushi-tabletop-ui-smoke-'),
+  )
 
   const serverProcess = spawn(process.execPath, [viteEntry, '--host', '127.0.0.1', '--port', String(port)], {
     cwd: __dirname + '/..',
     env: {
       ...process.env,
-      FUSHI_AUTOSAVE_DIR: isolatedAutosaveDir,
+      FUSHI_ASSET_DIR: path.join(isolatedRuntimeDirectory, 'assets'),
+      FUSHI_AUTOSAVE_DIR: path.join(isolatedRuntimeDirectory, 'autosave'),
     },
     stdio: 'ignore',
   })
@@ -195,6 +198,155 @@ async function openShortcutsRail(page) {
   ) {
     throw new Error('Mesa: rail de atalhos abriu sem liberar anotacoes pessoais.')
   }
+}
+
+async function openHudTools(page) {
+  const hud = page.locator('.tabletop-hud')
+  if (await waitForVisible(hud, 250)) return
+
+  const toolsButton = page.getByRole('button', { name: 'Abrir ferramentas' })
+  if (!(await waitForVisible(toolsButton, 5_000))) {
+    throw new Error('Mesa: comando para abrir as ferramentas do Mestre nao apareceu.')
+  }
+
+  await toolsButton.click()
+  await hud.waitFor({ state: 'visible', timeout: 5_000 })
+}
+
+async function smokeVisualLibrary(page, { buttonName, testId, screenshotName }) {
+  await openHudTools(page)
+  const toolButton = page.getByRole('button', { name: buttonName, exact: true })
+  if (!(await waitForVisible(toolButton, 5_000))) {
+    throw new Error(`Mesa bibliotecas: ferramenta ${buttonName} nao apareceu.`)
+  }
+
+  await toolButton.click()
+  const library = page.locator(`[data-testid="${testId}"]`)
+  await library.waitFor({ state: 'visible', timeout: 10_000 })
+
+  const topbar = library.locator('.tabletop-visual-library__topbar')
+  const sidebar = library.locator('.tabletop-visual-library__sidebar')
+  const content = library.locator('.tabletop-visual-library__content')
+  for (const [label, locator] of [['topo', topbar], ['navegacao', sidebar], ['conteudo', content]]) {
+    if (!(await locator.isVisible())) {
+      throw new Error(`Mesa bibliotecas: ${buttonName} perdeu ${label} visual.`)
+    }
+  }
+
+  const dimensions = await library.evaluate((element) => {
+    const rect = element.getBoundingClientRect()
+    return {
+      height: rect.height,
+      width: rect.width,
+      scrollWidth: element.scrollWidth,
+    }
+  })
+  if (dimensions.width < 560 || dimensions.height < 320) {
+    throw new Error(
+      `Mesa bibliotecas: ${buttonName} abriu comprimido (${dimensions.width}x${dimensions.height}).`,
+    )
+  }
+  if (dimensions.scrollWidth > dimensions.width + 2) {
+    throw new Error(
+      `Mesa bibliotecas: ${buttonName} criou overflow horizontal interno (${dimensions.scrollWidth} > ${dimensions.width}).`,
+    )
+  }
+
+  const artifactDirectory = path.resolve(__dirname, '../.codex-dev/artifact-work')
+  fs.mkdirSync(artifactDirectory, { recursive: true })
+  await page.screenshot({
+    path: path.join(artifactDirectory, screenshotName),
+    fullPage: false,
+  })
+
+  const window = page.locator('.floating-window').filter({ has: library })
+  await window.getByRole('button', { name: 'Fechar janela' }).click()
+  await library.waitFor({ state: 'detached', timeout: 5_000 })
+}
+
+async function smokePersistentVisualThumbnail(page) {
+  await openHudTools(page)
+  await page.getByRole('button', { name: 'Eventos da mesa', exact: true }).click()
+
+  const library = page.locator('[data-testid="event-manager"]')
+  await library.waitFor({ state: 'visible', timeout: 10_000 })
+
+  const thumbnail = library.locator('.tabletop-event-manager__thumbnail')
+  const fileInput = thumbnail.locator('input[type="file"]')
+  await fileInput.setInputFiles({
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    ),
+    mimeType: 'image/png',
+    name: 'smoke-event-cover.png',
+  })
+
+  await thumbnail.getByRole('status').filter({ hasText: 'Capa atualizada.' }).waitFor({
+    state: 'visible',
+    timeout: 10_000,
+  })
+  const uploadedImage = thumbnail.locator('img')
+  await uploadedImage.waitFor({ state: 'visible', timeout: 10_000 })
+  const uploadedSource = await uploadedImage.getAttribute('src')
+  if (!uploadedSource?.includes('/api/fushi/assets/images/')) {
+    throw new Error(`Mesa bibliotecas: capa persistente recebeu URL invalida (${uploadedSource}).`)
+  }
+
+  const persistedThumbnail = await page.evaluate(() => {
+    const storageKey = Object.keys(window.localStorage).find((key) =>
+      key.startsWith('fushi-tabletop:asset-library:v1:campaign:'),
+    )
+    const rawState = storageKey ? window.localStorage.getItem(storageKey) : null
+    const state = rawState ? JSON.parse(rawState) : null
+    return state?.visualThumbnails?.['event:initial-training'] ?? null
+  })
+  if (persistedThumbnail !== uploadedSource) {
+    throw new Error(
+      `Mesa bibliotecas: capa enviada nao persistiu no estado canonico (${persistedThumbnail}).`,
+    )
+  }
+
+  const window = page.locator('.floating-window').filter({ has: library })
+  await window.getByRole('button', { name: 'Fechar janela' }).click()
+  await library.waitFor({ state: 'detached', timeout: 5_000 })
+
+  await openHudTools(page)
+  await page.getByRole('button', { name: 'Eventos da mesa', exact: true }).click()
+  await library.waitFor({ state: 'visible', timeout: 10_000 })
+  const reopenedSource = await library
+    .locator('.tabletop-event-manager__thumbnail img')
+    .getAttribute('src')
+  if (reopenedSource !== uploadedSource) {
+    throw new Error('Mesa bibliotecas: capa persistente sumiu ao reabrir o hub EVE.')
+  }
+
+  await library
+    .getByRole('button', { name: /Remover capa de/i })
+    .click()
+  await library.getByRole('status').filter({ hasText: 'Capa removida.' }).waitFor({
+    state: 'visible',
+    timeout: 5_000,
+  })
+
+  const cleanedState = await page.evaluate(() => {
+    const storageKey = Object.keys(window.localStorage).find((key) =>
+      key.startsWith('fushi-tabletop:asset-library:v1:campaign:'),
+    )
+    const rawState = storageKey ? window.localStorage.getItem(storageKey) : null
+    const state = rawState ? JSON.parse(rawState) : null
+    return state?.visualThumbnails?.['event:initial-training'] ?? null
+  })
+  if (cleanedState !== null) {
+    throw new Error('Mesa bibliotecas: limpeza da capa de teste nao persistiu.')
+  }
+
+  await page
+    .locator('.floating-window')
+    .filter({ has: library })
+    .getByRole('button', { name: 'Fechar janela' })
+    .click()
+  await library.waitFor({ state: 'detached', timeout: 5_000 })
 }
 
 async function smokeLauncher(browser) {
@@ -476,6 +628,21 @@ async function smokeMesa(browser) {
     .filter({ has: page.locator('[data-testid="build-manager"]') })
     .locator('button[aria-label="Fechar janela"]')
     .click()
+
+  console.log('smoke:ui mesa/bibliotecas-visuais')
+  for (const visualLibrary of [
+    { buttonName: 'Mapas', testId: 'map-library', screenshotName: 'map-library-gm.png' },
+    { buttonName: 'Livro', testId: 'master-shield-library', screenshotName: 'master-shield-gm.png' },
+    { buttonName: 'Objetos', testId: 'object-library', screenshotName: 'object-library-gm.png' },
+    { buttonName: 'NPCs', testId: 'npc-library', screenshotName: 'npc-library-gm.png' },
+    { buttonName: 'Eventos da mesa', testId: 'event-manager', screenshotName: 'event-manager-gm.png' },
+    { buttonName: 'Efeitos visuais', testId: 'tabletop-vfx-library', screenshotName: 'vfx-library-gm.png' },
+  ]) {
+    await smokeVisualLibrary(page, visualLibrary)
+  }
+  await smokePersistentVisualThumbnail(page)
+  await assertNoConsoleErrors(page, 'Mesa bibliotecas visuais')
+  await assertNoHorizontalOverflow(page, 'Mesa bibliotecas visuais')
 
   console.log('smoke:ui mesa/janelas')
   await openShortcutsRail(page)

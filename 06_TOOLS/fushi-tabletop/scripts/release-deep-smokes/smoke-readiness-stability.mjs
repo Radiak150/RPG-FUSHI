@@ -54,7 +54,23 @@ async function connectCdp(webSocketUrl) {
     if (message.method === 'Log.entryAdded') {
       const entry = message.params?.entry
       if (entry?.level === 'error') {
-        issueEvents.push({ method: message.method, text: entry.text })
+        issueEvents.push({
+          method: message.method,
+          text: entry.text,
+          url: entry.url ?? '',
+          lineNumber: entry.lineNumber ?? 0,
+        })
+      }
+    }
+    if (message.method === 'Network.responseReceived') {
+      const response = message.params?.response
+      if (Number(response?.status) >= 400) {
+        issueEvents.push({
+          method: message.method,
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url,
+        })
       }
     }
   })
@@ -62,13 +78,13 @@ async function connectCdp(webSocketUrl) {
   function send(method, params = {}) {
     const id = nextId
     nextId += 1
-    socket.send(JSON.stringify({ id, method, params }))
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         pending.delete(id)
         reject(new Error(`CDP timeout: ${method}`))
       }, 30000)
       pending.set(id, { resolve, reject, timeoutId })
+      socket.send(JSON.stringify({ id, method, params }))
     })
   }
 
@@ -95,6 +111,7 @@ async function main() {
   const { issueEvents, send, socket } = await connectCdp(page.webSocketDebuggerUrl)
   await send('Runtime.enable')
   await send('Log.enable')
+  await send('Network.enable')
   await send('Page.enable')
   await send('Input.setIgnoreInputEvents', { ignore: false })
 

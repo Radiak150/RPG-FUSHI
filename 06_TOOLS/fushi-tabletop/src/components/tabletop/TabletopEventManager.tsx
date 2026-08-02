@@ -1,5 +1,13 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import {
+  CalendarDays,
+  Globe2,
+  Layers3,
+  Presentation,
+  Settings2,
+  type LucideIcon,
+} from 'lucide-react'
+import {
   BUILD_ARCHETYPES,
   BUILD_ITEMS,
   ITEM_RARITY_META,
@@ -22,8 +30,23 @@ import {
   VILLAGE_TRAINING_ARC,
   type TabletopTrainingState,
 } from '../../lib/tabletopTraining'
+import { TabletopVisualLibrary } from './TabletopVisualLibrary'
+import { TabletopVisualThumbnailPicker } from './TabletopVisualThumbnailPicker'
+
+type EventCategoryFilter = 'all' | 'world' | 'presentation' | 'management'
+
+const EVENT_CATEGORY_META: Record<
+  EventCategoryFilter,
+  { icon: LucideIcon; label: string }
+> = {
+  all: { icon: Layers3, label: 'Todos os eventos' },
+  world: { icon: Globe2, label: 'Mundo' },
+  presentation: { icon: Presentation, label: 'Apresentação' },
+  management: { icon: Settings2, label: 'Gestão' },
+}
 
 interface TabletopEventManagerProps {
+  campaignId?: string
   characters: CharacterSheet[]
   eventState: TabletopEventSystemState
   onActivate: (eventId: TabletopEventId) => void
@@ -39,10 +62,13 @@ interface TabletopEventManagerProps {
     itemId: string
     itemName: string
   }) => void
+  onSetVisualThumbnail: (key: string, value: string) => void
   trainingState: TabletopTrainingState | null
+  visualThumbnails: Record<string, string>
 }
 
 export function TabletopEventManager({
+  campaignId,
   characters,
   eventState,
   onActivate,
@@ -53,10 +79,15 @@ export function TabletopEventManager({
   onOpenTraining,
   onRestartTraining,
   onStartRarityDraw,
+  onSetVisualThumbnail,
   trainingState,
+  visualThumbnails,
 }: TabletopEventManagerProps) {
   const [selectedEventId, setSelectedEventId] =
     useState<TabletopEventId>('initial-training')
+  const [eventCategory, setEventCategory] =
+    useState<EventCategoryFilter>('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [archetypeId, setArchetypeId] = useState<FushiBuildArchetype>('tank')
   const [characterId, setCharacterId] = useState(() => characters[0]?.id ?? '')
   const [itemId, setItemId] = useState(
@@ -74,6 +105,7 @@ export function TabletopEventManager({
     (event) => event.id === selectedEventId,
   ) ?? TABLETOP_EVENT_DEFINITIONS[0]
   const selectedRuntime = eventState.events[selectedEvent.id]
+  const SelectedEventIcon = EVENT_CATEGORY_META[selectedEvent.category].icon
   const activeEvents = TABLETOP_EVENT_DEFINITIONS.filter((event) =>
     isTabletopEventActive(eventState, event.id),
   )
@@ -91,6 +123,16 @@ export function TabletopEventManager({
     [trainingState],
   )
   const rarityHistory = [...eventState.rarityHistory].reverse()
+  const visibleEventDefinitions = useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLocaleLowerCase('pt-BR')
+    return TABLETOP_EVENT_DEFINITIONS.filter((event) => {
+      if (eventCategory !== 'all' && event.category !== eventCategory) return false
+      if (!normalizedSearch) return true
+      return `${event.label} ${event.summary} ${event.description}`
+        .toLocaleLowerCase('pt-BR')
+        .includes(normalizedSearch)
+    })
+  }, [eventCategory, searchQuery])
 
   function chooseArchetype(nextArchetype: FushiBuildArchetype) {
     setArchetypeId(nextArchetype)
@@ -118,8 +160,115 @@ export function TabletopEventManager({
     return 'Evento visual'
   }
 
+  const sidebar = (
+    <>
+      {activeEvents.length > 0 ? (
+        <div className="tabletop-visual-library__sidebar-section">
+          <p className="eyebrow">Ativos agora</p>
+          <div className="tabletop-event-manager__active-list">
+            {activeEvents.map((event) => (
+              <button
+                key={event.id}
+                onClick={() => setSelectedEventId(event.id)}
+                type="button"
+              >
+                <i />
+                <span>{event.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="tabletop-visual-library__sidebar-section">
+          <p className="eyebrow">Estado da mesa</p>
+          <p className="support-copy">Nenhum evento ativo.</p>
+        </div>
+      )}
+
+      <nav aria-label="Categorias de eventos" className="tabletop-visual-library__nav">
+        {(Object.keys(EVENT_CATEGORY_META) as EventCategoryFilter[]).map(
+          (category) => {
+            const meta = EVENT_CATEGORY_META[category]
+            const Icon = meta.icon
+            const count =
+              category === 'all'
+                ? TABLETOP_EVENT_DEFINITIONS.length
+                : TABLETOP_EVENT_DEFINITIONS.filter(
+                    (event) => event.category === category,
+                  ).length
+            return (
+              <button
+                aria-current={eventCategory === category ? 'page' : undefined}
+                className={eventCategory === category ? 'is-active' : ''}
+                key={category}
+                onClick={() => setEventCategory(category)}
+                type="button"
+              >
+                <Icon aria-hidden="true" size={17} />
+                <span>{meta.label}</span>
+                <small>{count}</small>
+              </button>
+            )
+          },
+        )}
+      </nav>
+
+      <div className="tabletop-visual-library__sidebar-section">
+        <p className="eyebrow">Catálogo</p>
+        <div className="tabletop-event-manager__event-list">
+          {visibleEventDefinitions.map((event) => {
+            const isActive = isTabletopEventActive(eventState, event.id)
+            return (
+              <button
+                aria-current={event.id === selectedEventId ? 'page' : undefined}
+                className={event.id === selectedEventId ? 'is-active' : ''}
+                data-testid={`event-card-${event.id}`}
+                key={event.id}
+                onClick={() => setSelectedEventId(event.id)}
+                type="button"
+              >
+                <span>{event.label}</span>
+                <small className={isActive ? 'is-active' : ''}>
+                  {isActive ? 'Ativo' : getEventCategoryLabel(event.category)}
+                </small>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </>
+  )
+
   return (
-    <div className="tabletop-event-manager" data-testid="event-manager">
+    <TabletopVisualLibrary
+      actions={
+        <span className="tag" data-testid="active-event-count">
+          {activeEvents.length} ativo(s)
+        </span>
+      }
+      className="tabletop-event-manager tabletop-event-manager--visual"
+      code="EVE"
+      contentHeader={
+        <div className="tabletop-event-manager__visual-heading">
+          <div>
+            <p className="eyebrow">{getEventCategoryTitle(selectedEvent.category)}</p>
+            <h3>{selectedEvent.label}</h3>
+            <p className="support-copy">{selectedEvent.description}</p>
+          </div>
+          <span className={selectedRuntime.isActive ? 'tag is-success' : 'tag'}>
+            {selectedRuntime.isActive ? 'Ativo' : 'Inativo'}
+          </span>
+        </div>
+      }
+      icon={CalendarDays}
+      onSearchChange={setSearchQuery}
+      searchPlaceholder="Buscar evento"
+      searchValue={searchQuery}
+      sidebar={sidebar}
+      testId="event-manager"
+      title="Eventos da mesa"
+    >
+      <div className="tabletop-event-manager__legacy">
       <header className="tabletop-event-manager__header">
         <div>
           <p className="eyebrow">EVE · Mestre</p>
@@ -128,7 +277,7 @@ export function TabletopEventManager({
             Ative apenas as camadas que a cena precisa. Desativar remove regras e apresentacoes temporarias sem apagar o progresso arquivado.
           </p>
         </div>
-        <span className="tag" data-testid="active-event-count">
+        <span className="tag" data-testid="active-event-count-legacy">
           {activeEvents.length} ativo(s)
         </span>
       </header>
@@ -159,7 +308,7 @@ export function TabletopEventManager({
               <button
                 aria-current={event.id === selectedEventId ? 'true' : undefined}
                 className={event.id === selectedEventId ? 'is-selected' : ''}
-                data-testid={`event-card-${event.id}`}
+                data-testid={`event-card-legacy-${event.id}`}
                 key={event.id}
                 onClick={() => setSelectedEventId(event.id)}
                 type="button"
@@ -174,6 +323,16 @@ export function TabletopEventManager({
         </nav>
 
         <section className="tabletop-event-manager__detail">
+          <TabletopVisualThumbnailPicker
+            alt={selectedEvent.label}
+            campaignId={campaignId}
+            className="tabletop-visual-thumbnail--feature tabletop-event-manager__thumbnail"
+            fallback={<SelectedEventIcon size={42} />}
+            onChange={(value) =>
+              onSetVisualThumbnail(`event:${selectedEvent.id}`, value)
+            }
+            value={visualThumbnails[`event:${selectedEvent.id}`]}
+          />
           <header>
             <div>
               <p className="eyebrow">{getEventCategoryTitle(selectedEvent.category)}</p>
@@ -505,6 +664,7 @@ export function TabletopEventManager({
           )}
         </section>
       </div>
-    </div>
+      </div>
+    </TabletopVisualLibrary>
   )
 }
