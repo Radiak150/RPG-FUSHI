@@ -71,7 +71,7 @@ export function TabletopBuildManager({
     () => BUILD_ITEMS.find((item) => item.archetype === 'tank')?.id ?? '',
   )
   const [rarity, setRarity] = useState<StandardRarity>('comum')
-  const [characterId, setCharacterId] = useState(() => characters[0]?.id ?? '')
+  const [characterId, setCharacterId] = useState('')
   const [feedback, setFeedback] = useState('')
   const [secretTargetId, setSecretTargetId] = useState('')
   const [rerollResults, setRerollResults] = useState<Array<{ rarity: StandardRarity; roll: number }>>([])
@@ -90,7 +90,7 @@ export function TabletopBuildManager({
     )
   const selectedItem = visibleItems.find((item) => item.id === selectedItemId) ?? visibleItems[0]
   const SelectedArchetypeIcon = archetypeIcons[archetypeId]
-  const selectedCharacter = characters.find((character) => character.id === characterId) ?? characters[0]
+  const selectedCharacter = characters.find((character) => character.id === characterId)
   const previewItem = selectedItem ? resolveBuildItemByRarity(selectedItem, rarity) : null
   const absorbedItems = getBuildItems(selectedCharacter?.combatProfile?.build)
   const isAlreadyAbsorbed = Boolean(
@@ -110,7 +110,11 @@ export function TabletopBuildManager({
   }
 
   function absorbSelectedItem() {
-    if (!selectedCharacter || !previewItem || isAlreadyAbsorbed) return
+    if (!selectedCharacter) {
+      setFeedback('Escolha uma ficha antes de absorver o item.')
+      return
+    }
+    if (!previewItem || isAlreadyAbsorbed) return
     onChangeCharacter(absorbCharacterBuildItem(selectedCharacter, previewItem))
     setFeedback(`${previewItem.name} foi vinculado a ${selectedCharacter.nome}.`)
   }
@@ -205,6 +209,7 @@ export function TabletopBuildManager({
           }}
           value={selectedCharacter?.id ?? ''}
         >
+          <option value="">Escolha uma ficha</option>
           {charactersByType.map((character) => (
             <option key={character.id} value={character.id}>{character.nome} - {character.tipo}</option>
           ))}
@@ -343,6 +348,7 @@ export function TabletopBuildManager({
                     }}
                     value={selectedCharacter?.id ?? ''}
                   >
+                    <option value="">Escolha uma ficha</option>
                     {charactersByType.map((character) => (
                       <option key={character.id} value={character.id}>
                         {character.nome} · {character.tipo}
@@ -353,7 +359,7 @@ export function TabletopBuildManager({
                 <button
                   className="button button--primary"
                   data-testid="build-absorb"
-                  disabled={!selectedCharacter || isAlreadyAbsorbed}
+                  disabled={!previewItem || isAlreadyAbsorbed}
                   onClick={absorbSelectedItem}
                   type="button"
                 >

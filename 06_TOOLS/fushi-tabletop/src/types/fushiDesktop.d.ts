@@ -115,6 +115,7 @@ export interface FushiOllamaChatResult {
 
 export interface FushiRenderedRegionInspection {
   blank: boolean
+  blankTileRatio?: number
   error?: string
   meanBrightness?: number
   nearWhiteRatio?: number

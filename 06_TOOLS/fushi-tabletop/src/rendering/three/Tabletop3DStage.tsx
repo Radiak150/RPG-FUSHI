@@ -79,6 +79,7 @@ interface Tabletop3DStageProps {
   onObjectRemove?: (objectId: string) => void
   onObjectSelect?: (objectId: string) => void
   onObjectUndo?: () => void
+  onRendererFailure?: () => void
   onTokenSelect?: (tokenId: string) => void
   quality?: VisualQualityMode
   tokens?: Tabletop3DTokenView[]
@@ -2150,6 +2151,7 @@ export function Tabletop3DStage({
   onObjectRemove,
   onObjectSelect,
   onObjectUndo,
+  onRendererFailure,
   onTokenSelect,
   quality = 'balanced',
   tokens = [],
@@ -2178,6 +2180,7 @@ export function Tabletop3DStage({
   const onObjectRemoveRef = useRef(onObjectRemove)
   const onObjectSelectRef = useRef(onObjectSelect)
   const onObjectUndoRef = useRef(onObjectUndo)
+  const onRendererFailureRef = useRef(onRendererFailure)
   const onTokenSelectRef = useRef(onTokenSelect)
   const tokensRef = useRef(tokens)
   const cameraSignature = [
@@ -2213,6 +2216,7 @@ export function Tabletop3DStage({
     onObjectRemoveRef.current = onObjectRemove
     onObjectSelectRef.current = onObjectSelect
     onObjectUndoRef.current = onObjectUndo
+    onRendererFailureRef.current = onRendererFailure
     onTokenSelectRef.current = onTokenSelect
     tokensRef.current = tokens
   }, [
@@ -2230,6 +2234,7 @@ export function Tabletop3DStage({
     onObjectRemove,
     onObjectSelect,
     onObjectUndo,
+    onRendererFailure,
     onTokenSelect,
     tokens,
   ])
@@ -2334,8 +2339,18 @@ export function Tabletop3DStage({
       renderer.domElement.className = 'tabletop-3d-stage__canvas'
       renderer.domElement.dataset.cameraMode = cameraMode
       renderer.domElement.dataset.editorEnabled = editorEnabled ? '1' : '0'
+      renderer.domElement.dataset.renderState = 'ready'
       renderer.domElement.tabIndex = 0
       mountHost.replaceChildren(renderer.domElement)
+
+      function handleContextLost(event: Event) {
+        event.preventDefault()
+        renderer.domElement.dataset.renderState = 'lost'
+        renderer.domElement.style.visibility = 'hidden'
+        onRendererFailureRef.current?.()
+      }
+
+      renderer.domElement.addEventListener('webglcontextlost', handleContextLost)
       if (editorEnabled && cameraMode === 'free') {
         window.requestAnimationFrame(() => renderer.domElement.focus())
       }
@@ -3668,6 +3683,7 @@ export function Tabletop3DStage({
         renderer.domElement.removeEventListener('pointercancel', handlePointerUp)
         renderer.domElement.removeEventListener('wheel', handleWheel)
         renderer.domElement.removeEventListener('contextmenu', handleContextMenu)
+        renderer.domElement.removeEventListener('webglcontextlost', handleContextLost)
         window.removeEventListener('keydown', handleKeyDown, true)
         document.removeEventListener('keydown', handleKeyDown, true)
         renderer.domElement.removeEventListener('keydown', handleKeyDown)
@@ -3683,14 +3699,20 @@ export function Tabletop3DStage({
     }
 
     let cleanup: (() => void) | undefined
-    mount().then((nextCleanup) => {
-      if (disposed) {
-        nextCleanup?.()
-        return
-      }
+    mount()
+      .then((nextCleanup) => {
+        if (disposed) {
+          nextCleanup?.()
+          return
+        }
 
-      cleanup = nextCleanup
-    })
+        cleanup = nextCleanup
+      })
+      .catch(() => {
+        if (!disposed) {
+          onRendererFailureRef.current?.()
+        }
+      })
 
     return () => {
       disposed = true

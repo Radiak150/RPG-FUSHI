@@ -800,7 +800,7 @@ async function exerciseBoardRenderRecovery(send, reconnectAfterRendererReload) {
 
   const forcedWhite = await evaluate(
     send,
-    `(() => {
+    `(async () => {
       document.getElementById('smoke-force-white-board')?.remove()
       document.getElementById('smoke-force-white-layer')?.remove()
       const style = document.createElement('style')
@@ -821,6 +821,8 @@ async function exerciseBoardRenderRecovery(send, reconnectAfterRendererReload) {
         'pointer-events: none',
       ].join(';')
       document.body.appendChild(layer)
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+      await new Promise((resolve) => setTimeout(resolve, 120))
       return Boolean(
         document.getElementById('smoke-force-white-board') &&
           document.getElementById('smoke-force-white-layer'),
@@ -831,8 +833,8 @@ async function exerciseBoardRenderRecovery(send, reconnectAfterRendererReload) {
   const forcedProbe = await evaluate(
     send,
     `(async () => {
-      const stage = document.querySelector('.tabletop-board__stage')
-      const rect = stage?.getBoundingClientRect()
+      const layer = document.getElementById('smoke-force-white-layer')
+      const rect = layer?.getBoundingClientRect()
       const inspector = window.fushiDesktop?.inspectRenderedRegion
       if (!(rect instanceof DOMRect) || typeof inspector !== 'function') {
         return { available: false }
@@ -855,6 +857,11 @@ async function exerciseBoardRenderRecovery(send, reconnectAfterRendererReload) {
     })()`,
   )
   console.log(`[mun-interludes] forced-white probe=${JSON.stringify(forcedProbe)}`)
+  assert(forcedProbe?.available === true, 'Detector de superficie branca indisponivel.')
+  assert(
+    forcedProbe?.probe?.ok === true && forcedProbe?.probe?.blank === true,
+    `Detector nao reconheceu a superficie branca simulada: ${JSON.stringify(forcedProbe)}`,
+  )
 
   const waitForHardAfter = () =>
     waitFor(
@@ -1093,23 +1100,35 @@ async function exerciseFolderOrganization(send) {
         element.dispatchEvent(new Event('input', { bubbles: true }))
         element.dispatchEvent(new Event('change', { bubbles: true }))
       }
-      const clickButton = async (label, root = document) => {
-        const button = Array.from(root.querySelectorAll('button')).find(
-          (item) => item.textContent?.trim() === label,
-        )
-        if (!(button instanceof HTMLElement)) return false
-        button.click()
-        await wait(260)
+      const library = () => document.querySelector('[data-testid="map-library"]')
+      const findDirectFolder = (label) =>
+        Array.from(library()?.querySelectorAll('.tabletop-library-folder-card[data-library-folder-name]') ?? [])
+          .find((item) => item.getAttribute('data-library-folder-name')?.trim() === label)
+      const openDirectFolder = async (label) => {
+        const folder = findDirectFolder(label)
+        if (!(folder instanceof HTMLElement)) return false
+        folder.click()
+        await wait(280)
         return true
       }
-      const clickFolder = async (label) => {
-        const folder = Array.from(
-          document.querySelectorAll('[data-library-folder-name]'),
-        ).find((item) => item.getAttribute('data-library-folder-name')?.trim() === label)
+      const openFolderMenu = async (folder, action) => {
         if (!(folder instanceof HTMLElement)) return false
-        const selectButton = folder.querySelector('.tabletop-visual-library-folder__select')
-        ;(selectButton instanceof HTMLElement ? selectButton : folder).click()
-        await wait(260)
+        const bounds = folder.getBoundingClientRect()
+        folder.dispatchEvent(new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          buttons: 2,
+          clientX: Math.max(24, bounds.left + 24),
+          clientY: Math.max(24, bounds.top + 24),
+        }))
+        await wait(180)
+        const button = Array.from(
+          document.querySelectorAll('.tabletop-library-folder-menu button'),
+        ).find((item) => isVisible(item) && item.textContent?.trim() === action)
+        if (!(button instanceof HTMLElement)) return false
+        button.click()
+        await wait(240)
         return true
       }
       const ensureTransitionsRoot = async () => {
@@ -1120,15 +1139,29 @@ async function exerciseFolderOrganization(send) {
             continue
           }
           transitionTab.click()
-          await wait(160)
-          if (
-            transitionTab.classList.contains('is-active') &&
-            Array.from(document.querySelectorAll('[data-testid="map-library-new-folder-name"]')).some(isVisible)
-          ) {
+          await wait(220)
+          if (transitionTab.classList.contains('is-active') && library()) {
             return true
           }
         }
         return false
+      }
+      const createFolder = async (name) => {
+        const root = library()
+        const toggle = root?.querySelector(
+          '.tabletop-visual-library__sidebar-heading button[aria-label="Criar pasta"]',
+        )
+        if (!(toggle instanceof HTMLElement)) return { ok: false, step: 'folder-toggle' }
+        toggle.click()
+        await wait(160)
+        const input = root.querySelector('[data-testid="map-library-new-folder-name"]')
+        if (!(input instanceof HTMLInputElement)) return { ok: false, step: 'folder-input' }
+        setValue(input, name)
+        const submit = root.querySelector('[data-testid="map-library-create-folder"]')
+        if (!(submit instanceof HTMLElement)) return { ok: false, step: 'folder-submit' }
+        submit.click()
+        await wait(300)
+        return { ok: findDirectFolder(name) instanceof HTMLElement }
       }
 
       const toolsButton = Array.from(document.querySelectorAll('button')).find(
@@ -1152,44 +1185,98 @@ async function exerciseFolderOrganization(send) {
       mapsButton.click()
       await wait(380)
       if (!(await ensureTransitionsRoot())) return { step: 'tab' }
-      const input = document.querySelector('[data-testid="map-library-new-folder-name"]')
-      if (!(input instanceof HTMLInputElement)) return { step: 'folder-input' }
-      setValue(input, 'Teste Riacho')
-      const createFolderButton = document.querySelector('[data-testid="map-library-create-folder"]')
-      if (!(createFolderButton instanceof HTMLElement)) return { step: 'create-folder' }
-      createFolderButton.click()
-      await wait(260)
-
-      const newFolder = Array.from(document.querySelectorAll('.tabletop-library-folder-card')).find(
-        (item) => item.textContent?.includes('Teste Riacho'),
-      )
-      if (!(newFolder instanceof HTMLElement)) {
-        return {
-          step: 'folder-card',
-          inputValue: input.value,
-          folderTexts: Array.from(
-            document.querySelectorAll('.tabletop-library-folder-card'),
-          ).map((item) => item.textContent?.trim()).slice(0, 12),
-          tabTexts: Array.from(document.querySelectorAll('[data-library-view]')).map(
-            (item) => ({
-              active: item.classList.contains('is-active'),
-              text: item.textContent?.trim(),
-            }),
-          ),
-        }
+      const folderList = library()?.querySelector('.tabletop-visual-library__folder-list')
+      const content = library()?.querySelector('.tabletop-visual-library__content')
+      const scrollLayout = {
+        distinct: folderList instanceof HTMLElement && content instanceof HTMLElement && folderList !== content,
+        folderOverflow: folderList instanceof HTMLElement ? getComputedStyle(folderList).overflowY : '',
+        contentOverflow: content instanceof HTMLElement ? getComputedStyle(content).overflowY : '',
       }
-      const newFolderId = Array.from(document.querySelectorAll('.tabletop-library-folder-card'))
-        .indexOf(newFolder)
 
-      if (!(await clickFolder('MUN'))) return { step: 'mun-folder' }
-      const planicieFolder = Array.from(document.querySelectorAll('.tabletop-library-folder-card')).find(
-        (item) => /Plan/i.test(item.textContent ?? ''),
+      const firstCreate = await createFolder('Teste Riacho')
+      if (!firstCreate.ok) return { step: firstCreate.step ?? 'folder-card' }
+      const secondCreate = await createFolder('Teste Ordem')
+      if (!secondCreate.ok) return { step: secondCreate.step ?? 'second-folder-card' }
+
+      const sourceFolder = findDirectFolder('Teste Ordem')
+      const targetFolder = findDirectFolder('Teste Riacho')
+      if (!(sourceFolder instanceof HTMLElement) || !(targetFolder instanceof HTMLElement)) {
+        return { step: 'reorder-folders' }
+      }
+      const folderDragData = new DataTransfer()
+      const folderDragStartAccepted = sourceFolder.dispatchEvent(new DragEvent('dragstart', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: folderDragData,
+      }))
+      await wait(180)
+      const targetBounds = targetFolder.getBoundingClientRect()
+      const folderDragTypes = Array.from(folderDragData.types)
+      const folderDragPayloads = Object.fromEntries(
+        folderDragTypes.map((type) => [type, folderDragData.getData(type)]),
       )
+      const folderDragOverAccepted = targetFolder.dispatchEvent(new DragEvent('dragover', {
+        bubbles: true,
+        cancelable: true,
+        clientY: targetBounds.top + 1,
+        dataTransfer: folderDragData,
+      }))
+      const folderDropAccepted = targetFolder.dispatchEvent(new DragEvent('drop', {
+        bubbles: true,
+        cancelable: true,
+        clientY: targetBounds.top + 1,
+        dataTransfer: folderDragData,
+      }))
+      sourceFolder.dispatchEvent(new DragEvent('dragend', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: folderDragData,
+      }))
+      await wait(360)
+      const rootFolderNames = Array.from(
+        library()?.querySelectorAll('.tabletop-library-folder-card[data-library-folder-name]') ?? [],
+      ).map((item) => item.getAttribute('data-library-folder-name'))
+      const foldersReordered =
+        rootFolderNames.indexOf('Teste Ordem') >= 0 &&
+        rootFolderNames.indexOf('Teste Ordem') < rootFolderNames.indexOf('Teste Riacho')
+
+      const munTreeRow = Array.from(
+        library()?.querySelectorAll('.tabletop-visual-library__folder-list [data-library-folder-name]') ?? [],
+      ).find((item) => item.getAttribute('data-library-folder-name') === 'MUN')
+      if (!(munTreeRow instanceof HTMLElement)) return { step: 'mun-tree-row' }
+      const munTreeButton = munTreeRow.querySelector('.tabletop-visual-library-folder__select')
+      if (!(munTreeButton instanceof HTMLElement)) return { step: 'mun-tree-button' }
+      const planicieIsVisible = () => Array.from(
+        library()?.querySelectorAll('.tabletop-visual-library__folder-list [data-library-folder-name]') ?? [],
+      ).some((item) => isVisible(item) && /Plan/i.test(item.getAttribute('data-library-folder-name') ?? ''))
+      const initialPlanicieChild = planicieIsVisible()
+      munTreeButton.click()
+      await wait(260)
+      const toggledPlanicieChild = planicieIsVisible()
+      const currentMunTreeRow = Array.from(
+        library()?.querySelectorAll('.tabletop-visual-library__folder-list [data-library-folder-name]') ?? [],
+      ).find((item) => item.getAttribute('data-library-folder-name') === 'MUN')
+      const currentMunTreeButton = currentMunTreeRow?.querySelector(
+        '.tabletop-visual-library-folder__select',
+      )
+      if (!(currentMunTreeButton instanceof HTMLElement)) return { step: 'mun-tree-button-collapse' }
+      currentMunTreeButton.click()
+      await wait(260)
+      const restoredPlanicieChild = planicieIsVisible()
+      const treeToggleWorked =
+        toggledPlanicieChild !== initialPlanicieChild &&
+        restoredPlanicieChild === initialPlanicieChild
+
+      if (!(await ensureTransitionsRoot())) return { step: 'transition-root-before-move' }
+      if (!(await openDirectFolder('MUN'))) return { step: 'mun-folder' }
+      const planicieFolder = Array.from(
+        library()?.querySelectorAll('.tabletop-library-folder-card[data-library-folder-name]') ?? [],
+      ).find((item) => /Plan/i.test(item.getAttribute('data-library-folder-name') ?? ''))
       if (!(planicieFolder instanceof HTMLElement)) return { step: 'planicie-folder' }
       planicieFolder.click()
       await wait(280)
 
-      const card = Array.from(document.querySelectorAll('.tabletop-library-card')).find(
+      const card = Array.from(library()?.querySelectorAll('.tabletop-library-card') ?? []).find(
         (item) => item.textContent?.includes(${JSON.stringify(targetMapName)}),
       )
       if (!(card instanceof HTMLElement)) return { step: 'm5-card' }
@@ -1202,7 +1289,7 @@ async function exerciseFolderOrganization(send) {
         }),
       )
       await wait(180)
-      const dock = document.querySelector('.tabletop-library-drop-dock')
+      const dock = library()?.querySelector('.tabletop-library-drop-dock')
       const dockTarget = dock
         ? Array.from(dock.querySelectorAll('button')).find(
             (item) => item.textContent?.trim() === 'Teste Riacho',
@@ -1236,62 +1323,75 @@ async function exerciseFolderOrganization(send) {
       if (!(transitionRootButton instanceof HTMLElement)) return { step: 'transition-root' }
       transitionRootButton.click()
       await wait(260)
-      const movedFolder = Array.from(document.querySelectorAll('.tabletop-library-folder-card')).find(
-        (item) => item.textContent?.includes('Teste Riacho'),
-      )
+      const movedFolder = findDirectFolder('Teste Riacho')
       if (!(movedFolder instanceof HTMLElement)) return { step: 'moved-folder' }
       movedFolder.click()
       await wait(260)
-      const movedCard = Array.from(document.querySelectorAll('.tabletop-library-card')).find(
+      const movedCard = Array.from(library()?.querySelectorAll('.tabletop-library-card') ?? []).find(
         (item) => item.textContent?.includes(${JSON.stringify(targetMapName)}),
       )
       if (!(movedCard instanceof HTMLElement)) return { step: 'moved-card' }
 
-      const backButton = Array.from(document.querySelectorAll('.tabletop-library-folder-card')).find(
-        (item) => item.textContent?.includes('Voltar'),
-      )
+      const backButton = library()?.querySelector('[data-library-folder-action="back"]')
       if (!(backButton instanceof HTMLElement)) return { step: 'back-folder' }
       backButton.click()
       await wait(240)
-      const folderForRename = Array.from(document.querySelectorAll('.tabletop-library-folder-card')).find(
-        (item) => item.textContent?.includes('Teste Riacho'),
-      )
+      const folderForRename = findDirectFolder('Teste Riacho')
       if (!(folderForRename instanceof HTMLElement)) return { step: 'rename-folder' }
-      if (!(await clickButton('Nome', folderForRename))) return { step: 'rename-button' }
-      const renameInput = folderForRename.querySelector('input')
+      if (!(await openFolderMenu(folderForRename, 'Renomear'))) return { step: 'rename-menu' }
+      const renameContainer = Array.from(
+        library()?.querySelectorAll('[data-library-folder-name="Teste Riacho"]') ?? [],
+      ).find((item) => isVisible(item.querySelector('input')))
+      const renameInput = renameContainer?.querySelector('input')
       if (!(renameInput instanceof HTMLInputElement)) return { step: 'rename-input' }
       setValue(renameInput, 'Sessao Riacho')
-      if (!(await clickButton('Salvar', folderForRename))) return { step: 'rename-save' }
+      const saveRename = renameContainer.querySelector('button[aria-label="Salvar nome"]')
+      if (!(saveRename instanceof HTMLElement)) return { step: 'rename-save' }
+      saveRename.click()
+      await wait(300)
 
-      const renamedFolder = Array.from(document.querySelectorAll('.tabletop-library-folder-card')).find(
-        (item) => item.textContent?.includes('Sessao Riacho'),
-      )
+      const renamedFolder = findDirectFolder('Sessao Riacho')
       if (!(renamedFolder instanceof HTMLElement)) return { step: 'renamed-folder' }
       window.confirm = () => true
-      if (!(await clickButton('Excluir', renamedFolder))) return { step: 'delete-folder' }
+      if (!(await openFolderMenu(renamedFolder, 'Excluir pasta'))) return { step: 'delete-folder' }
+      await wait(320)
+      const orderFolder = findDirectFolder('Teste Ordem')
+      if (!(orderFolder instanceof HTMLElement)) return { step: 'order-folder-before-delete' }
+      if (!(await openFolderMenu(orderFolder, 'Excluir pasta'))) return { step: 'delete-order-folder' }
       await wait(320)
 
-      const folderStillExists = Array.from(document.querySelectorAll('.tabletop-library-folder-card')).some(
-        (item) => item.textContent?.includes('Sessao Riacho'),
+      const folderStillExists = Array.from(library()?.querySelectorAll('[data-library-folder-name]') ?? []).some(
+        (item) => ['Sessao Riacho', 'Teste Ordem'].includes(item.getAttribute('data-library-folder-name') ?? ''),
       )
-      if (!(await clickFolder('MUN'))) return { step: 'restored-mun-folder' }
+      if (!(await ensureTransitionsRoot())) return { step: 'restored-transition-root' }
+      if (!(await openDirectFolder('MUN'))) return { step: 'restored-mun-folder' }
       const restoredPlanicieFolder = Array.from(
-        document.querySelectorAll('.tabletop-library-folder-card'),
-      ).find((item) => /Plan/i.test(item.textContent ?? ''))
+        library()?.querySelectorAll('.tabletop-library-folder-card[data-library-folder-name]') ?? [],
+      ).find((item) => /Plan/i.test(item.getAttribute('data-library-folder-name') ?? ''))
       if (!(restoredPlanicieFolder instanceof HTMLElement)) {
         return { step: 'restored-planicie-folder' }
       }
       restoredPlanicieFolder.click()
       await wait(260)
-      const restoredCard = Array.from(document.querySelectorAll('.tabletop-library-card')).find(
+      const restoredCard = Array.from(library()?.querySelectorAll('.tabletop-library-card') ?? []).find(
         (item) => item.textContent?.includes(${JSON.stringify(targetMapName)}),
       )
 
       return {
         step: 'done',
         folderStillExists,
+        folderDragOverAccepted,
+        folderDragPayloads,
+        folderDragStartAccepted,
+        folderDragTypes,
+        folderDropAccepted,
+        foldersReordered,
         hasRestoredCard: restoredCard instanceof HTMLElement,
-        newFolderId,
+        rootFolderNames,
+        scrollLayout,
+        treeCollapsed: [initialPlanicieChild, toggledPlanicieChild].includes(false),
+        treeExpanded: [initialPlanicieChild, toggledPlanicieChild].includes(true),
+        treeToggleWorked,
       }
     })()`,
   )
@@ -1301,6 +1401,31 @@ async function exerciseFolderOrganization(send) {
   assert(
     result.hasRestoredCard === true,
     'Conteudo da pasta excluida nao voltou para o agrupamento automatico.',
+  )
+  assert(
+    result.foldersReordered === true,
+    `Arrastar pasta nao alterou a ordem entre irmas: ${JSON.stringify(result)}`,
+  )
+  assert(
+    result.treeExpanded === true,
+    `Pasta MUN nao revelou suas subpastas ao expandir: ${JSON.stringify(result)}`,
+  )
+  assert(
+    result.treeCollapsed === true,
+    `Pasta MUN nao recolheu suas subpastas ao fechar: ${JSON.stringify(result)}`,
+  )
+  assert(
+    result.treeToggleWorked === true,
+    `Pasta MUN nao alternou entre aberta e recolhida: ${JSON.stringify(result)}`,
+  )
+  assert(result.scrollLayout?.distinct === true, 'Pastas e conteudo compartilham o mesmo scroll.')
+  assert(
+    ['auto', 'scroll'].includes(result.scrollLayout?.folderOverflow),
+    `Sidebar sem scroll proprio: ${JSON.stringify(result.scrollLayout)}`,
+  )
+  assert(
+    ['auto', 'scroll'].includes(result.scrollLayout?.contentOverflow),
+    `Conteudo sem scroll proprio: ${JSON.stringify(result.scrollLayout)}`,
   )
 
   return result
@@ -1326,6 +1451,18 @@ async function exerciseBaseRelease(send) {
         Array.from(document.querySelectorAll('button')).find(
           (button) => isVisible(button) && predicate(button),
         )
+      const closeFloatingWindows = async () => {
+        for (let attempt = 0; attempt < 12; attempt += 1) {
+          const closeButton = findVisibleButton(
+            (button) =>
+              button.getAttribute('aria-label') === 'Fechar janela' &&
+              Boolean(button.closest('.floating-window')),
+          )
+          if (!(closeButton instanceof HTMLElement)) break
+          closeButton.click()
+          await wait(100)
+        }
+      }
       const clickTools = async () => {
         const toolsButton = findVisibleButton(
           (button) =>
@@ -1339,18 +1476,22 @@ async function exerciseBaseRelease(send) {
         }
       }
 
+      await closeFloatingWindows()
       await clickTools()
       const worldButton = findVisibleButton(
         (button) =>
-          button.getAttribute('aria-label') === 'Abrir Mapa Mundi' ||
-          button.getAttribute('aria-label') === 'Mapa Mundi' ||
-          button.title === 'Mapa Mundi',
+          button.getAttribute('aria-label') === 'Mapa Mundi' &&
+          Boolean(button.closest('.tabletop-hud')),
       )
       if (!(worldButton instanceof HTMLElement)) return { step: 'world-button' }
       worldButton.click()
       await wait(500)
 
-      const baseTab = findVisibleButton((button) => button.textContent?.trim() === 'Base')
+      const baseTab = findVisibleButton(
+        (button) =>
+          button.getAttribute('aria-label') === 'Base' ||
+          button.textContent?.trim() === 'Base',
+      )
       if (!(baseTab instanceof HTMLElement)) {
         return {
           step: 'base-tab',
@@ -1417,6 +1558,18 @@ async function exercisePrepareMapForGm(send) {
         Array.from(document.querySelectorAll('button')).find(
           (button) => isVisible(button) && predicate(button),
         )
+      const closeFloatingWindows = async () => {
+        for (let attempt = 0; attempt < 12; attempt += 1) {
+          const closeButton = findVisibleButton(
+            (button) =>
+              button.getAttribute('aria-label') === 'Fechar janela' &&
+              Boolean(button.closest('.floating-window')),
+          )
+          if (!(closeButton instanceof HTMLElement)) break
+          closeButton.click()
+          await wait(100)
+        }
+      }
       const clickTools = async () => {
         const toolsButton = findVisibleButton(
           (button) =>
@@ -1469,6 +1622,7 @@ async function exercisePrepareMapForGm(send) {
         return { ready: false, ...lastState }
       }
 
+      await closeFloatingWindows()
       if (!(await openMapLibrary())) return { step: 'open-library' }
 
       const mapsTab = document.querySelector('[data-library-view="maps"]')

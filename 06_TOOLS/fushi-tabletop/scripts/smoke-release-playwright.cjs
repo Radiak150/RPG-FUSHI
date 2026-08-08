@@ -113,14 +113,36 @@ async function smokePackagedBuildManager(page) {
   )
 
   const absorbButton = manager.locator('[data-testid="build-absorb"]')
-  const characterSelect = manager.getByLabel('Vincular a ficha')
-  const characterOptions = await characterSelect.locator('option').count()
+  const characterSelect = manager.locator('.build-manager__binding select')
+  const characterOptions = await characterSelect.locator('option').evaluateAll((options) =>
+    options.map((option) => option.value),
+  )
   const itemButtons = manager.locator('.build-manager__item-list button')
   const absorbedCountTag = manager.locator('.build-manager__character .tag')
 
-  let foundAbsorbable = !(await absorbButton.isDisabled())
-  for (let characterIndex = 0; !foundAbsorbable && characterIndex < characterOptions; characterIndex += 1) {
-    await characterSelect.selectOption({ index: characterIndex })
+  assert((await characterSelect.inputValue()) === '', 'Release BUI escolheu uma ficha automaticamente.')
+  assert(
+    await manager.getByText('Nenhuma ficha', { exact: true }).isVisible(),
+    'Release BUI nao exibiu o estado neutro da ficha.',
+  )
+  if ((await itemButtons.count()) > 0) {
+    await itemButtons.first().click()
+    await absorbButton.click()
+    await manager
+      .getByText('Escolha uma ficha antes de absorver o item.', { exact: true })
+      .waitFor({ state: 'visible', timeout: 3_000 })
+  }
+
+  let foundAbsorbable = false
+  for (const characterId of characterOptions) {
+    if (foundAbsorbable) break
+    if (!characterId) continue
+    await characterSelect.selectOption(characterId)
+    await characterSelect.waitFor({ state: 'visible' })
+    assert(
+      (await characterSelect.inputValue()) === characterId,
+      'Release BUI nao manteve a ficha escolhida para a absorcao.',
+    )
     for (let itemIndex = 0; itemIndex < (await itemButtons.count()); itemIndex += 1) {
       await itemButtons.nth(itemIndex).click()
       if (!(await absorbButton.isDisabled())) {
@@ -524,6 +546,11 @@ async function smokePackagedMusicLibrary(page) {
   const sidebar = library.locator('[data-testid="tabletop-msc-folders"]')
   const trackGrid = library.locator('[data-testid="tabletop-msc-track-grid"]')
   await sidebar.waitFor({ state: 'visible', timeout: 5_000 })
+  assert(
+    (await library.locator('.tabletop-library-folder-card:not(.tabletop-library-folder-card--back)').count()) > 0,
+    'Release MSC abriu a raiz sem as pastas diretas.',
+  )
+  await sidebar.getByRole('button', { name: /Todos os sons/ }).click()
   await trackGrid.waitFor({ state: 'visible', timeout: 5_000 })
 
   const cards = trackGrid.locator('.tabletop-msc-track')
@@ -537,7 +564,7 @@ async function smokePackagedMusicLibrary(page) {
   await folderButton.waitFor({ state: 'visible', timeout: 5_000 })
   await folderButton.click()
   assert(await sidebar.isVisible(), 'Release MSC perdeu a barra de pastas apos navegar.')
-  await library.getByRole('button', { name: 'Biblioteca', exact: true }).click()
+  await sidebar.getByRole('button', { name: /Todos os sons/ }).click()
 
   const targetCard = library.locator(`.tabletop-msc-track[data-track-id="${trackId}"]`)
   await targetCard.waitFor({ state: 'visible', timeout: 5_000 })
@@ -591,6 +618,10 @@ async function smokePackagedMusicLibrary(page) {
   await library.waitFor({ state: 'detached', timeout: 5_000 })
   await musicButton.click()
   await library.waitFor({ state: 'visible', timeout: 5_000 })
+  await library
+    .locator('[data-testid="tabletop-msc-folders"]')
+    .getByRole('button', { name: /Todos os sons/ })
+    .click()
   await library.getByText(editedName, { exact: true }).waitFor({ timeout: 8_000 })
 
   const artifactDirectory = path.resolve(__dirname, '../.codex-dev/artifact-work')

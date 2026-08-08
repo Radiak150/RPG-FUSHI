@@ -1865,6 +1865,15 @@ ipcMain.handle('fushi-desktop:inspect-rendered-region', async (event, inputRect)
     let nearWhitePixels = 0
     let brightnessTotal = 0
     let brightnessSquaredTotal = 0
+    const sampleSize = sample.getSize()
+    const tileColumns = 6
+    const tileRows = 6
+    const tileStats = Array.from({ length: tileColumns * tileRows }, () => ({
+      brightnessSquaredTotal: 0,
+      brightnessTotal: 0,
+      nearWhitePixels: 0,
+      pixels: 0,
+    }))
 
     for (let offset = 0; offset < bitmap.length; offset += 4) {
       const blue = bitmap[offset] ?? 0
@@ -1878,6 +1887,26 @@ ipcMain.handle('fushi-desktop:inspect-rendered-region', async (event, inputRect)
 
       brightnessTotal += brightness
       brightnessSquaredTotal += brightness * brightness
+
+      const pixelIndex = Math.floor(offset / 4)
+      const pixelX = pixelIndex % sampleSize.width
+      const pixelY = Math.floor(pixelIndex / sampleSize.width)
+      const tileX = Math.min(
+        tileColumns - 1,
+        Math.floor((pixelX / sampleSize.width) * tileColumns),
+      )
+      const tileY = Math.min(
+        tileRows - 1,
+        Math.floor((pixelY / sampleSize.height) * tileRows),
+      )
+      const tile = tileStats[tileY * tileColumns + tileX]
+
+      tile.pixels += 1
+      tile.brightnessTotal += brightness
+      tile.brightnessSquaredTotal += brightness * brightness
+      if (red >= 246 && green >= 246 && blue >= 246) {
+        tile.nearWhitePixels += 1
+      }
     }
 
     const meanBrightness = brightnessTotal / pixelCount
@@ -1886,9 +1915,26 @@ ipcMain.handle('fushi-desktop:inspect-rendered-region', async (event, inputRect)
       brightnessSquaredTotal / pixelCount - meanBrightness * meanBrightness,
     )
     const nearWhiteRatio = nearWhitePixels / pixelCount
+    const blankTileCount = tileStats.filter((tile) => {
+      if (!tile.pixels) {
+        return false
+      }
+
+      const tileMean = tile.brightnessTotal / tile.pixels
+      const tileVariance = Math.max(
+        0,
+        tile.brightnessSquaredTotal / tile.pixels - tileMean * tileMean,
+      )
+
+      return tile.nearWhitePixels / tile.pixels >= 0.96 && tileVariance <= 260
+    }).length
+    const blankTileRatio = blankTileCount / tileStats.length
 
     return {
-      blank: nearWhiteRatio >= 0.94 && variance <= 220,
+      blank:
+        (nearWhiteRatio >= 0.94 && variance <= 220) ||
+        blankTileRatio >= 0.42,
+      blankTileRatio,
       meanBrightness,
       nearWhiteRatio,
       ok: true,

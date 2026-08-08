@@ -1,4 +1,12 @@
 import { useState, type CSSProperties, type DragEvent } from 'react'
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Crosshair,
+  ListOrdered,
+  UsersRound,
+} from 'lucide-react'
 import type {
   CharacterFeatureActivationSource,
   CharacterFeatureDetail,
@@ -9,6 +17,7 @@ import type {
   TabletopTurnState,
 } from '../../lib/tabletopSession'
 import { COMBAT_MANEUVER_DEFINITIONS } from '../../lib/combatV2'
+import { TabletopVisualLibrary } from './TabletopVisualLibrary'
 
 const TABLETOP_TURN_ACTIONS: Array<{
   id: TabletopTurnActionId
@@ -305,6 +314,7 @@ export function TabletopTurnSetupPanel({
   onToggleCandidate,
   selectedTokenIds,
 }: TabletopTurnSetupPanelProps) {
+  const [view, setView] = useState<'participants' | 'sequence'>('participants')
   const [draggingTokenId, setDraggingTokenId] = useState('')
   const selectedCandidates = selectedTokenIds
     .map((tokenId) => candidates.find((candidate) => candidate.id === tokenId) ?? null)
@@ -330,8 +340,59 @@ export function TabletopTurnSetupPanel({
   }
 
   return (
-    <div className="tabletop-turn-setup">
-      <article className="list-card">
+    <TabletopVisualLibrary
+      actions={
+        <button
+          aria-label="Aplicar ordem de turnos"
+          disabled={selectedCandidates.length === 0}
+          onClick={onApply}
+          title="Aplicar ordem de turnos"
+          type="button"
+        >
+          <Check aria-hidden="true" size={17} />
+        </button>
+      }
+      className="tabletop-turn-browser"
+      code="TURN"
+      contentHeader={
+        <div>
+          <p className="eyebrow">{view === 'participants' ? 'Mesa' : 'Combate'}</p>
+          <h2>{view === 'participants' ? 'Escolher participantes' : 'Ordem dos turnos'}</h2>
+          <small>
+            {view === 'participants'
+              ? 'Inclua apenas quem participa deste combate.'
+              : 'Arraste para reordenar e marque quem começa.'}
+          </small>
+        </div>
+      }
+      icon={ListOrdered}
+      sidebar={
+        <nav className="tabletop-visual-library__nav" aria-label="Configuração de turnos">
+          <button
+            className={view === 'participants' ? 'is-active' : ''}
+            onClick={() => setView('participants')}
+            type="button"
+          >
+            <UsersRound aria-hidden="true" size={17} />
+            <span>Participantes</span>
+            <small>{selectedTokenIds.length}</small>
+          </button>
+          <button
+            className={view === 'sequence' ? 'is-active' : ''}
+            onClick={() => setView('sequence')}
+            type="button"
+          >
+            <ListOrdered aria-hidden="true" size={17} />
+            <span>Ordem</span>
+            <small>{selectedCandidates.length}</small>
+          </button>
+        </nav>
+      }
+      testId="turn-setup-browser"
+      title="Controle de turnos"
+    >
+      {view === 'participants' ? (
+      <article className="list-card tabletop-turn-browser__panel">
         <div className="list-card__top">
           <div>
             <p className="eyebrow">Turnos</p>
@@ -352,7 +413,11 @@ export function TabletopTurnSetupPanel({
               onClick={() => onToggleCandidate(candidate.id)}
               type="button"
             >
-              {candidate.imageUrl ? <img alt="" src={candidate.imageUrl} /> : <span>{candidate.label}</span>}
+              {candidate.imageUrl ? (
+                <img alt="" decoding="async" loading="lazy" src={candidate.imageUrl} />
+              ) : (
+                <span>{candidate.label}</span>
+              )}
               <strong>{candidate.name}</strong>
               {candidate.isHidden ? <em>Oculto</em> : null}
               {candidate.isStealthed ? <em>Furtivo</em> : null}
@@ -360,16 +425,14 @@ export function TabletopTurnSetupPanel({
           ))}
         </div>
       </article>
-
-      <article className="list-card">
+      ) : (
+      <article className="list-card tabletop-turn-browser__panel">
         <div className="list-card__top">
           <div>
             <p className="eyebrow">Ordem</p>
             <h3>Sequencia do combate</h3>
           </div>
-          <button className="button button--primary" onClick={onApply} type="button">
-            Aplicar
-          </button>
+          <span className="tag">Arraste para ordenar</span>
         </div>
         <div className="tabletop-turn-sequence">
           {selectedCandidates.length > 0 ? (
@@ -392,16 +455,35 @@ export function TabletopTurnSetupPanel({
                 title="Arraste para reordenar"
               >
                 <span>{index + 1}</span>
-                {candidate.imageUrl ? <img alt="" src={candidate.imageUrl} /> : <i>{candidate.label}</i>}
+                {candidate.imageUrl ? (
+                  <img alt="" decoding="async" loading="lazy" src={candidate.imageUrl} />
+                ) : (
+                  <i>{candidate.label}</i>
+                )}
                 <strong>{candidate.name}</strong>
-                <button onClick={() => onMove(candidate.id, -1)} type="button">
-                  ^
+                <button
+                  aria-label={`Subir ${candidate.name}`}
+                  onClick={() => onMove(candidate.id, -1)}
+                  title="Subir"
+                  type="button"
+                >
+                  <ChevronUp aria-hidden="true" size={16} />
                 </button>
-                <button onClick={() => onMove(candidate.id, 1)} type="button">
-                  v
+                <button
+                  aria-label={`Descer ${candidate.name}`}
+                  onClick={() => onMove(candidate.id, 1)}
+                  title="Descer"
+                  type="button"
+                >
+                  <ChevronDown aria-hidden="true" size={16} />
                 </button>
-                <button onClick={() => onSetActive(candidate.id)} type="button">
-                  Vez
+                <button
+                  aria-label={`Definir ${candidate.name} como turno atual`}
+                  onClick={() => onSetActive(candidate.id)}
+                  title="Definir turno atual"
+                  type="button"
+                >
+                  <Crosshair aria-hidden="true" size={16} />
                 </button>
               </div>
             ))
@@ -410,6 +492,7 @@ export function TabletopTurnSetupPanel({
           )}
         </div>
       </article>
-    </div>
+      )}
+    </TabletopVisualLibrary>
   )
 }

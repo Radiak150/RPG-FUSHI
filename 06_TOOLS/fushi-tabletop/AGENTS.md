@@ -108,3 +108,7 @@ Key workbook tabs:
 - `Bosses_Fases`: advanced boss/Cataclysm planning, including phase/map/VFX/interlude needs.
 - `Faccoes`: faction production overview.
 - `Mundo_Biomas`: MUN/biome production overview.
+
+## Padrao visual da Mesa
+
+Os hubs internos da Mesa devem seguir `docs/TABLETOP_VISUAL_BROWSER_STANDARD.md`. Esse documento e a fonte de verdade visual para bibliotecas, pastas, seletores neutros e limites de seguranca; reworks visuais nao podem alterar multiplayer, ficha canonica, regras ou lore.

@@ -1,4 +1,5 @@
 import { useMemo, useState, type CSSProperties } from 'react'
+import { ListChecks, PlusCircle, ShieldAlert } from 'lucide-react'
 import {
   TABLETOP_STATUS_CATALOG,
   getTabletopStatusDefinition,
@@ -6,6 +7,7 @@ import {
 } from '../../data/statusCatalog'
 import type { TabletopCombatMark } from '../../lib/tabletopSession'
 import { TabletopStatusIcon } from './TabletopStatusIcon'
+import { TabletopVisualLibrary } from './TabletopVisualLibrary'
 
 export interface TabletopStatusParticipant {
   characterId?: string
@@ -35,6 +37,7 @@ export function TabletopStatusManager({
   onRemove,
   participants,
 }: TabletopStatusManagerProps) {
+  const [view, setView] = useState<'apply' | 'active'>('apply')
   const [statusId, setStatusId] = useState<TabletopStatusId>('sangrando')
   const [targetTokenId, setTargetTokenId] = useState('')
   const [sourceTokenId, setSourceTokenId] = useState('')
@@ -46,11 +49,11 @@ export function TabletopStatusManager({
   const effectiveTargetId =
     participants.some((participant) => participant.id === targetTokenId)
       ? targetTokenId
-      : participants[0]?.id ?? ''
+      : ''
   const effectiveSourceId =
     participants.some((participant) => participant.id === sourceTokenId)
       ? sourceTokenId
-      : effectiveTargetId
+      : ''
   const participantById = useMemo(
     () => new Map(participants.map((participant) => [participant.id, participant])),
     [participants],
@@ -60,18 +63,47 @@ export function TabletopStatusManager({
     .sort((first, second) => second.createdAt - first.createdAt)
 
   return (
-    <div className="status-manager">
-      <header className="status-manager__header">
+    <TabletopVisualLibrary
+      className="status-manager-browser"
+      code="BUF"
+      contentHeader={
         <div>
-          <span className="eyebrow">Controle canônico</span>
-          <h3>Estados da cena</h3>
-          <p className="support-copy">
-            Aplique estados temporários sem alterar permanentemente a ficha.
-          </p>
+          <p className="eyebrow">{view === 'apply' ? 'Novo estado' : 'Mesa'}</p>
+          <h2>{view === 'apply' ? 'Aplicar buff ou debuff' : 'Efeitos ativos'}</h2>
+          <small>
+            {view === 'apply'
+              ? 'Escolha conscientemente alvo e origem antes de aplicar.'
+              : `${activeMarks.length} efeito(s) acompanhados nesta cena.`}
+          </small>
         </div>
-        <span className="tag">{activeMarks.length} ativo(s)</span>
-      </header>
-
+      }
+      icon={ShieldAlert}
+      sidebar={
+        <nav className="tabletop-visual-library__nav" aria-label="Vistas de buffs e debuffs">
+          <button
+            className={view === 'apply' ? 'is-active' : ''}
+            onClick={() => setView('apply')}
+            type="button"
+          >
+            <PlusCircle aria-hidden="true" size={17} />
+            <span>Aplicar estado</span>
+            <small>{TABLETOP_STATUS_CATALOG.length}</small>
+          </button>
+          <button
+            className={view === 'active' ? 'is-active' : ''}
+            onClick={() => setView('active')}
+            type="button"
+          >
+            <ListChecks aria-hidden="true" size={17} />
+            <span>Ativos na mesa</span>
+            <small>{activeMarks.length}</small>
+          </button>
+        </nav>
+      }
+      testId="status-manager-browser"
+      title="Buffs e debuffs"
+    >
+      {view === 'apply' ? (
       <section className="status-manager__composer">
         <label className="field">
           <span>Estado</span>
@@ -111,6 +143,7 @@ export function TabletopStatusManager({
             onChange={(event) => setTargetTokenId(event.target.value)}
             value={effectiveTargetId}
           >
+            <option value="">Escolha um alvo</option>
             {participants.map((participant) => (
               <option key={participant.id} value={participant.id}>
                 {participant.name} [{participant.label}]
@@ -127,6 +160,7 @@ export function TabletopStatusManager({
             onChange={(event) => setSourceTokenId(event.target.value)}
             value={effectiveSourceId}
           >
+            <option value="">Mestre / ambiente</option>
             {participants.map((participant) => (
               <option key={participant.id} value={participant.id}>
                 {participant.name} [{participant.label}]
@@ -215,7 +249,7 @@ export function TabletopStatusManager({
           Aplicar estado
         </button>
       </section>
-
+      ) : (
       <section className="status-manager__active">
         <header>
           <span className="eyebrow">Mesa</span>
@@ -264,6 +298,7 @@ export function TabletopStatusManager({
           <p className="support-copy">Nenhum estado canônico ativo nesta cena.</p>
         )}
       </section>
-    </div>
+      )}
+    </TabletopVisualLibrary>
   )
 }

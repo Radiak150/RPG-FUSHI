@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  ArrowDown,
-  ArrowUp,
+  ChevronDown,
   ChevronRight,
+  CornerUpLeft,
   Folder,
   FolderOpen,
   FolderPlus,
   Plus,
   Save,
-  Settings,
   UserPlus,
   Users,
   X,
@@ -30,7 +29,11 @@ interface TabletopNpcLibraryProps {
   onCreateFolder: (parentId: string, name: string) => void
   onDeleteFolder: (folderId: string) => void
   onHideCharacter: (characterId: string) => void
-  onMoveFolder: (folderId: string, direction: 'up' | 'down') => void
+  onReorderFolder: (
+    folderId: string,
+    targetFolderId: string,
+    placement: 'before' | 'after',
+  ) => void
   onRenameFolder: (folderId: string, name: string) => void
   onRenameVirtualFaction?: (currentName: string, nextName: string) => void
   onSpawn: (characterId: string) => void
@@ -48,6 +51,11 @@ interface NpcDragPayload {
   id: string
 }
 
+interface FolderDragPayload {
+  category: 'npcs'
+  folderId: string
+}
+
 interface FolderRow {
   depth: number
   folder: FolderView
@@ -62,6 +70,7 @@ interface FolderContextMenuState {
 const ROOT_FOLDER_ID = ''
 const ALL_ITEMS_FOLDER_ID = 'virtual:all-items'
 const LIBRARY_DRAG_DATA_TYPE = 'application/x-fushi-library-item'
+const FOLDER_DRAG_DATA_TYPE = 'application/x-fushi-library-folder'
 const PROTAGONISTS_FOLDER_ID = 'virtual:npcs:protagonistas'
 const MAIN_CHARACTERS_FOLDER_ID = 'virtual:npcs:personagens-principais'
 const FACTIONS_FOLDER_ID = 'virtual:npcs:factions'
@@ -223,7 +232,7 @@ function compareFolders(a: FolderView, b: FolderView) {
   return a.name.localeCompare(b.name)
 }
 
-function buildFolderRows(folders: FolderView[]) {
+function buildFolderRows(folders: FolderView[], expandedFolderIds: Set<string>) {
   const rows: FolderRow[] = []
   const visited = new Set<string>()
 
@@ -235,17 +244,65 @@ function buildFolderRows(folders: FolderView[]) {
         if (visited.has(folder.id)) return
         visited.add(folder.id)
         rows.push({ depth, folder })
-        visit(folder.id, depth + 1)
+        if (expandedFolderIds.has(folder.id)) {
+          visit(folder.id, depth + 1)
+        }
       })
   }
 
   visit(ROOT_FOLDER_ID, 0)
+  const knownFolderIds = new Set(folders.map((folder) => folder.id))
   folders
-    .filter((folder) => !visited.has(folder.id))
+    .filter(
+      (folder) =>
+        !visited.has(folder.id) &&
+        folder.parentId !== ROOT_FOLDER_ID &&
+        !knownFolderIds.has(folder.parentId),
+    )
     .sort(compareFolders)
-    .forEach((folder) => rows.push({ depth: 0, folder }))
+    .forEach((folder) => {
+      visited.add(folder.id)
+      rows.push({ depth: 0, folder })
+      if (expandedFolderIds.has(folder.id)) {
+        visit(folder.id, 1)
+      }
+    })
 
   return rows
+}
+
+function getAncestorFolderIds(folders: FolderView[], folderId: string) {
+  const ancestorIds: string[] = []
+  const visited = new Set<string>()
+  let currentId = folderId
+
+  while (currentId && !visited.has(currentId)) {
+    visited.add(currentId)
+    const folder = folders.find((item) => item.id === currentId)
+    if (!folder) break
+    if (folder.parentId) ancestorIds.unshift(folder.parentId)
+    currentId = folder.parentId
+  }
+
+  return ancestorIds
+}
+
+function startFolderDrag(event: React.DragEvent, payload: FolderDragPayload) {
+  const serializedPayload = JSON.stringify(payload)
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData(FOLDER_DRAG_DATA_TYPE, serializedPayload)
+  event.dataTransfer.setData('text/plain', serializedPayload)
+}
+
+function readFolderDragPayload(event: React.DragEvent) {
+  const serializedPayload = event.dataTransfer.getData(FOLDER_DRAG_DATA_TYPE)
+  if (!serializedPayload) return null
+
+  try {
+    return JSON.parse(serializedPayload) as FolderDragPayload
+  } catch {
+    return null
+  }
 }
 
 function buildBreadcrumb(folders: FolderView[], selectedFolderId: string) {
@@ -348,19 +405,26 @@ export function TabletopNpcLibrary({
   onCreateFolder,
   onDeleteFolder,
   onHideCharacter,
-  onMoveFolder,
+  onReorderFolder,
   onRenameFolder,
   onRenameVirtualFaction,
   onSpawn,
   onRemoveFromScene,
 }: TabletopNpcLibraryProps) {
-  const [selectedFolderId, setSelectedFolderId] = useState(ALL_ITEMS_FOLDER_ID)
+  const [selectedFolderId, setSelectedFolderId] = useState(ROOT_FOLDER_ID)
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(() => new Set())
+  const [showNewFolderInput, setShowNewFolderInput] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [renamingFolderId, setRenamingFolderId] = useState('')
   const [renamingFolderName, setRenamingFolderName] = useState('')
   const [folderContextMenu, setFolderContextMenu] =
     useState<FolderContextMenuState | null>(null)
+  const [draggingFolderId, setDraggingFolderId] = useState('')
+  const [folderDropTarget, setFolderDropTarget] = useState<{
+    folderId: string
+    placement: 'before' | 'after'
+  } | null>(null)
   const virtualFolders = useMemo(
     () => buildVirtualFolders(characters, factions),
     [characters, factions],
@@ -377,7 +441,7 @@ export function TabletopNpcLibrary({
   const currentFolderId =
     isAllItemsView || !selectedFolderExists ? ROOT_FOLDER_ID : selectedFolderId
   const breadcrumb = buildBreadcrumb(effectiveFolders, currentFolderId)
-  const folderRows = buildFolderRows(effectiveFolders)
+  const folderRows = buildFolderRows(effectiveFolders, expandedFolderIds)
   const directFolders = effectiveFolders
     .filter((folder) => folder.parentId === currentFolderId)
     .sort(compareFolders)
@@ -413,6 +477,28 @@ export function TabletopNpcLibrary({
 
     onCreateFolder(currentFolderId, trimmedName)
     setNewFolderName('')
+    setShowNewFolderInput(false)
+  }
+
+  function selectFolder(folderId: string, expandAncestors = true) {
+    setSelectedFolderId(folderId)
+    if (!expandAncestors || !folderId || folderId === ALL_ITEMS_FOLDER_ID) return
+
+    const ancestorIds = getAncestorFolderIds(effectiveFolders, folderId)
+    setExpandedFolderIds((current) => new Set([...current, ...ancestorIds]))
+  }
+
+  function toggleFolder(folderId: string) {
+    selectFolder(folderId)
+    const hasChildren = effectiveFolders.some((folder) => folder.parentId === folderId)
+    if (!hasChildren) return
+
+    setExpandedFolderIds((current) => {
+      const next = new Set(current)
+      if (next.has(folderId)) next.delete(folderId)
+      else next.add(folderId)
+      return next
+    })
   }
 
   function handleSaveFolderRename(folderId: string) {
@@ -486,10 +572,81 @@ export function TabletopNpcLibrary({
     onAssignCharacterFolder(payload.id, folderId)
   }
 
+  function handleFolderOrderDragOver(
+    event: React.DragEvent<HTMLElement>,
+    targetFolder: FolderView,
+  ) {
+    const folderPayload = readFolderDragPayload(event)
+    const sourceFolderId = folderPayload?.category === 'npcs'
+      ? folderPayload.folderId
+      : draggingFolderId
+
+    if (!sourceFolderId) {
+      event.preventDefault()
+      return
+    }
+
+    const sourceFolder = effectiveFolders.find((folder) => folder.id === sourceFolderId)
+    if (
+      !sourceFolder ||
+      sourceFolder.id === targetFolder.id ||
+      sourceFolder.isVirtual ||
+      targetFolder.isVirtual ||
+      sourceFolder.parentId !== targetFolder.parentId
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const placement = event.clientY < bounds.top + bounds.height / 2 ? 'before' : 'after'
+    setFolderDropTarget({ folderId: targetFolder.id, placement })
+  }
+
+  function handleFolderTargetDrop(
+    event: React.DragEvent<HTMLElement>,
+    targetFolder: FolderView,
+  ) {
+    event.preventDefault()
+    event.stopPropagation()
+    const folderPayload = readFolderDragPayload(event)
+
+    if (folderPayload?.category === 'npcs') {
+      const sourceFolder = effectiveFolders.find(
+        (folder) => folder.id === folderPayload.folderId,
+      )
+      const targetBounds = event.currentTarget.getBoundingClientRect()
+      const dropPlacement =
+        event.clientY < targetBounds.top + targetBounds.height / 2
+          ? 'before'
+          : 'after'
+      const placement = folderDropTarget?.folderId === targetFolder.id
+        ? folderDropTarget.placement
+        : dropPlacement
+
+      if (
+        sourceFolder &&
+        !sourceFolder.isVirtual &&
+        !targetFolder.isVirtual &&
+        sourceFolder.parentId === targetFolder.parentId &&
+        sourceFolder.id !== targetFolder.id
+      ) {
+        onReorderFolder(sourceFolder.id, targetFolder.id, placement)
+      }
+
+      setDraggingFolderId('')
+      setFolderDropTarget(null)
+      return
+    }
+
+    handleFolderDrop(event, targetFolder.id)
+  }
+
   function handleFolderKeyDown(event: React.KeyboardEvent, folderId: string) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      setSelectedFolderId(folderId)
+      toggleFolder(folderId)
     }
   }
 
@@ -547,31 +704,58 @@ export function TabletopNpcLibrary({
 
       <div className="tabletop-visual-library__sidebar-heading">
         <span>Pastas e faccoes</span>
-        <FolderPlus aria-hidden="true" size={15} />
+        <button
+          aria-label="Nova pasta"
+          onClick={() => setShowNewFolderInput((current) => !current)}
+          title="Nova pasta"
+          type="button"
+        >
+          <FolderPlus aria-hidden="true" size={15} />
+        </button>
       </div>
       <div className="tabletop-visual-library__folder-list">
         {folderRows.map(({ depth, folder }) => {
           const itemCount = getFolderItemCount(folder.id, effectiveFolders, characterFolderIds)
           const isRenaming = renamingFolderId === folder.id
+          const hasChildren = effectiveFolders.some((item) => item.parentId === folder.id)
+          const isExpanded = expandedFolderIds.has(folder.id)
+          const dropPlacement = folderDropTarget?.folderId === folder.id
+            ? folderDropTarget.placement
+            : null
 
           return (
             <div
               className={`tabletop-visual-library-folder${
                 currentFolderId === folder.id ? ' is-active' : ''
-              }`}
+              }${dropPlacement ? ` is-drop-${dropPlacement}` : ''}`}
+              draggable={!folder.isVirtual}
               key={folder.id}
+              onDragEnd={() => {
+                setDraggingFolderId('')
+                setFolderDropTarget(null)
+              }}
+              onDragOver={(event) => handleFolderOrderDragOver(event, folder)}
+              onDragStart={(event) => {
+                if (folder.isVirtual) return
+                startFolderDrag(event, { category: 'npcs', folderId: folder.id })
+                setDraggingFolderId(folder.id)
+              }}
+              onDrop={(event) => handleFolderTargetDrop(event, folder)}
               onContextMenu={(event) => handleFolderContextMenu(event, folder.id)}
               style={{ paddingLeft: `${Math.min(depth, 4) * 12}px` }}
             >
               <button
-                className="tabletop-visual-library-folder__select"
-                onClick={() => setSelectedFolderId(folder.id)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => handleFolderDrop(event, folder.id)}
+                className="tabletop-visual-library-folder__select tabletop-visual-library-folder__select--tree"
+                onClick={() => toggleFolder(folder.id)}
                 onKeyDown={(event) => handleFolderKeyDown(event, folder.id)}
                 title="Abrir pasta ou soltar um personagem aqui"
                 type="button"
               >
+                <span className="tabletop-visual-library-folder__chevron">
+                  {hasChildren
+                    ? isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+                    : null}
+                </span>
                 {getFolderLogoUrl(folder)
                   ? renderFolderIcon(folder, 'tabletop-visual-library-folder__logo')
                   : currentFolderId === folder.id
@@ -594,20 +778,10 @@ export function TabletopNpcLibrary({
                 )}
                 <small>{itemCount}</small>
               </button>
-              {!folder.isVirtual ? (
+              {!folder.isVirtual && isRenaming ? (
                 <div className="tabletop-visual-library-folder__actions">
-                  {isRenaming ? (
-                    <>
-                      <button aria-label="Salvar nome" onClick={() => handleSaveFolderRename(folder.id)} title="Salvar nome" type="button"><Save size={13} /></button>
-                      <button aria-label="Cancelar" onClick={() => setRenamingFolderId('')} title="Cancelar" type="button"><X size={13} /></button>
-                    </>
-                  ) : (
-                    <>
-                      <button aria-label="Renomear pasta" onClick={() => beginRenameFolder(folder)} title="Renomear pasta" type="button"><Settings size={13} /></button>
-                      <button aria-label="Mover para cima" onClick={() => onMoveFolder(folder.id, 'up')} title="Mover para cima" type="button"><ArrowUp size={13} /></button>
-                      <button aria-label="Mover para baixo" onClick={() => onMoveFolder(folder.id, 'down')} title="Mover para baixo" type="button"><ArrowDown size={13} /></button>
-                    </>
-                  )}
+                  <button aria-label="Salvar nome" onClick={() => handleSaveFolderRename(folder.id)} title="Salvar nome" type="button"><Save size={13} /></button>
+                  <button aria-label="Cancelar" onClick={() => setRenamingFolderId('')} title="Cancelar" type="button"><X size={13} /></button>
                 </div>
               ) : null}
             </div>
@@ -615,24 +789,28 @@ export function TabletopNpcLibrary({
         })}
       </div>
 
-      <div className="tabletop-visual-library__new-folder">
-        <input
-          onChange={(event) => setNewFolderName(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') handleCreateFolder()
-          }}
-          placeholder="Nova pasta"
-          value={newFolderName}
-        />
-        <button aria-label="Criar pasta" onClick={handleCreateFolder} title="Criar pasta" type="button"><Plus size={16} /></button>
-      </div>
+      {showNewFolderInput ? (
+        <div className="tabletop-visual-library__new-folder">
+          <input
+            autoFocus
+            onChange={(event) => setNewFolderName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') handleCreateFolder()
+              if (event.key === 'Escape') setShowNewFolderInput(false)
+            }}
+            placeholder="Nova pasta"
+            value={newFolderName}
+          />
+          <button aria-label="Criar pasta" onClick={handleCreateFolder} title="Criar pasta" type="button"><Plus size={16} /></button>
+        </div>
+      ) : null}
     </>
   )
 
   return (
     <TabletopVisualLibrary
       actions={
-        <button aria-label="Criar pasta" onClick={handleCreateFolder} title="Criar pasta" type="button">
+        <button aria-label="Criar pasta" onClick={() => setShowNewFolderInput(true)} title="Criar pasta" type="button">
           <Plus size={17} />
         </button>
       }
@@ -684,23 +862,34 @@ export function TabletopNpcLibrary({
             }
             type="button"
           >
-            <span>Voltar</span>
+            <CornerUpLeft aria-hidden="true" size={24} />
             <strong>Voltar</strong>
           </button>
         ) : null}
         {directFolders.map((folder) => {
           const itemCount = getFolderItemCount(folder.id, effectiveFolders, characterFolderIds)
-          const canDeleteFolder = !folder.isVirtual && itemCount === 0
-          const canEditFolder = !folder.isVirtual
           const isRenaming = renamingFolderId === folder.id
+          const dropPlacement = folderDropTarget?.folderId === folder.id
+            ? folderDropTarget.placement
+            : null
 
           return (
             <article
-              className="tabletop-library-folder-card"
+              className={`tabletop-library-folder-card${dropPlacement ? ` is-drop-${dropPlacement}` : ''}`}
+              draggable={!folder.isVirtual}
               key={folder.id}
-              onClick={() => setSelectedFolderId(folder.id)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => handleFolderDrop(event, folder.id)}
+              onClick={() => selectFolder(folder.id)}
+              onDragEnd={() => {
+                setDraggingFolderId('')
+                setFolderDropTarget(null)
+              }}
+              onDragOver={(event) => handleFolderOrderDragOver(event, folder)}
+              onDragStart={(event) => {
+                if (folder.isVirtual) return
+                startFolderDrag(event, { category: 'npcs', folderId: folder.id })
+                setDraggingFolderId(folder.id)
+              }}
+              onDrop={(event) => handleFolderTargetDrop(event, folder)}
               onKeyDown={(event) => handleFolderKeyDown(event, folder.id)}
               onContextMenu={(event) => handleFolderContextMenu(event, folder.id)}
               role="button"
@@ -729,69 +918,13 @@ export function TabletopNpcLibrary({
                 <strong>{folder.name}</strong>
               )}
               <small>{itemCount} item(s)</small>
-              {canEditFolder ? (
+              {!folder.isVirtual && isRenaming ? (
                 <div
                   className="tabletop-library-folder-card__actions"
                   onClick={(event) => event.stopPropagation()}
                 >
-                  {isRenaming ? (
-                    <>
-                      <button
-                        className="button button--compact"
-                        onClick={() => handleSaveFolderRename(folder.id)}
-                        type="button"
-                      >
-                        Salvar
-                      </button>
-                      <button
-                        className="button button--compact"
-                        onClick={() => setRenamingFolderId('')}
-                        type="button"
-                      >
-                        Cancelar
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        className="button button--compact"
-                        onClick={() => {
-                          setRenamingFolderId(folder.id)
-                          setRenamingFolderName(folder.name)
-                        }}
-                        type="button"
-                      >
-                        Nome
-                      </button>
-                      <button
-                        className="button button--compact"
-                        onClick={() => onMoveFolder(folder.id, 'up')}
-                        type="button"
-                      >
-                        Subir
-                      </button>
-                      <button
-                        className="button button--compact"
-                        onClick={() => onMoveFolder(folder.id, 'down')}
-                        type="button"
-                      >
-                        Descer
-                      </button>
-                      <button
-                        className="button button--compact"
-                        disabled={!canDeleteFolder}
-                        onClick={() => onDeleteFolder(folder.id)}
-                        title={
-                          canDeleteFolder
-                            ? 'Excluir pasta vazia'
-                            : 'So e possivel excluir uma pasta vazia'
-                        }
-                        type="button"
-                      >
-                        Excluir
-                      </button>
-                    </>
-                  )}
+                  <button aria-label="Salvar nome" className="tabletop-visual-library-icon-button" onClick={() => handleSaveFolderRename(folder.id)} title="Salvar nome" type="button"><Save size={15} /></button>
+                  <button aria-label="Cancelar" className="tabletop-visual-library-icon-button" onClick={() => setRenamingFolderId('')} title="Cancelar" type="button"><X size={15} /></button>
                 </div>
               ) : null}
             </article>

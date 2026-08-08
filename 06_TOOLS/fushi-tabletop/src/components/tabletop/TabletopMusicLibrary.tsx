@@ -1,10 +1,10 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent, KeyboardEvent } from 'react'
 import {
   Activity,
-  ArrowDown,
-  ArrowUp,
+  ChevronDown,
   ChevronRight,
+  CornerUpLeft,
   Disc3,
   Edit3,
   Folder,
@@ -81,7 +81,11 @@ interface TabletopMusicLibraryProps {
   onCreateTrack: (input: TabletopMusicCreateInput) => void
   onDeleteFolder: (folderId: string) => void
   onDeleteTrack: (trackId: string) => void
-  onMoveFolder: (folderId: string, direction: 'up' | 'down') => void
+  onReorderFolder: (
+    folderId: string,
+    targetFolderId: string,
+    placement: 'before' | 'after',
+  ) => void
   onPauseAll: () => void
   onPauseTrack: (trackId: string) => void
   onApplyFavoritePreset: (presetId: string) => void
@@ -114,15 +118,28 @@ interface MusicDragPayload {
   id: string
 }
 
+interface MusicFolderDragPayload {
+  category: 'music'
+  folderId: string
+}
+
+interface FolderContextMenuState {
+  folderId: string
+  x: number
+  y: number
+}
+
 interface TrackVisual {
   color: string
   Icon: LucideIcon
 }
 
 const ROOT_FOLDER_ID = ''
+const ALL_TRACKS_FOLDER_ID = 'virtual:music:todos'
 const ACTIVE_FOLDER_ID = 'virtual:music:ativos'
 const FAVORITES_FOLDER_ID = 'virtual:music:favoritos'
 const LIBRARY_DRAG_DATA_TYPE = 'application/x-fushi-library-item'
+const FOLDER_DRAG_DATA_TYPE = 'application/x-fushi-library-folder'
 const DEFAULT_TRACK_VOLUME = 0.35
 const AUDIO_CATEGORY_OPTIONS = [
   'efeitos de trilha',
@@ -195,7 +212,7 @@ function compareFolders(a: FolderView, b: FolderView) {
   return orderA === orderB ? a.name.localeCompare(b.name) : orderA - orderB
 }
 
-function buildFolderRows(folders: FolderView[]) {
+function buildFolderRows(folders: FolderView[], expandedFolderIds: Set<string>) {
   const rows: FolderRow[] = []
   const visited = new Set<string>()
 
@@ -209,17 +226,48 @@ function buildFolderRows(folders: FolderView[]) {
         }
         visited.add(folder.id)
         rows.push({ depth, folder })
-        visit(folder.id, depth + 1)
+        if (expandedFolderIds.has(folder.id)) {
+          visit(folder.id, depth + 1)
+        }
       })
   }
 
   visit(ROOT_FOLDER_ID, 0)
+  const knownFolderIds = new Set(folders.map((folder) => folder.id))
   folders
-    .filter((folder) => !visited.has(folder.id))
+    .filter(
+      (folder) =>
+        !visited.has(folder.id) &&
+        folder.parentId !== ROOT_FOLDER_ID &&
+        !knownFolderIds.has(folder.parentId),
+    )
     .sort(compareFolders)
-    .forEach((folder) => rows.push({ depth: 0, folder }))
+    .forEach((folder) => {
+      visited.add(folder.id)
+      rows.push({ depth: 0, folder })
+      if (expandedFolderIds.has(folder.id)) {
+        visit(folder.id, 1)
+      }
+    })
 
   return rows
+}
+
+function getAncestorFolderIds(folders: FolderView[], folderId: string) {
+  const ancestorIds: string[] = []
+  const visitedIds = new Set<string>()
+  let currentId = folderId
+
+  while (currentId && !visitedIds.has(currentId)) {
+    visitedIds.add(currentId)
+    const folder = folders.find((entry) => entry.id === currentId)
+
+    if (!folder) break
+    if (folder.parentId) ancestorIds.unshift(folder.parentId)
+    currentId = folder.parentId
+  }
+
+  return ancestorIds
 }
 
 function buildBreadcrumb(folders: FolderView[], selectedFolderId: string) {
@@ -319,6 +367,28 @@ function readDragPayload(event: DragEvent): MusicDragPayload | null {
   }
 }
 
+function startFolderDrag(event: DragEvent, folderId: string) {
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData(
+    FOLDER_DRAG_DATA_TYPE,
+    JSON.stringify({ category: 'music', folderId } satisfies MusicFolderDragPayload),
+  )
+}
+
+function readFolderDragPayload(event: DragEvent): MusicFolderDragPayload | null {
+  const rawPayload = event.dataTransfer.getData(FOLDER_DRAG_DATA_TYPE)
+  if (!rawPayload) return null
+
+  try {
+    const payload = JSON.parse(rawPayload) as Partial<MusicFolderDragPayload>
+    return payload.category === 'music' && typeof payload.folderId === 'string'
+      ? { category: 'music', folderId: payload.folderId }
+      : null
+  } catch {
+    return null
+  }
+}
+
 function getTrackVisual(track: TabletopMusicLibraryItem): TrackVisual {
   const searchable = `${track.name} ${track.categoryLabel} ${track.category ?? ''}`.toLowerCase()
   return (
@@ -350,7 +420,7 @@ export function TabletopMusicLibrary({
   onCreateTrack,
   onDeleteFolder,
   onDeleteTrack,
-  onMoveFolder,
+  onReorderFolder,
   onPauseAll,
   onPauseTrack,
   onApplyFavoritePreset,
@@ -373,6 +443,10 @@ export function TabletopMusicLibrary({
   const editAudioInputRef = useRef<HTMLInputElement | null>(null)
   const editImageInputRef = useRef<HTMLInputElement | null>(null)
   const [selectedFolderId, setSelectedFolderId] = useState(ROOT_FOLDER_ID)
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
+    () => new Set(),
+  )
+  const [showNewFolderInput, setShowNewFolderInput] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
   const [newPresetName, setNewPresetName] = useState('')
   const [renamingFolderId, setRenamingFolderId] = useState('')
@@ -384,6 +458,13 @@ export function TabletopMusicLibrary({
   const [activeScrubTrackId, setActiveScrubTrackId] = useState('')
   const [scrubValues, setScrubValues] = useState<Record<string, number>>({})
   const [uploadStatus, setUploadStatus] = useState('')
+  const [folderContextMenu, setFolderContextMenu] =
+    useState<FolderContextMenuState | null>(null)
+  const [draggingFolderId, setDraggingFolderId] = useState('')
+  const [folderDropTarget, setFolderDropTarget] = useState<{
+    folderId: string
+    placement: 'before' | 'after'
+  } | null>(null)
   const [createForm, setCreateForm] = useState<TabletopMusicCreateInput>({
     category: 'Musicas de trilha',
     folderId: ROOT_FOLDER_ID,
@@ -409,9 +490,15 @@ export function TabletopMusicLibrary({
     ],
     [folders, virtualFolders],
   )
-  const folderRows = useMemo(() => buildFolderRows(effectiveFolders), [effectiveFolders])
+  const folderRows = useMemo(
+    () => buildFolderRows(effectiveFolders, expandedFolderIds),
+    [effectiveFolders, expandedFolderIds],
+  )
+  const isAllTracksView = selectedFolderId === ALL_TRACKS_FOLDER_ID
   const isSelectedSpecialView =
-    selectedFolderId === ACTIVE_FOLDER_ID || selectedFolderId === FAVORITES_FOLDER_ID
+    isAllTracksView ||
+    selectedFolderId === ACTIVE_FOLDER_ID ||
+    selectedFolderId === FAVORITES_FOLDER_ID
   const currentFolderId =
     isSelectedSpecialView ||
     selectedFolderId === ROOT_FOLDER_ID ||
@@ -420,9 +507,12 @@ export function TabletopMusicLibrary({
       : ROOT_FOLDER_ID
   const isActiveView = currentFolderId === ACTIVE_FOLDER_ID
   const isFavoritesView = currentFolderId === FAVORITES_FOLDER_ID
-  const isSpecialView = isActiveView || isFavoritesView
+  const isSpecialView = isAllTracksView || isActiveView || isFavoritesView
   const currentFolder = effectiveFolders.find((folder) => folder.id === currentFolderId) ?? null
   const breadcrumb = buildBreadcrumb(effectiveFolders, currentFolderId)
+  const directFolders = effectiveFolders
+    .filter((folder) => folder.parentId === currentFolderId)
+    .sort(compareFolders)
   const trackFolderIds = tracks.map((track) => resolveTrackFolderId(track, trackFolders))
   const activeTracks = tracks.filter(
     (track) => getTrackState(track.id, mixerTracks, trackVolumes).status !== 'stopped',
@@ -431,7 +521,7 @@ export function TabletopMusicLibrary({
     .map((trackId) => tracks.find((track) => track.id === trackId))
     .filter((track): track is TabletopMusicLibraryItem => Boolean(track))
   const selectedTracks = (
-    currentFolderId === ROOT_FOLDER_ID
+    isAllTracksView
       ? tracks
       : isActiveView
         ? activeTracks
@@ -451,6 +541,22 @@ export function TabletopMusicLibrary({
     .sort((a, b) => a.name.localeCompare(b.name))
   const editingTrack = tracks.find((track) => track.id === editingTrackId) ?? null
 
+  useEffect(() => {
+    if (!folderContextMenu) return
+
+    function closeContextMenu() {
+      setFolderContextMenu(null)
+    }
+
+    window.addEventListener('pointerdown', closeContextMenu)
+    window.addEventListener('keydown', closeContextMenu)
+
+    return () => {
+      window.removeEventListener('pointerdown', closeContextMenu)
+      window.removeEventListener('keydown', closeContextMenu)
+    }
+  }, [folderContextMenu])
+
   function handleCreateFolder() {
     const trimmedName = newFolderName.trim()
     if (!trimmedName || isSpecialView) {
@@ -458,6 +564,29 @@ export function TabletopMusicLibrary({
     }
     onCreateFolder(currentFolderId, trimmedName)
     setNewFolderName('')
+    setShowNewFolderInput(false)
+  }
+
+  function selectFolder(folderId: string, expandAncestors = true) {
+    setSelectedFolderId(folderId)
+    if (!expandAncestors || !folderId || folderId === ALL_TRACKS_FOLDER_ID) return
+
+    setExpandedFolderIds((current) =>
+      new Set([...current, ...getAncestorFolderIds(effectiveFolders, folderId)]),
+    )
+  }
+
+  function toggleFolder(folderId: string) {
+    selectFolder(folderId)
+    const hasChildren = effectiveFolders.some((folder) => folder.parentId === folderId)
+    if (!hasChildren) return
+
+    setExpandedFolderIds((current) => {
+      const next = new Set(current)
+      if (next.has(folderId)) next.delete(folderId)
+      else next.add(folderId)
+      return next
+    })
   }
 
   function handleSaveFolderRename(folderId: string) {
@@ -628,10 +757,105 @@ export function TabletopMusicLibrary({
     }
   }
 
+  function handleFolderOrderDragOver(
+    event: DragEvent<HTMLElement>,
+    targetFolder: FolderView,
+  ) {
+    const folderPayload = readFolderDragPayload(event)
+    const sourceFolderId = folderPayload?.folderId ?? draggingFolderId
+
+    if (!sourceFolderId) {
+      event.preventDefault()
+      return
+    }
+
+    const sourceFolder = effectiveFolders.find((folder) => folder.id === sourceFolderId)
+    if (
+      !sourceFolder ||
+      sourceFolder.id === targetFolder.id ||
+      sourceFolder.isVirtual ||
+      targetFolder.isVirtual ||
+      sourceFolder.parentId !== targetFolder.parentId
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const placement = event.clientY < bounds.top + bounds.height / 2 ? 'before' : 'after'
+    setFolderDropTarget({ folderId: targetFolder.id, placement })
+  }
+
+  function handleFolderTargetDrop(event: DragEvent<HTMLElement>, targetFolder: FolderView) {
+    event.preventDefault()
+    event.stopPropagation()
+    const folderPayload = readFolderDragPayload(event)
+
+    if (folderPayload) {
+      const sourceFolder = effectiveFolders.find(
+        (folder) => folder.id === folderPayload.folderId,
+      )
+      const targetBounds = event.currentTarget.getBoundingClientRect()
+      const dropPlacement =
+        event.clientY < targetBounds.top + targetBounds.height / 2
+          ? 'before'
+          : 'after'
+      const placement =
+        folderDropTarget?.folderId === targetFolder.id
+          ? folderDropTarget.placement
+          : dropPlacement
+
+      if (
+        sourceFolder &&
+        !sourceFolder.isVirtual &&
+        !targetFolder.isVirtual &&
+        sourceFolder.parentId === targetFolder.parentId &&
+        sourceFolder.id !== targetFolder.id
+      ) {
+        onReorderFolder(sourceFolder.id, targetFolder.id, placement)
+      }
+
+      setDraggingFolderId('')
+      setFolderDropTarget(null)
+      return
+    }
+
+    handleFolderDrop(event, targetFolder.id)
+  }
+
+  function handleFolderContextMenu(event: React.MouseEvent, folderId: string) {
+    event.preventDefault()
+    event.stopPropagation()
+    setFolderContextMenu({ folderId, x: event.clientX, y: event.clientY })
+  }
+
+  function beginFolderRename(folder: FolderView) {
+    if (folder.isVirtual) return
+    setRenamingFolderId(folder.id)
+    setRenamingFolderName(folder.name)
+    setFolderContextMenu(null)
+  }
+
+  function createChildFolder(folder: FolderView) {
+    setFolderContextMenu(null)
+    const name = window.prompt('Nome da nova subpasta')
+    if (name?.trim()) onCreateFolder(folder.id, name.trim())
+  }
+
+  function deleteFolderFromMenu(folder: FolderView) {
+    setFolderContextMenu(null)
+    if (folder.isVirtual) return
+
+    if (window.confirm(`Excluir a pasta "${folder.name}"? O conteudo sera movido para a pasta anterior.`)) {
+      onDeleteFolder(folder.id)
+    }
+  }
+
   function handleFolderKeyDown(event: KeyboardEvent, folderId: string) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      setSelectedFolderId(folderId)
+      toggleFolder(folderId)
     }
   }
 
@@ -780,7 +1004,9 @@ export function TabletopMusicLibrary({
     ? 'Tocando agora'
     : isFavoritesView
       ? 'Favoritos'
-      : currentFolder?.name ?? 'Todos os sons'
+      : isAllTracksView
+        ? 'Todos os sons'
+        : currentFolder?.name ?? 'Biblioteca'
 
   return (
     <section className="tabletop-msc" data-testid="tabletop-msc-library">
@@ -851,10 +1077,8 @@ export function TabletopMusicLibrary({
         <aside className="tabletop-msc__sidebar" data-testid="tabletop-msc-folders">
           <nav className="tabletop-msc__nav">
             <button
-              className={currentFolderId === ROOT_FOLDER_ID ? 'is-active' : ''}
-              onClick={() => setSelectedFolderId(ROOT_FOLDER_ID)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => handleFolderDrop(event, ROOT_FOLDER_ID)}
+              className={isAllTracksView ? 'is-active' : ''}
+              onClick={() => selectFolder(ALL_TRACKS_FOLDER_ID, false)}
               type="button"
             >
               <ListMusic size={17} />
@@ -883,25 +1107,62 @@ export function TabletopMusicLibrary({
 
           <div className="tabletop-msc__folder-heading">
             <span>Pastas</span>
-            <FolderPlus aria-hidden="true" size={15} />
+            <button
+              aria-label="Criar pasta"
+              className={showNewFolderInput ? 'is-active' : ''}
+              onClick={() => setShowNewFolderInput((current) => !current)}
+              title="Criar pasta"
+              type="button"
+            >
+              <FolderPlus aria-hidden="true" size={15} />
+            </button>
           </div>
           <div className="tabletop-msc__folder-list">
             {folderRows.map(({ depth, folder }) => {
               const selected = currentFolderId === folder.id
               const itemCount = getFolderItemCount(folder.id, effectiveFolders, trackFolderIds)
               const isRenaming = renamingFolderId === folder.id
+              const hasChildren = effectiveFolders.some(
+                (entry) => entry.parentId === folder.id,
+              )
+              const isExpanded = expandedFolderIds.has(folder.id)
+              const dropPlacement =
+                folderDropTarget?.folderId === folder.id
+                  ? folderDropTarget.placement
+                  : null
               return (
-                <div className={`tabletop-msc-folder${selected ? ' is-active' : ''}`} key={folder.id}>
+                <div
+                  className={`tabletop-msc-folder${selected ? ' is-active' : ''}${
+                    dropPlacement ? ` is-drop-${dropPlacement}` : ''
+                  }`}
+                  draggable={!folder.isVirtual && !isRenaming}
+                  key={folder.id}
+                  onContextMenu={(event) => handleFolderContextMenu(event, folder.id)}
+                  onDragEnd={() => {
+                    setDraggingFolderId('')
+                    setFolderDropTarget(null)
+                  }}
+                  onDragOver={(event) => handleFolderOrderDragOver(event, folder)}
+                  onDragStart={(event) => {
+                    if (folder.isVirtual || isRenaming) return
+                    startFolderDrag(event, folder.id)
+                    setDraggingFolderId(folder.id)
+                  }}
+                  onDrop={(event) => handleFolderTargetDrop(event, folder)}
+                  style={{ paddingLeft: `${Math.min(depth, 4) * 12}px` }}
+                >
                   <button
-                    className="tabletop-msc-folder__select"
-                    onClick={() => setSelectedFolderId(folder.id)}
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={(event) => handleFolderDrop(event, folder.id)}
+                    className="tabletop-msc-folder__select tabletop-msc-folder__select--tree"
+                    onClick={() => toggleFolder(folder.id)}
                     onKeyDown={(event) => handleFolderKeyDown(event, folder.id)}
-                    style={{ paddingLeft: `${10 + Math.min(depth, 4) * 14}px` }}
-                    title="Abrir pasta"
+                    title="Abrir pasta ou soltar um som aqui"
                     type="button"
                   >
+                    <span className="tabletop-msc-folder__chevron" aria-hidden="true">
+                      {hasChildren ? (
+                        isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+                      ) : null}
+                    </span>
                     {selected ? <FolderOpen size={16} /> : <Folder size={16} />}
                     {isRenaming ? (
                       <input
@@ -920,80 +1181,50 @@ export function TabletopMusicLibrary({
                     )}
                     <small>{itemCount}</small>
                   </button>
-                  {!folder.isVirtual && selected ? (
+                  {!folder.isVirtual && isRenaming ? (
                     <div className="tabletop-msc-folder__actions">
-                      {isRenaming ? (
-                        <>
-                          <button aria-label="Salvar nome" onClick={() => handleSaveFolderRename(folder.id)} title="Salvar" type="button">
-                            <Save size={14} />
-                          </button>
-                          <button aria-label="Cancelar nome" onClick={() => setRenamingFolderId('')} title="Cancelar" type="button">
-                            <X size={14} />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            aria-label="Renomear pasta"
-                            onClick={() => {
-                              setRenamingFolderId(folder.id)
-                              setRenamingFolderName(folder.name)
-                            }}
-                            title="Renomear"
-                            type="button"
-                          >
-                            <Edit3 size={14} />
-                          </button>
-                          <button aria-label="Subir pasta" onClick={() => onMoveFolder(folder.id, 'up')} title="Subir" type="button">
-                            <ArrowUp size={14} />
-                          </button>
-                          <button aria-label="Descer pasta" onClick={() => onMoveFolder(folder.id, 'down')} title="Descer" type="button">
-                            <ArrowDown size={14} />
-                          </button>
-                          <button
-                            aria-label="Excluir pasta"
-                            className="is-danger"
-                            disabled={itemCount !== 0}
-                            onClick={() => onDeleteFolder(folder.id)}
-                            title={itemCount === 0 ? 'Excluir pasta' : 'Esvazie a pasta antes de excluir'}
-                            type="button"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </>
-                      )}
+                      <button aria-label="Salvar nome" onClick={() => handleSaveFolderRename(folder.id)} title="Salvar" type="button">
+                        <Save size={14} />
+                      </button>
+                      <button aria-label="Cancelar nome" onClick={() => setRenamingFolderId('')} title="Cancelar" type="button">
+                        <X size={14} />
+                      </button>
                     </div>
                   ) : null}
                 </div>
               )
             })}
           </div>
-          <div className="tabletop-msc__new-folder">
-            <input
-              aria-label="Nome da nova pasta"
-              disabled={isSpecialView}
-              onChange={(event) => setNewFolderName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') handleCreateFolder()
-              }}
-              placeholder="Nova pasta"
-              value={newFolderName}
-            />
-            <button aria-label="Criar pasta" disabled={!newFolderName.trim() || isSpecialView} onClick={handleCreateFolder} title="Criar pasta" type="button">
-              <FolderPlus size={16} />
-            </button>
-          </div>
+          {showNewFolderInput ? (
+            <div className="tabletop-msc__new-folder">
+              <input
+                aria-label="Nome da nova pasta"
+                autoFocus
+                disabled={isSpecialView}
+                onChange={(event) => setNewFolderName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') handleCreateFolder()
+                  if (event.key === 'Escape') setShowNewFolderInput(false)
+                }}
+                placeholder="Nova pasta"
+                value={newFolderName}
+              />
+              <button aria-label="Criar pasta" disabled={!newFolderName.trim() || isSpecialView} onClick={handleCreateFolder} title="Criar pasta" type="button">
+                <FolderPlus size={16} />
+              </button>
+            </div>
+          ) : null}
         </aside>
 
         <main className="tabletop-msc__content">
           <header className="tabletop-msc__content-header">
             <div>
               <div className="tabletop-msc__breadcrumb">
-                <button onClick={() => setSelectedFolderId(ROOT_FOLDER_ID)} type="button">Biblioteca</button>
+                <button onClick={() => selectFolder(ROOT_FOLDER_ID)} type="button">Biblioteca</button>
                 {breadcrumb.map((folder) => (
                   <span key={folder.id}>
                     <ChevronRight size={13} />
-                    <button onClick={() => setSelectedFolderId(folder.id)} type="button">{folder.name}</button>
+                    <button onClick={() => selectFolder(folder.id)} type="button">{folder.name}</button>
                   </span>
                 ))}
               </div>
@@ -1001,6 +1232,70 @@ export function TabletopMusicLibrary({
               <span>{selectedTracks.length} som(ns)</span>
             </div>
           </header>
+
+          {!isSpecialView ? (
+            <div className="tabletop-library-folder-grid tabletop-msc__folder-grid">
+              {currentFolderId ? (
+                <button
+                  className="tabletop-library-folder-card tabletop-library-folder-card--back"
+                  onClick={() =>
+                    selectFolder(
+                      effectiveFolders.find((folder) => folder.id === currentFolderId)
+                        ?.parentId ?? ROOT_FOLDER_ID,
+                    )
+                  }
+                  type="button"
+                >
+                  <CornerUpLeft aria-hidden="true" size={24} />
+                  <strong>Voltar</strong>
+                </button>
+              ) : null}
+              {directFolders.map((folder) => {
+                const itemCount = getFolderItemCount(
+                  folder.id,
+                  effectiveFolders,
+                  trackFolderIds,
+                )
+                const dropPlacement =
+                  folderDropTarget?.folderId === folder.id
+                    ? folderDropTarget.placement
+                    : null
+
+                return (
+                  <article
+                    className={`tabletop-library-folder-card${
+                      dropPlacement ? ` is-drop-${dropPlacement}` : ''
+                    }`}
+                    draggable={!folder.isVirtual}
+                    key={folder.id}
+                    onClick={() => selectFolder(folder.id)}
+                    onContextMenu={(event) => handleFolderContextMenu(event, folder.id)}
+                    onDragEnd={() => {
+                      setDraggingFolderId('')
+                      setFolderDropTarget(null)
+                    }}
+                    onDragOver={(event) => handleFolderOrderDragOver(event, folder)}
+                    onDragStart={(event) => {
+                      if (folder.isVirtual) return
+                      startFolderDrag(event, folder.id)
+                      setDraggingFolderId(folder.id)
+                    }}
+                    onDrop={(event) => handleFolderTargetDrop(event, folder)}
+                    onKeyDown={(event) => handleFolderKeyDown(event, folder.id)}
+                    role="button"
+                    tabIndex={0}
+                    title="Abrir pasta ou soltar um som aqui"
+                  >
+                    <span className="tabletop-library-folder-card__icon">
+                      <FolderOpen aria-hidden="true" size={26} />
+                    </span>
+                    <strong>{folder.name}</strong>
+                    <small>{itemCount} item(ns)</small>
+                  </article>
+                )
+              })}
+            </div>
+          ) : null}
 
           {isCreatingTrack ? (
             <section className="tabletop-msc-editor" aria-label="Adicionar som">
@@ -1090,6 +1385,44 @@ export function TabletopMusicLibrary({
           )}
         </main>
       </div>
+
+      {folderContextMenu ? (() => {
+        const folder = effectiveFolders.find(
+          (item) => item.id === folderContextMenu.folderId,
+        )
+
+        if (!folder) return null
+
+        return (
+          <div
+            className="tabletop-library-folder-menu"
+            onClick={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+            style={{ left: folderContextMenu.x, top: folderContextMenu.y }}
+          >
+            <button onClick={() => selectFolder(folder.id)} type="button">
+              Abrir pasta
+            </button>
+            {!folder.isVirtual ? (
+              <button onClick={() => beginFolderRename(folder)} type="button">
+                Renomear
+              </button>
+            ) : null}
+            <button onClick={() => createChildFolder(folder)} type="button">
+              Nova subpasta
+            </button>
+            {!folder.isVirtual ? (
+              <button
+                className="tabletop-library-folder-menu__danger"
+                onClick={() => deleteFolderFromMenu(folder)}
+                type="button"
+              >
+                Excluir pasta
+              </button>
+            ) : null}
+          </div>
+        )
+      })() : null}
     </section>
   )
 }

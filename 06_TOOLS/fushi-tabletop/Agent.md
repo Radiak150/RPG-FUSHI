@@ -78,6 +78,11 @@ Este arquivo e a regra de operacao para qualquer chat/agente que mexer no sistem
     por texto/lore e nao criar uma segunda ficha viva. Alteracoes exigem
     `npm run smoke:stages`, `npm run smoke:multiplayer`, `npm run smoke:ui` e
     `npm run smoke:release`.
+27. Hubs internos da Mesa seguem `docs/TABLETOP_VISUAL_BROWSER_STANDARD.md`:
+    navegacao lateral e conteudo com scroll independente, arvore de pastas
+    recolhida, criacao pelo icone, menu de contexto, reordenacao por arraste,
+    selecao neutra e midia sob demanda. Preserve os motores existentes e nao
+    crie um CMD paralelo sem aprovacao.
 
 ## Fonte de verdade operacional
 

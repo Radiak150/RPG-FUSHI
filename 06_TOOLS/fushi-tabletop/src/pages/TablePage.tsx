@@ -14,12 +14,19 @@ import {
 } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
+  Activity,
   BookOpen,
   Box,
+  ClipboardCopy,
   Film,
   History,
   Layers3,
+  LocateFixed,
   Plus,
+  RadioTower,
+  UsersRound,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react'
 import { TabletopCinematicOverlay } from '../components/tabletop/TabletopCinematicOverlay'
 import type {
@@ -2063,6 +2070,8 @@ export function TablePage() {
     readPersistedWorldMundiState(activeCampaignId),
   )
   const [activeHudPanel, setActiveHudPanel] = useState<HudPanelId | null>(null)
+  const [diagnosticsView, setDiagnosticsView] =
+    useState<'overview' | 'transport' | 'players'>('overview')
   const [masterBookView, setMasterBookView] = useState<'rules' | 'history'>('rules')
   const [trainingOpenRequestId, setTrainingOpenRequestId] = useState(0)
   const [turnDraftActiveTokenId, setTurnDraftActiveTokenId] = useState('')
@@ -6258,7 +6267,7 @@ export function TablePage() {
             setBoardRenderEpoch((currentEpoch) => currentEpoch + 1)
             setIsBoardArtworkSuspended(false)
             setTableFeedbackMessage(
-              'Mesa renderizada novamente. Estado da sessao preservado.',
+              'Reconstruindo as camadas visuais da mesa...',
             )
             boardRecoveryTimerRef.current = null
           }, 180)
@@ -6321,6 +6330,10 @@ export function TablePage() {
       hardRecoveryStarted: false,
       requestedAt: 0,
     }
+    setIsBoardArtworkSuspended(false)
+    setTableFeedbackMessage(
+      'Mesa renderizada novamente. Estado da sessao preservado.',
+    )
   }, [boardMap?.id, currentSceneId])
 
   useEffect(() => {
@@ -6612,40 +6625,44 @@ export function TablePage() {
     })
   }
 
-  function moveLibraryFolder(folderId: string, direction: 'up' | 'down') {
+  function reorderLibraryFolder(
+    folderId: string,
+    targetFolderId: string,
+    placement: 'before' | 'after',
+  ) {
     updateLibraryState((currentState) => {
-      const targetFolder = currentState.folders.find((folder) => folder.id === folderId)
+      const movingFolder = currentState.folders.find((folder) => folder.id === folderId)
+      const targetFolder = currentState.folders.find((folder) => folder.id === targetFolderId)
 
-      if (!targetFolder) {
+      if (
+        !movingFolder ||
+        !targetFolder ||
+        movingFolder.id === targetFolder.id ||
+        movingFolder.category !== targetFolder.category ||
+        movingFolder.parentId !== targetFolder.parentId
+      ) {
         return currentState
       }
 
       const siblings = currentState.folders
         .filter(
           (folder) =>
-            folder.category === targetFolder.category &&
-            folder.parentId === targetFolder.parentId,
+            folder.category === movingFolder.category &&
+            folder.parentId === movingFolder.parentId,
         )
         .sort((a, b) => {
           const orderA = a.sortOrder ?? Number.MAX_SAFE_INTEGER
           const orderB = b.sortOrder ?? Number.MAX_SAFE_INTEGER
-
-          if (orderA !== orderB) {
-            return orderA - orderB
-          }
-
-          return a.name.localeCompare(b.name)
+          return orderA !== orderB ? orderA - orderB : a.name.localeCompare(b.name)
         })
-      const currentIndex = siblings.findIndex((folder) => folder.id === folderId)
-      const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+      const nextSiblings = siblings.filter((folder) => folder.id !== movingFolder.id)
+      const targetIndex = nextSiblings.findIndex((folder) => folder.id === targetFolder.id)
 
-      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= siblings.length) {
+      if (targetIndex < 0) {
         return currentState
       }
 
-      const nextSiblings = [...siblings]
-      const [movingFolder] = nextSiblings.splice(currentIndex, 1)
-      nextSiblings.splice(nextIndex, 0, movingFolder)
+      nextSiblings.splice(targetIndex + (placement === 'after' ? 1 : 0), 0, movingFolder)
       const orderByFolderId = new Map(
         nextSiblings.map((folder, index) => [folder.id, index + 1]),
       )
@@ -15526,7 +15543,7 @@ export function TablePage() {
                     }
                     onDeleteFolder={deleteLibraryFolder}
                     onHideCharacter={hideLibraryCharacter}
-                    onMoveFolder={moveLibraryFolder}
+                    onReorderFolder={reorderLibraryFolder}
                     onRenameFolder={renameLibraryFolder}
                     onRenameVirtualFaction={renameNpcFaction}
                     onRemoveFromScene={removeCharacterTokenFromCurrentScene}
@@ -15726,7 +15743,7 @@ export function TablePage() {
                       onDeleteMap={deleteLibraryMap}
                       onDeleteTransition={deleteLibraryTransition}
                       onHideMap={hideMapFromPlayers}
-                      onMoveFolder={moveLibraryFolder}
+                      onReorderFolder={reorderLibraryFolder}
                       onPrepareMap={prepareMapForGm}
                       onRenameFolder={renameLibraryFolder}
                       onReturnToActiveMap={returnToActivePlayerMap}
@@ -16162,13 +16179,16 @@ export function TablePage() {
 
                 <div className="tabletop-hud-panel__actions">
                   <button
+                    aria-label="Centralizar mapa"
                     className="button"
                     onClick={() => centerScrollableViewport(viewportRef.current)}
+                    title="Centralizar mapa"
                     type="button"
                   >
-                    Centralizar
+                    <LocateFixed aria-hidden="true" size={17} />
                   </button>
                   <button
+                    aria-label="Diminuir zoom"
                     className="button"
                     onClick={() =>
                       updateSession((currentSession) =>
@@ -16191,11 +16211,13 @@ export function TablePage() {
                         }),
                       )
                     }
+                    title="Diminuir zoom"
                     type="button"
                   >
-                    Zoom -
+                    <ZoomOut aria-hidden="true" size={17} />
                   </button>
                   <button
+                    aria-label="Aumentar zoom"
                     className="button button--primary"
                     onClick={() =>
                       updateSession((currentSession) =>
@@ -16218,9 +16240,10 @@ export function TablePage() {
                         }),
                       )
                     }
+                    title="Aumentar zoom"
                     type="button"
                   >
-                    Zoom +
+                    <ZoomIn aria-hidden="true" size={17} />
                   </button>
                 </div>
               </TabletopHudPanel>
@@ -16257,7 +16280,7 @@ export function TablePage() {
                     onCreateTrack={handleCreateMusicTrack}
                     onDeleteFolder={deleteLibraryFolder}
                     onDeleteTrack={deleteLibraryTrack}
-                    onMoveFolder={moveLibraryFolder}
+                    onReorderFolder={reorderLibraryFolder}
                     onPauseAll={pauseAllMixerTracks}
                     onPauseTrack={pauseMixerTrack}
                     onApplyFavoritePreset={applyFavoritePreset}
@@ -16432,7 +16455,7 @@ export function TablePage() {
           {activeHudPanel === 'diagnostics' ? (
             <FloatingWindow
               initialPosition={{ x: 104, y: 220 }}
-              initialSize={{ width: 620, height: 560 }}
+              initialSize={{ width: 780, height: 580 }}
               onClose={() => setActiveHudPanel(null)}
               subtitle="Rede, fila remota e confirmacoes do servidor."
               title="Diagnostico multiplayer"
@@ -16443,7 +16466,75 @@ export function TablePage() {
                 subtitle="Rede, fila remota e confirmacoes do servidor."
                 title="Diagnostico multiplayer"
               >
-                <div className="multiplayer-diagnostics">
+                <TabletopVisualLibrary
+                  actions={
+                    <button
+                      aria-label="Copiar diagnóstico"
+                      onClick={handleCopyMultiplayerDiagnostics}
+                      title="Copiar diagnóstico"
+                      type="button"
+                    >
+                      <ClipboardCopy aria-hidden="true" size={17} />
+                    </button>
+                  }
+                  className="tabletop-diagnostics-browser"
+                  code="NET"
+                  contentHeader={
+                    <div>
+                      <p className="eyebrow">
+                        {diagnosticsView === 'overview'
+                          ? 'Pre-voo'
+                          : diagnosticsView === 'transport'
+                            ? 'Fila e ACK'
+                            : 'Sessão'}
+                      </p>
+                      <h2>
+                        {diagnosticsView === 'overview'
+                          ? 'Saúde da conexão'
+                          : diagnosticsView === 'transport'
+                            ? 'Transporte remoto'
+                            : 'Host e jogadores'}
+                      </h2>
+                    </div>
+                  }
+                  icon={RadioTower}
+                  sidebar={
+                    <nav className="tabletop-visual-library__nav" aria-label="Diagnóstico multiplayer">
+                      <button
+                        className={diagnosticsView === 'overview' ? 'is-active' : ''}
+                        onClick={() => setDiagnosticsView('overview')}
+                        type="button"
+                      >
+                        <Activity aria-hidden="true" size={17} />
+                        <span>Resumo</span>
+                        <small>{multiplayerConnectionStatus}</small>
+                      </button>
+                      <button
+                        className={diagnosticsView === 'transport' ? 'is-active' : ''}
+                        onClick={() => setDiagnosticsView('transport')}
+                        type="button"
+                      >
+                        <RadioTower aria-hidden="true" size={17} />
+                        <span>Fila e ACK</span>
+                        <small>{multiplayerDiagnostics.pendingActions}</small>
+                      </button>
+                      <button
+                        className={diagnosticsView === 'players' ? 'is-active' : ''}
+                        onClick={() => setDiagnosticsView('players')}
+                        type="button"
+                      >
+                        <UsersRound aria-hidden="true" size={17} />
+                        <span>Jogadores</span>
+                        <small>{multiplayerDiagnosticPlayers.length}</small>
+                      </button>
+                    </nav>
+                  }
+                  testId="multiplayer-diagnostics-browser"
+                  title="Diagnóstico multiplayer"
+                >
+                  <div className="multiplayer-diagnostics">
+                  {diagnosticsView === 'overview' ? (
+                    <>
                   <div className="multiplayer-diagnostics__summary">
                     <article>
                       <span>Estado</span>
@@ -16471,13 +16562,6 @@ export function TablePage() {
                           Use antes do teste e copie se alguma coisa travar, cair ou nao sincronizar.
                         </p>
                       </div>
-                      <button
-                        className="button"
-                        onClick={handleCopyMultiplayerDiagnostics}
-                        type="button"
-                      >
-                        Copiar diagnostico
-                      </button>
                     </div>
                     <div className="multiplayer-diagnostics__checklist">
                       {multiplayerDiagnosticRiskItems.map((item) => (
@@ -16498,7 +16582,10 @@ export function TablePage() {
                       ))}
                     </div>
                   </article>
+                    </>
+                  ) : null}
 
+                  {diagnosticsView === 'transport' ? (
                   <article className="list-card">
                     <div className="list-card__top">
                       <h3>Ultima acao remota</h3>
@@ -16523,7 +16610,9 @@ export function TablePage() {
                       <strong>{multiplayerDiagnostics.staleStatesIgnored}</strong>
                     </div>
                   </article>
+                  ) : null}
 
+                  {diagnosticsView === 'players' ? (
                   <article className="list-card">
                     <div className="list-card__top">
                       <h3>Host e jogadores</h3>
@@ -16570,8 +16659,9 @@ export function TablePage() {
                       )}
                     </div>
                   </article>
+                  ) : null}
 
-                  {multiplayerErrorMessage ? (
+                  {diagnosticsView === 'overview' && multiplayerErrorMessage ? (
                     <article className="list-card list-card--danger">
                       <div className="list-card__top">
                         <h3>Alerta atual</h3>
@@ -16583,6 +16673,7 @@ export function TablePage() {
                     </article>
                   ) : null}
                 </div>
+                </TabletopVisualLibrary>
               </TabletopHudPanel>
             </FloatingWindow>
           ) : null}

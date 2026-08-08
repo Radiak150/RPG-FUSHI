@@ -1,6 +1,24 @@
 ﻿import { useMemo, useState, type CSSProperties, type JSX } from 'react'
 import type { CharacterSheet, FactionItem, TabletopMap } from '../../data/types'
-import { Moon, Sun } from 'lucide-react'
+import {
+  BadgeCheck,
+  BrainCircuit,
+  CircleHelp,
+  Clock3,
+  Crown,
+  History,
+  Home,
+  Map as MapIcon,
+  Moon,
+  Save,
+  ScrollText,
+  Settings2,
+  Star,
+  Sun,
+  UsersRound,
+  Waves as WavesIcon,
+  type LucideIcon,
+} from 'lucide-react'
 import { useEffect } from 'react'
 import type { DragEvent } from 'react'
 import { getFactionLogoUrl } from '../../lib/factionAssets'
@@ -111,6 +129,26 @@ type WorldMundiTab =
   | 'ajuda'
   | 'rotas'
   | 'npcs'
+
+const WORLD_MUNDI_PRIMARY_TABS: Array<{
+  icon: LucideIcon
+  id: WorldMundiTab
+  label: string
+}> = [
+  { id: 'mestre', label: 'Mestre', icon: Crown },
+  { id: 'geral', label: 'Geral', icon: MapIcon },
+  { id: 'base', label: 'Base', icon: Home },
+  { id: 'waves', label: 'Waves', icon: WavesIcon },
+  { id: 'xp', label: 'XP', icon: Star },
+  { id: 'personagens', label: 'Personagens', icon: UsersRound },
+  { id: 'historia', label: 'História', icon: History },
+  { id: 'ia', label: 'IA', icon: BrainCircuit },
+  { id: 'canon', label: 'Canon', icon: BadgeCheck },
+  { id: 'relogio', label: 'Relógio', icon: Clock3 },
+  { id: 'logs', label: 'Logs', icon: ScrollText },
+  { id: 'editor', label: 'Editor', icon: Settings2 },
+  { id: 'ajuda', label: 'Ajuda', icon: CircleHelp },
+]
 type WorldMundiEditorSection = 'locais' | 'npcs' | 'rotas' | 'npc-ia'
 type TravelMode = 'players' | 'npc'
 type MovementMode = 'quick' | 'planning'
@@ -8861,43 +8899,28 @@ export function TabletopWorldMundiPanel({
         </div>
       </div>
 
-      <div className="tabletop-hud-panel__actions">
-        {(['mestre', 'geral', 'base', 'waves', 'xp', 'personagens', 'historia', 'ia', 'canon', 'relogio', 'logs', 'editor', 'ajuda'] as WorldMundiTab[]).map((tab) => (
+      <nav className="world-mundi__compact-toolbar" aria-label="Áreas do MUN">
+        {WORLD_MUNDI_PRIMARY_TABS.map(({ icon: Icon, id, label }) => (
           <button
-            className={`button${activeTab === tab ? ' button--primary' : ''}`}
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            aria-label={label}
+            className={activeTab === id ? 'is-active' : ''}
+            key={id}
+            onClick={() => setActiveTab(id)}
+            title={label}
             type="button"
           >
-            {tab === 'mestre'
-              ? 'Mestre'
-              : tab === 'geral'
-                ? 'Geral'
-              : tab === 'base'
-                ? 'Base'
-              : tab === 'waves'
-                ? 'Waves'
-              : tab === 'xp'
-                ? 'XP'
-              : tab === 'personagens'
-                ? 'Personagens'
-              : tab === 'ia'
-                ? 'IA'
-              : tab === 'canon'
-                  ? 'Canon'
-                  : tab === 'relogio'
-                    ? 'Relogio'
-                  : tab === 'historia'
-                    ? 'Historia'
-                  : tab === 'ajuda'
-                    ? '?'
-                  : formatLabel(tab)}
+            <Icon aria-hidden="true" size={18} strokeWidth={1.7} />
           </button>
         ))}
-        <button className="button" onClick={() => setShowSettings(true)} type="button">
-          Sessao
+        <button
+          aria-label="Sessão"
+          onClick={() => setShowSettings(true)}
+          title="Sessão"
+          type="button"
+        >
+          <Save aria-hidden="true" size={18} strokeWidth={1.7} />
         </button>
-      </div>
+      </nav>
 
       {showSettings ? (
         <div className="world-mundi__modal-backdrop" role="presentation">

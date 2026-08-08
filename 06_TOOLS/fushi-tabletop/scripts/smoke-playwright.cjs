@@ -505,9 +505,23 @@ async function smokeMesa(browser) {
   const characterOptions = await characterSelect.locator('option').evaluateAll((options) =>
     options.map((option) => option.value),
   )
+  if ((await characterSelect.inputValue()) !== '') {
+    throw new Error('Mesa BUI: abriu com uma ficha escolhida automaticamente.')
+  }
+  if (!(await buildManager.getByText('Nenhuma ficha', { exact: true }).isVisible())) {
+    throw new Error('Mesa BUI: estado neutro da ficha nao ficou visivel.')
+  }
+  if ((await catalogButtons.count()) > 0) {
+    await catalogButtons.first().click()
+    await absorbButton.click()
+    await buildManager
+      .getByText('Escolha uma ficha antes de absorver o item.', { exact: true })
+      .waitFor({ state: 'visible', timeout: 3_000 })
+  }
   let foundBuildCandidate = false
 
   for (const characterId of characterOptions) {
+    if (!characterId) continue
     await characterSelect.selectOption(characterId)
     for (let itemIndex = 0; itemIndex < await catalogButtons.count(); itemIndex += 1) {
       await catalogButtons.nth(itemIndex).click()
@@ -637,6 +651,9 @@ async function smokeMesa(browser) {
     { buttonName: 'NPCs', testId: 'npc-library', screenshotName: 'npc-library-gm.png' },
     { buttonName: 'Eventos da mesa', testId: 'event-manager', screenshotName: 'event-manager-gm.png' },
     { buttonName: 'Efeitos visuais', testId: 'tabletop-vfx-library', screenshotName: 'vfx-library-gm.png' },
+    { buttonName: 'Buffs e debuffs', testId: 'status-manager-browser', screenshotName: 'status-manager-gm.png' },
+    { buttonName: 'Turnos', testId: 'turn-setup-browser', screenshotName: 'turn-setup-gm.png' },
+    { buttonName: 'Diagnostico multiplayer', testId: 'multiplayer-diagnostics-browser', screenshotName: 'multiplayer-diagnostics-gm.png' },
   ]) {
     await smokeVisualLibrary(page, visualLibrary)
   }

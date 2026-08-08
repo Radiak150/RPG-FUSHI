@@ -1354,9 +1354,11 @@ export function TabletopBoard({
       onObjectRemove={onObjectRemove}
       onObjectSelect={onObjectSelect}
       onObjectUndo={onObjectUndo}
+      onRendererFailure={onArtworkBlank}
       onTokenSelect={(tokenId) => onTokenSelect(tokenId, { additive: false })}
       quality={visualQuality}
       tokens={tokens}
+      key={`${map.id}:${renderEpoch}:${is3dFreeCameraVisible ? 'free' : 'topdown'}`}
     />
   )
   const tokenNameById = new Map(tokens.map((token) => [token.id, token.name]))
